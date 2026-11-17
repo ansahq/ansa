@@ -1,0 +1,8 @@
+[package]
+name = "ansa-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ansa-ui-gpui = { path = "../../crates/ui-gpui" }

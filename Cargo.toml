@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+exclude = ["experiments/gpui-accessibility", "target/framework-candidates/pinned-zed"]
+members = [
+    "apps/desktop", "apps/cli", "crates/domain", "crates/search", "crates/core",
+    "crates/platform-api", "crates/platform-windows", "crates/ui-components", "crates/ui-gpui",
+]
+default-members = ["apps/cli", "crates/domain", "crates/search", "crates/core", "crates/platform-api", "crates/platform-windows"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.99"
+
+[workspace.dependencies]
+gpui = "=0.2.2"
+unicode-segmentation = "=1.13.3"
+
+[profile.dev]
+debug = 1
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

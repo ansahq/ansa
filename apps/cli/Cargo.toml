@@ -1,0 +1,14 @@
+[package]
+name = "ansa-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ansa"
+path = "src/main.rs"
+
+[dependencies]
+ansa-core = { path = "../../crates/core" }
+ansa-domain = { path = "../../crates/domain" }
+ansa-platform-windows = { path = "../../crates/platform-windows" }

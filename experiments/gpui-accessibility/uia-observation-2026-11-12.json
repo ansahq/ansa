@@ -1,0 +1,47 @@
+{
+    "Scope":  "Only the owned synthetic candidate process",
+    "SearchRole":  "ControlType.Edit",
+    "SearchLabel":  "Search applications and commands",
+    "SearchKeyboardFocusable":  true,
+    "SearchHasKeyboardFocus":  true,
+    "SearchValuePatternAvailable":  true,
+    "SearchValueReadOnly":  false,
+    "ListRole":  "ControlType.List",
+    "RealizedRows":  9,
+    "FirstRowLabel":  "Project 00000 Terminal",
+    "FirstRowPosition":  1,
+    "LogicalResultCount":  10000,
+    "FirstRowSelectionPatternAvailable":  true,
+    "FirstRowSelected":  true,
+    "ScreenReaderAcceptance":  false,
+    "TextRangeAndSelectionAcceptance":  false,
+    "RowSelectionWithoutActivation":  true,
+    "OffscreenLastResult":  {
+                                "SelectedLabel":  "Project 09999 Terminal",
+                                "Position":  10000,
+                                "LogicalCount":  10000,
+                                "LiveEvents":  1,
+                                "LiveAnnouncement":  "Project 09999 Terminal, result 10000 of 10000",
+                                "SearchFocusRetained":  true
+                            },
+    "ReturnToFirstResult":  {
+                                "SelectedLabel":  "Project 00000 Terminal",
+                                "Position":  1,
+                                "LogicalCount":  10000,
+                                "LiveEvents":  1,
+                                "LiveAnnouncement":  "Project 00000 Terminal, result 1 of 10000",
+                                "SearchFocusRetained":  true
+                            },
+    "SetValueUpdatedQueryAndResults":  true,
+    "FilteredRowLabel":  "Project 09999 Terminal",
+    "FilteredLogicalCount":  1,
+    "TextRangeSmoke":  {
+                           "DocumentTextMatches":  true,
+                           "SelectedText":  "😀",
+                           "BoundingRectangles":  1,
+                           "SelectionRoundTrip":  true,
+                           "OversizedValueRejectedAtomically":  true,
+                           "GeometryWithinField":  true,
+                           "PointRangeWithinSelectedScalar":  true
+                       }
+}

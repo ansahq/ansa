@@ -1,0 +1,19 @@
+[package]
+name = "ansa-ui-components"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Owned GPUI widgets, themes and accessibility contracts for the Ansa launcher"
+
+[lib]
+name = "ansa_ui_components"
+path = "src/lib.rs"
+
+[features]
+# Only the isolated, immutable-revision experiment enables this API adapter.
+upstream-candidate = []
+
+[dependencies]
+gpui.workspace = true
+unicode-segmentation.workspace = true

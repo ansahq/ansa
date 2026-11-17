@@ -1,0 +1,17 @@
+[package]
+name = "ansa-platform-api"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "Platform-neutral application discovery, launch and capability contract for Ansa"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+name = "ansa_platform_api"
+path = "src/lib.rs"
+
+# The Windows adapter is the only concrete backend in this slice. It is a
+# target-specific dependency so non-Windows builds do not compile Win32 code.
+[target.'cfg(windows)'.dependencies]
+ansa-platform-windows = { path = "../platform-windows" }

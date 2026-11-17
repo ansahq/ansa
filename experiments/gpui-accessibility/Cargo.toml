@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+
+[package]
+name = "ansa-gpui-accessibility-spike"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+default-run = "ansa-gpui-accessibility-spike"
+
+[features]
+launcher-shell = ["dep:ansa-ui-gpui"]
+
+[[bin]]
+name = "ansa-launcher-accessibility-candidate"
+path = "src/launcher.rs"
+required-features = ["launcher-shell"]
+
+[dependencies]
+gpui = { path = "../../target/framework-candidates/pinned-zed/crates/gpui" }
+gpui_platform = { path = "../../target/framework-candidates/pinned-zed/crates/gpui_platform" }
+raw-window-handle = "=0.6.2"
+ansa-core = { path = "../../crates/core" }
+ansa-domain = { path = "../../crates/domain" }
+ansa-ui-components = { path = "../../crates/ui-components", features = ["upstream-candidate"] }
+ansa-ui-gpui = { path = "../../crates/ui-gpui", features = ["upstream-candidate"], optional = true }
+
+[patch.crates-io]
+gpui = { path = "../../target/framework-candidates/pinned-zed/crates/gpui" }

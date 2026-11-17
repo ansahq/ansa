@@ -1,0 +1,11 @@
+{
+    "Scope":  "Only the owned launcher HWND; native geometry, not screen capture",
+    "ClientEqualsWindow":  true,
+    "NativeChromeAbsent":  true,
+    "DirectCompositionEnabled":  true,
+    "AllFourNativeCornersClipped":  true,
+    "RegionReachesAllFourEdges":  true,
+    "DesktopPixelTransparencyVerified":  false,
+    "PhysicalWidth":  776,
+    "PhysicalHeight":  509
+}

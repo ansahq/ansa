@@ -1,0 +1,19 @@
+[package]
+name = "ansa-ui-gpui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+# Only the isolated experiment workspace enables this against the immutable
+# upstream GPUI candidate. It must never be enabled for the crates.io pin.
+upstream-candidate = ["ansa-ui-components/upstream-candidate"]
+
+[dependencies]
+gpui.workspace = true
+async-channel = "=2.5.0"
+raw-window-handle = "=0.6.2"
+ansa-ui-components = { path = "../ui-components" }
+ansa-core = { path = "../core" }
+ansa-domain = { path = "../domain" }
+ansa-platform-windows = { path = "../platform-windows" }

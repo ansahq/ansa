@@ -1,0 +1,97 @@
+# Raycast parity research — public documentation snapshot, 2026-11-11
+
+This is documentation research, not REA binary evidence or observed execution. No Raycast binary, local database, account, or private service was inspected. Described Raycast behavior is vendor-documented; proposed acceptance criteria and phase assignments are design recommendations. The current docs describe Raycast v2; archived v1 articles and early Windows beta articles are insufficient baselines. Cached Windows download version strings disagree, so record an actual build number during the future behavioral capture rather than claiming a latest build here.
+
+## High-impact conclusions
+
+- Current Raycast is more than a launcher plus clipboard manager. Its public manual now includes AI Agents, MCP, Skills, Projects, scheduled AI Automations, Dictation, Screen Awareness, local models, custom providers, BYOK and subscription connections. [Manual index](https://manual.raycast.com/)
+- Windows is an available product with app/file search, clipboard, snippets, quicklinks, calculator, emoji, AI and Notes. Do not describe it as an invitation-only beta or assume macOS-only features merely from old blog posts. Exact OS-by-feature parity remains to be tested. [Windows product](https://www.raycast.com/windows)
+- Free software parity should include features Raycast paywalls, but free distribution cannot promise free third-party inference, cloud hosting, code signing or proprietary data feeds. Support local AI and user-configured services; make a hosted service optional.
+- The SDK is React/TypeScript/Node-based; Rust-only extensions will not recover the existing ecosystem. A Rust host can support an independently implemented declarative component protocol and a JavaScript adapter. Do not claim drop-in compatibility without a corpus and coverage table. [SDK introduction](https://developers.raycast.com/readme.md)
+
+## Proposed feature matrix
+
+Phases: P1 reliable daily launcher; P2 core productivity and SDK; P3 advanced personal parity; P4 optional cloud/team platform. These labels are ordering recommendations, not delivery estimates. Linux support is proposed, not a Raycast capability claim.
+
+| Domain | Documented Raycast reference surface | Proposed requirement / phase | Acceptance example |
+|---|---|---|---|
+| Root search | Apps, commands, files, folders, windows, links, AI, snippets; action panel; aliases/hotkeys | P1 unified command registry, deterministic sections, favorites, frecency, fallback actions | Run app from query, invoke secondary action, back out, reopen with correct focus; stale async results never replace current query |
+| Keyboard shell | Command navigation, aliases, per-command hotkeys | P1 consistent keyboard grammar, shortcut recorder and conflicts | All primary flows keyboard-complete with screen-reader labels; escape follows documented nesting |
+| Applications | Launch and switch apps, app actions | P1 enumerate, de-duplicate, search and launch; P2 uninstall/reveal integrations | Installed/uninstalled applications appear/disappear without restart; errors identify unavailable targets |
+| File search | Root results, richer detail command, filename default, optional content search | P1 names/paths; P2 metadata/content with scoped indexing | Unicode path, rename, removable volume, symlink cycle, inaccessible directory and offline cloud file handled without hangs |
+| Quicklinks | URLs, files, folders, deeplinks, arguments, app override, tags | P1 templates and URL encoding; P2 library/import | Search argument with spaces, Unicode, ampersands is correctly escaped; no shell interpolation |
+| Calculator | Arithmetic, units, date/time, currency from root | P1 deterministic local arithmetic/unit/date engine; P2 cached rate provider | Test decimal precision, dimensional errors, DST and stale currency timestamp; no network for ordinary arithmetic |
+| Emoji/symbols | Search and insert | P1 local Unicode/CLDR database, variants, favorites/history | Paste exact grapheme sequence, including joined and skin-tone emoji |
+| Clipboard | Multiple data formats, grouped items, type filters, pins, edit/rename, retention, exclusions, OCR and QR | P1 text/image/file capture and paste; P2 formats, exclusions, retention; P3 OCR/QR | Paste into the pre-launch focused app; avoid self-capture loops; sensitive formats excluded; a concurrent clipboard change is never overwritten by restoration |
+| Snippets | Search/manual paste, keyword expansion, tags, rich text and dynamic placeholders | P2 manual/templates; P3 global expansion and advanced placeholders | Expand across test apps without retaining general keystroke logs; IME composition not interrupted; secure-input fallback explicit |
+| Notes | Floating notes window, create/search, Markdown editing, task lists, formatting actions | P2 local durable notes; P3 full editor and cross-window actions | Crash during edit preserves acknowledged content; export to readable Markdown; search title and body |
+| Window management | Halves/thirds/quarters/sixths, center, maximize, exact move/resize, restore, display/space/desktop actions, custom layouts | P2 reliable common tiling; P3 layout editor and OS-specific desktop adapters | Respect work area, DPI and minimum app sizes; restore per-window bounds; unplugging a display does not strand windows |
+| Navigation | Window switcher and active application's menu search | P2 switcher; P3 accessibility-based menu commands where supported | Reflect window lifecycle, avoid stale handles, disabled menu items remain disabled |
+| Scripts | Metadata-discovered commands in C#, Bash, PowerShell, Python, Node etc.; args and output modes | P2 explicit interpreter support, timeouts, cancellation, output limits | Whitespace and metacharacter args passed as argv; cancellation terminates owned descendants, not unrelated processes |
+| Extensions | UI/no-view/menu-bar commands; store; private extensions | P2 own SDK/store prototype; P3 compatibility adapter and background refresh | Malformed UI payload or infinite loop cannot freeze launcher; versions and grants independently revoke |
+| Screenshots | Search images/recordings, preview, latest screenshot paste, OCR and name/text/date filters | P3 scoped media index and optional OCR | Cloud placeholders not downloaded without choice; deletion policy distinguishes removing index from deleting files |
+| Focus | Timed goals with app/site allow/block lists | P3 session timer; deeper blocking separate platform feature | Sleep/wake and clock changes preserve duration semantics; user can always end a session |
+| Calendar | Calendar feature listed in current manual | P3 provider integration; inspect exact behavior before parity claim | Local time, recurrence and join-link fixtures; OAuth permissions explicit |
+| System utilities | System commands, Run, Auto Quit | P2 safe system commands; P3 Run/auto-quit rules | Destructive actions use clear confirmation and never target stale app identities |
+| Hyper Key | Remap spare key; modifier combinations; tap behavior | P3, independent of ordinary hotkeys | No stuck modifier after crash, sleep or unplug; conflicting keyboard tools detected where possible |
+| Themes | Theme/custom appearance controls | P2 coherent light/dark/high contrast; P3 user themes | Theme cannot make required text inaccessible; theme packages contain data, not executable code |
+| Quick AI / Chat | Short answers and persistent full chat | P3 provider abstraction, streaming, attachments, cancellation | Disconnected stream, provider auth failure, rate limits and context overflow are recoverable |
+| AI commands | Reusable prompts in everyday workflow | P3 prompt templates with selected-text context | Show where output is sent; insertion into target app requires preserved focus identity |
+| Dictation | Global shortcut, recording pill, clean text and paste; styles/history | P3 local transcription optional download; remote opt-in | Recording indicator matches actual mic state; cancel discards transient audio; missing target copies safely |
+| Screen awareness | Focused window content, selected text and screenshot; capture context menu | P3 permissioned context capture | Preview captured context; private windows excluded; partial capture clearly identified |
+| Agents | Saved role/model/tools, formerly Presets | P3 portable configuration | Tool permissions remain enforced regardless of agent prompt |
+| Skills | Local SKILL.md discovery and manual mention | P3 configurable directories, bounded parsing, transparent context | Symlinks/path traversal cannot escape granted roots; skill text cannot grant privileges |
+| Projects | Related chats, shared instructions/memory, working directory | P3 | Memory is inspectable/deletable; moving a chat changes future context without silent past-message rewrite |
+| MCP / tool use | MCP listed, extensions expose AI tools and composer resources | P3 after broker/security model | Tool results are untrusted data; writes use concrete approvals; disconnected server cannot stall all tools |
+| AI automations | Scheduled prompts, chat destinations, tools and skills | P4 durable scheduler | Missed runs, DST, duplicate delivery, offline device and revoked grants have explicit behavior |
+| Sync | Selective categories, offline catch-up, devices | P4 optional encrypted self-hostable service | Concurrent edits, tombstones, revoked device, replay and rollback tested; local-only operation independent |
+| Teams | Shared snippets, links, prompts, agents, dictation styles, private store; shared skills coming soon | P4 organization scopes and role enforcement | Personal data cannot enter team scope accidentally; revoke member/device immediately for future access |
+| Enterprise | SAML/SCIM, MDM, allow lists and organization controls marketed | Later enterprise track, not consumer 1.0 gate | Signed policy applies before extension execution; audit log excludes content/secrets |
+| iOS | Mobile app, keyboard/widgets/shortcuts/share extension | Explicitly outside initial desktop scope | If later promised, separate product/platform plan; desktop cross-platform does not imply iOS equivalence |
+
+The root/keyboard/calculator/emoji/calendar/system rows above are bounded by the [manual index](https://manual.raycast.com/) and [quickstart](https://manual.raycast.com/quickstart); these establish categories and common workflows, not every edge case. A release parity dashboard should separate `documented`, `captured`, `specified`, `implemented`, `tested`, `unsupported on this OS`.
+
+## Direct evidence links and bounded summaries
+
+1. [File Search](https://manual.raycast.com/file-search): inline root results and dedicated detail view; name search by default, optional content search; direct paths and folder sorting. Platform-specific indexing behavior still requires separate verification.
+2. [Quicklinks](https://manual.raycast.com/quicklinks): open a URL/path/deeplink, select app, add tags, and add parameterized library links. This is a distinct data type and launch action, not merely a bookmark list.
+3. [Clipboard](https://manual.raycast.com/clipboard-history): preserves source formats, groups multi-item copies, supports filtering, paste format selection, pin/edit/delete, OCR and QR extraction. Retention ranges from one day through unlimited, with longer retention on Pro. App exclusions and permission failure need implementation-specific testing. No claim that history is synced.
+4. [Snippets](https://manual.raycast.com/snippets): manual paste and keyword expansion, names/tags, dynamic placeholders, team scope, and JSON import. Current documentation mentions a 65K-character limit. Our implementation can choose its own validated limits instead of copying incidental constraints.
+5. [Notes](https://manual.raycast.com/notes): separate toggleable window, create and title/body search; Markdown shortcuts, slash formatting and task lists. Deep editor behavior should be specified through a capture corpus before promising matching selection/undo semantics.
+6. [Window Management](https://manual.raycast.com/window-management): standard geometry operations, exact coordinates and restore; displays and platform-specific desktops; custom commands and multi-window layouts; current-layout capture. macOS settings mention Stage Manager, Windows settings mention auto-closing empty desktops. These are different platform contracts rather than one universal API.
+7. [Navigation](https://manual.raycast.com/navigation): search currently available menu actions and switch among open windows; accessibility permission used for menu access. The page's paired platform shortcuts do not establish every command's behavior on both OSes.
+8. [Script Commands](https://manual.raycast.com/script-commands): scripts are indexed by metadata, can have hotkeys, run from their script folder unless configured otherwise, and can be written in different languages. Importing script metadata does not guarantee interpreter availability or portability.
+9. [Screenshots](https://manual.raycast.com/screenshots): media search includes OCR, preview and paste-latest; name/text/date filters; watched folders; optional downloading of cloud files for OCR. Implement file deletion and retention with explicit semantics because source-file deletion is materially different from index retention.
+10. [Focus](https://manual.raycast.com/focus): timed goal with distracting apps/sites blocked or an allow-list. [Hyper Key](https://manual.raycast.com/hyper-key): remaps modifiers/Caps Lock/function keys, has tap behavior, and discusses secure-input limitations. Do not treat either as trivial shortcuts.
+11. [Dictation](https://manual.raycast.com/ai/dictation): record via hotkey, show waveform/time, transcribe/clean/paste; requires microphone permission and platform integration. [Screen Awareness](https://manual.raycast.com/ai/screen-awareness): capture focused-window data, selected text and screenshot, with each piece gathered independently.
+12. [Agents](https://manual.raycast.com/ai/agents): saved instructions/model/tool configurations, renamed from v1 Presets. [Skills](https://manual.raycast.com/ai/skills): reusable local SKILL.md context, automatic discovery and manual mention. [Projects](https://manual.raycast.com/ai/projects): chat organization with instructions, memory and working directory.
+13. [Automations](https://manual.raycast.com/ai/automations): prompts run on a schedule into new/existing chats; includes local-time once/hourly/daily patterns and custom cron display. Scheduler operation must be rechecked against a pinned release before claiming exact parity.
+14. [Local Models](https://manual.raycast.com/ai/local-models): Ollama-backed local models are exposed in Raycast AI and labeled Pro. Supporting local models without a subscription is a reasonable differentiator for the free alternative.
+15. [Cloud Sync](https://manual.raycast.com/cloud-sync): current docs label it beta and Pro. Sync categories include prompts/agents, chats, MCP servers, links, notes, snippets, themes, transcription styles, layouts and extensions. Explicit exclusions include clipboard history, script bodies, credentials/passwords and other device-only data. iOS still uses a legacy path; v2 iOS sync is described as coming soon. Therefore never conflate sync with cross-device clipboard or claim all platforms already share identical sync.
+16. [Teams](https://manual.raycast.com/teams/shared-features): warns that some v2 Mac/Windows features remain in progress. Shared Skills specifically say Coming Soon; other shared categories include snippets, links, AI commands, agents, dictation styles and private extensions.
+17. [Pricing](https://www.raycast.com/pricing): core personal tools, Notes and extensions in Free; AI, sync, dictation, translator, longer clipboard retention, custom window management and themes among paid features. [Billing](https://manual.raycast.com/billing): the old Advanced AI add-on has been replaced by new credit-based plans. Exact prices are unnecessary for engineering design and should not be frozen into a long-lived spec.
+
+## Extension API scope and compatibility strategy
+
+[API introduction](https://developers.raycast.com/readme.md) explicitly describes TypeScript, React and Node with host-provided UI components. [API index](https://developers.raycast.com/api-reference) lists List, Grid, Detail, Form, Actions/ActionPanel, navigation, feedback, preferences, storage/cache, OAuth, clipboard, keyboard, system utilities, AI, window management, browser extension and menu-bar commands.
+
+[Manifest](https://developers.raycast.com/information/manifest.md) extends package.json with platform eligibility (`macOS`, `Windows`), commands and tools, preferences, assets, visibility, AI metadata and resource providers. Command modes include view/no-view/menu-bar, with scheduled intervals for background/no-view/menu-bar commands. [Tool API](https://developers.raycast.com/api-reference/tool.md) documents confirmations before effects, composer mention searches, and URI-based resource resolution.
+
+[Official extensions repository](https://github.com/raycast/extensions) is public and shows MIT licensing at the repository level. Inspect per-extension assets, bundled libraries, package licenses and third-party service terms before redistribution. This does not imply the proprietary Raycast host/API package itself is reusable under the same terms.
+
+Recommended compatibility tiers (design):
+
+- Tier A: own Rust/WASM/native SDK and declarative host-rendered UI; entirely supported contract.
+- Tier B: source-portable Raycast-like TS/React components; conversion tool emits an explicit unsupported-API report.
+- Tier C: selected unmodified source extensions through a shim; only mark individual extension/version/OS combinations verified after tests.
+- Tier D: platform-private helpers, AppleScript/JXA, unrestricted Node/native add-ons, proprietary services, and store entitlement assumptions; unsupported until deliberately implemented.
+
+Create a reproducible 50-extension initial corpus stratified by UI type and side effects: simple lists/grids/forms, authenticated HTTP, pagination, streamed AI, clipboard, filesystem, subprocess, background/menu-bar and macOS-only helpers. Count API calls, imports and permissions. A percentage derived from this corpus must be labeled corpus compatibility, never store-wide parity. Add a permission and service-auth migration report; credentials should be reauthorized, not scraped from the old app.
+
+## Remaining questions / evidence boundaries
+
+- Latest exact macOS/Windows binary identity, UI timing, root-ranking formula, database schema, private IPC, memory use and renderer internals: unobserved in this research.
+- Feature names above are documented; per-platform behavioral equivalence is not established by manuals containing both shortcut styles.
+- SDK lifecycle, background termination, menus and native Node dependencies need focused versioned corpus testing.
+- Full MCP transport/auth behavior was not inspected in this pass; the category is documented by the manual index, not reverse-engineered.
+- A reproducible behavioral survey should record OS/build, version/hash, permission state, input/event sequence, screen recording, output, timing and failure states. Prefer ordinary public-API implementations for the alternative; do not encode undocumented private details until their maintenance cost is justified.

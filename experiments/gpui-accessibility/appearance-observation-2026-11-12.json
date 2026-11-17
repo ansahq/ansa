@@ -1,0 +1,17 @@
+{
+    "Scope":  "Only the owned launcher fixture; native geometry and semantic state, not screen capture",
+    "NativeGeometry":  {
+                           "Scope":  "Only the owned launcher HWND; native geometry, not screen capture",
+                           "ClientEqualsWindow":  true,
+                           "NativeChromeAbsent":  true,
+                           "DirectCompositionEnabled":  true,
+                           "AllFourNativeCornersClipped":  true,
+                           "RegionReachesAllFourEdges":  true,
+                           "DesktopPixelTransparencyVerified":  false,
+                           "PhysicalWidth":  776,
+                           "PhysicalHeight":  508
+                       },
+    "NoInvisibleSideGutter":  true,
+    "GlassTogglePreservesBounds":  true,
+    "DesktopPixelTransparencyVerified":  false
+}

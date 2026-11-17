@@ -1,0 +1,11 @@
+[package]
+name = "ansa-domain"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Renderer-independent domain types for the Ansa launcher"
+
+[lib]
+name = "ansa_domain"
+path = "src/lib.rs"

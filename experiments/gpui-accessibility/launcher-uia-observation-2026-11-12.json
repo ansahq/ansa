@@ -1,0 +1,23 @@
+{
+    "NativeWindowChromeAbsent":  true,
+    "GlassToggleRoundTrip":  true,
+    "FixtureRows":  3,
+    "RowSelectionDidNotExecute":  true,
+    "ActionSearchIndependent":  true,
+    "PinAndUnpinWorked":  true,
+    "RowRuntimeIdSurvivedReordering":  true,
+    "DetailsOpenedAndClosed":  true,
+    "CalculatorErrorExposed":  true,
+    "TextRangeSmoke":  {
+                           "DocumentTextMatches":  true,
+                           "SelectedText":  "😀",
+                           "BoundingRectangles":  1,
+                           "SelectionRoundTrip":  true,
+                           "OversizedValueRejectedAtomically":  true,
+                           "GeometryWithinField":  true,
+                           "PointRangeWithinSelectedScalar":  true
+                       },
+    "ScreenReaderAcceptance":  false,
+    "ClipboardActionsInvoked":  false,
+    "ExternalLaunchCommandsInvoked":  false
+}

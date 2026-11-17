@@ -1,0 +1,14 @@
+[package]
+name = "ansa-platform-windows"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "Windows Start Menu application catalog and ShellExecute launcher for Ansa"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+name = "ansa_platform_windows"
+path = "src/lib.rs"
+
+# Native integrations use checked, isolated Win32 FFI without external crates.

@@ -1,0 +1,21 @@
+{
+    "Scope":  "Only the owned synthetic candidate process",
+    "SearchRole":  "ControlType.Edit",
+    "SearchLabel":  "Search applications and commands",
+    "SearchKeyboardFocusable":  true,
+    "SearchHasKeyboardFocus":  true,
+    "SearchValuePatternAvailable":  true,
+    "SearchValueReadOnly":  false,
+    "ListRole":  "ControlType.List",
+    "RealizedRows":  9,
+    "FirstRowLabel":  "Project 00000 Terminal",
+    "FirstRowPosition":  1,
+    "LogicalResultCount":  10000,
+    "FirstRowSelectionPatternAvailable":  true,
+    "FirstRowSelected":  true,
+    "ScreenReaderAcceptance":  false,
+    "TextRangeAndSelectionAcceptance":  false,
+    "SetValueUpdatedQueryAndResults":  true,
+    "FilteredRowLabel":  "Project 09999 Terminal",
+    "FilteredLogicalCount":  1
+}

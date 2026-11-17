@@ -6,7 +6,7 @@ This file is generated from `Cargo.lock`, `cargo metadata --locked --offline`
 and `scripts/dependencies/review-status.toml`. It is a build/tooling artifact,
 not a legal review or a claim that every locked package is used on every OS.
 
-- Cargo.lock SHA-256 (LF-normalized): `08af1e2b90c05370590482b9f0e5237b2227f3eb7f12f3ced049c09ab70db565`
+- Cargo.lock SHA-256 (LF-normalized): `c0c6e1bd925291244b07f2388d22321ba5d0c3fee8a7925b4b2318262bc4397c`
 - Lock identity normalizes CRLF pairs to LF only; lone CR, UTF-8 and all
   other bytes are preserved. Registry artifact checksums below are raw.
 - Lockfile format: v3
@@ -364,7 +364,7 @@ legacy forms are not normalised into a different SPDX expression.
 | leak | 0.1.2 | macos | registry+https://github.com/rust-lang/crates.io-index | bd100e01f1154f2908dfa7d02219aeab25d0b9c7fa955164192e3245255a0c73 | Apache-2.0 OR MIT | unreviewed |
 | leaky-cow | 0.1.1 | macos | registry+https://github.com/rust-lang/crates.io-index | 40a8225d44241fd324a8af2806ba635fc7c8a7e9a7de4d5cf3ef54e71f5926fc | MIT / Apache-2.0 | unreviewed |
 | lebe | 0.5.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8 | BSD-3-Clause | unreviewed |
-| libc | 0.2.191 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a | MIT OR Apache-2.0 | unreviewed |
+| libc | 0.2.189 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2 | MIT OR Apache-2.0 | unreviewed |
 | libfuzzer-sys | 0.4.13 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | a9fd2f41a1cba099f79a0b6b6c35656cf7c03351a7bae8ff0f28f25270f929d2 | (MIT OR Apache-2.0) AND NCSA | unreviewed |
 | libloading | 0.8.9 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55 | ISC | unreviewed |
 | libm | 0.2.16 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981 | MIT | unreviewed |

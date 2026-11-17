@@ -4,6 +4,30 @@ The workflow is [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
 It is the blocking F03 build contract; the current local machine cannot execute
 the remote macOS/Linux matrix.
 
+## Triggers
+
+- `push` is limited to `branches: [main]`. A feature-branch push is validated
+  once by the `pull_request` event instead of twice (branch push plus pull
+  request synchronisation), which avoids duplicate runs and the wasted runner
+  time and queue contention they cause.
+- `pull_request` is retained without a branch filter, so a change is validated
+  against its actual base before merge, including pull requests whose base is
+  not `main`.
+- Merged work is still validated: once a pull request lands, the push to `main`
+  runs the same jobs on the merged commit, which is the commit that can be
+  released. A green pull request therefore does not by itself stand in for a
+  green `main`.
+- `pull_request_target`, tags, schedules and manual or repository-dispatch
+  triggers are not configured. Adding a privileged trigger would be a contract
+  change, not a routine edit; the repository tests already reject
+  `pull_request_target`, secret references and any `push` without a branch
+  filter.
+
+The repository contract test parses the `on:` block structurally with a narrow
+stdlib parser (a two-space-indented trigger map with optional four-space
+`branches: [ ... ]` flow sequences) rather than matching substrings, so a bare
+`push:` or an unexpected shape fails the dependency tooling tests.
+
 ## Jobs
 
 ### Format and locked inventory (Ubuntu)
@@ -94,8 +118,14 @@ unexercised rather than claiming a cross-platform pass.
 
 ## Remote status
 
-Configured, not executed remotely. The local record in
-[`validation-2026-11-17.md`](validation-2026-11-17.md) covers bounded tooling
-checks; the full fallback Windows run is recorded in the Sol-owned
-`docs/foundation-validation-2026-11-17.md`. Neither record is a substitute for
-an actual three-OS CI run.
+The original foundation record described CI as "configured, not executed remotely".
+That is a historical boundary, not the current hosted status. The first PR run
+passed Windows/macOS Rust builds and all reference/inventory/reuse jobs, but
+failed Linux dependency compilation. See the [CI follow-up record](../ci-follow-up-2026-11-17.md)
+and [PR #1 checks](https://github.com/ansahq/ansa/pull/1/checks) for subsequent
+commit-specific results.
+
+The local [tooling record](validation-2026-11-17.md) and
+[full Windows validation](../foundation-validation-2026-11-17.md) remain evidence
+for their stated commands, not substitutes for hosted jobs on another OS or a
+claim that native startup/reference behavior was tested there.

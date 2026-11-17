@@ -1,19 +1,87 @@
 """Repository-level checks for the F03 build/tooling contract.
 
 These tests deliberately use only text/TOML stdlib parsing. They verify that the
-toolchain pin, blocking CI matrix, offline/locked commands and documentation
-stay in sync; they do not claim that the remote CI matrix has been executed.
+toolchain pin, blocking CI matrix, trigger scoping, offline/locked commands and
+documentation stay in sync; they do not claim that the remote CI matrix has been
+executed.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 RUST_VERSION = "1.99.1"
+
+_TRIGGER_KEY = re.compile(r"(?P<name>[A-Za-z_][A-Za-z0-9_-]*):$")
+_BRANCHES_FLOW = re.compile(r"branches:\s*(?P<sequence>\[[^\]]*\])$")
+
+
+def parse_trigger_block(workflow: str) -> dict[str, list[str] | None]:
+    """Parse only the top-level ``on:`` block of a workflow, structurally.
+
+    The standard library has no YAML parser, so this supports the narrow shape
+    this repository uses instead of guessing at general YAML: a top-level
+    ``on:`` line, one two-space-indented trigger per line, and an optional
+    four-space-indented ``branches: [ ... ]`` flow sequence. Anything else
+    (comments, inline configuration, block sequences) raises ``AssertionError``
+    rather than being silently misread.
+
+    Returns the configured triggers mapped to their branch filters, where
+    ``None`` means the trigger has no filter (so it fires for every branch).
+    """
+
+    lines = workflow.splitlines()
+    try:
+        start = next(index for index, line in enumerate(lines) if line.rstrip() == "on:")
+    except StopIteration:
+        raise AssertionError("workflow has no top-level 'on:' trigger block") from None
+
+    triggers: dict[str, list[str] | None] = {}
+    current: str | None = None
+    for raw in lines[start + 1 :]:
+        if not raw.strip():
+            continue
+        indent = len(raw) - len(raw.lstrip(" "))
+        if indent == 0:
+            break
+        if "#" in raw:
+            raise AssertionError(
+                f"comments inside the trigger block are unsupported: {raw!r}"
+            )
+        entry = raw.strip()
+        if indent == 2:
+            match = _TRIGGER_KEY.fullmatch(entry)
+            if match is None:
+                raise AssertionError(f"unsupported trigger line: {raw!r}")
+            current = match.group("name")
+            if current in triggers:
+                raise AssertionError(f"duplicate trigger entry: {current!r}")
+            triggers[current] = None
+        elif indent == 4 and current is not None:
+            match = _BRANCHES_FLOW.fullmatch(entry)
+            if match is None:
+                raise AssertionError(
+                    f"unsupported nested trigger configuration: {raw!r}"
+                )
+            if triggers[current] is not None:
+                raise AssertionError(f"duplicate branches filter for {current!r}")
+            items = [
+                item.strip().strip("'\"")
+                for item in match.group("sequence")[1:-1].split(",")
+                if item.strip()
+            ]
+            triggers[current] = items
+        else:
+            raise AssertionError(f"unsupported structure in trigger block: {raw!r}")
+
+    if not triggers:
+        raise AssertionError("trigger block configures no events")
+    return triggers
 
 
 class RepositoryContractTests(unittest.TestCase):
@@ -33,6 +101,23 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn(f'RUST_VERSION: "{RUST_VERSION}"', ci)
         self.assertIn("toolchain: ${{ env.RUST_VERSION }}", ci)
         self.assertIn("components: rustfmt, clippy", ci)
+
+    def test_ci_push_is_main_only_and_pull_requests_are_retained(self) -> None:
+        triggers = parse_trigger_block(self.read(".github/workflows/ci.yml"))
+        self.assertIn("pull_request", triggers, "pull_request trigger must be retained")
+        self.assertIsNone(
+            triggers["pull_request"],
+            "pull_request must stay unfiltered so every pull request is validated",
+        )
+        self.assertIn("push", triggers, "push trigger must be retained for merged main")
+        branches = triggers["push"]
+        self.assertIsNotNone(
+            branches,
+            "a bare 'push:' runs CI on every branch and duplicates pull_request runs",
+        )
+        self.assertEqual(
+            branches, ["main"], f"push must be filtered to main, got {branches!r}"
+        )
 
     def test_ci_is_blocking_for_all_hosts(self) -> None:
         ci = self.read(".github/workflows/ci.yml")
@@ -101,6 +186,8 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("cache", ci.lower())
         self.assertIn("offline", ci.lower())
         self.assertIn("not executed", ci.lower())
+        self.assertIn("branches: [main]", ci)
+        self.assertIn("duplicate", ci.lower())
 
     def test_generated_inventory_exists_and_is_marked_generated(self) -> None:
         markdown = self.read("docs/build/dependency-inventory.md")

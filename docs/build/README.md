@@ -8,6 +8,7 @@ validation evidence. It is tooling documentation, not a release approval.
 |---|---|
 | [`toolchain.md`](toolchain.md) | Exact compiler pin, update procedure and local toolchain caveat |
 | [`ci.md`](ci.md) | Blocking macOS/Windows/Linux jobs, caching, offline resolution and secret policy |
+| [`linux-compatibility.md`](linux-compatibility.md) | Temporary libc/xattr compatibility constraint, failure evidence and upgrade procedure |
 | [`dependency-inventory.md`](dependency-inventory.md) | Generated human-readable Cargo.lock inventory |
 | [`dependency-inventory.spdx.json`](dependency-inventory.spdx.json) | Generated SPDX 2.3-style machine inventory |
 | [`validation-2026-11-17.md`](validation-2026-11-17.md) | Exact commands/results from the local F03 implementation run |
@@ -114,6 +115,8 @@ inventory.
 
 The workflow in `.github/workflows/ci.yml` is configured to block on formatting,
 Clippy, unit/integration tests, doctests, the generated inventory, and a native
-desktop build on Windows, macOS and Linux. **The remote matrix has not been run
-yet.** See [`ci.md`](ci.md) and the local validation record for what was and was
-not executed.
+desktop build on Windows, macOS and Linux. The first hosted PR matrix ran and
+failed Linux dependency compilation; Windows/macOS and the tooling jobs passed.
+See [`ci.md`](ci.md), the [follow-up record](../ci-follow-up-2026-11-17.md), and
+the PR's commit-specific checks for newer results. Hosted compile/test success
+does not establish native startup, accessibility or reference-product parity.

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0.0",
+  "audit_id": "ansa-f01-design-source-baseline-consistency-2026-11-17",
+  "audit_kind": "design_source_baseline_consistency",
+  "created": "2026-11-17",
+  "runtime_claim": false,
+  "method": "Check ten representative ledger rows against the inherited design and documentation baseline, confirm that each claim is supported only at the documented or design-proposal level, and record the missing capture. No page was fetched and no reference build was run; this is a design/source-baseline consistency check, not a fresh web or runtime replay.",
+  "row_count": 10,
+  "rows": [
+    {
+      "scenario_id": "S01-WIN",
+      "workflow": "launcher",
+      "claim": "Summon opens with query focus and Escape returns focus to the same editor without changing its text.",
+      "evidence_replayed": [
+        "EV-DOC-QUICKSTART",
+        "EV-DESIGN-KEYBOARD"
+      ],
+      "identity_manifest": "ref-win-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No frozen Windows reference identity, no capture session and no focus instrumentation.",
+      "next_capture_step": "Seed procedure step 1: freeze the identity, create the dedicated synthetic profile and record the actual shortcut and editor identity before pressing it.",
+      "baseline_consistency_notes": "The quickstart establishes a summon/search flow at category level. The focus and escape details come from our keyboard proposal. No Windows build, shortcut chord or focus result was observed."
+    },
+    {
+      "scenario_id": "S05-MAC",
+      "workflow": "launcher",
+      "claim": "IME confirm and cancel do not execute a result or dismiss the launcher while marked text owns the field.",
+      "evidence_replayed": [
+        "EV-DOC-QUICKSTART",
+        "EV-DESIGN-KEYBOARD",
+        "EV-DOC-OS-INPUT"
+      ],
+      "identity_manifest": "ref-mac-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No macOS capture host, no physical IME run and no key-event trace.",
+      "next_capture_step": "Seed procedure step 5: on a frozen macOS build, record the input source, composition state and every Enter/Escape effect in the dedicated profile.",
+      "baseline_consistency_notes": "The OS input citation is a proposed, unfetched supporting reference for the platform composition contract; the specific key routing is our proposed contract. No physical Japanese or Pinyin input was exercised on macOS."
+    },
+    {
+      "scenario_id": "S04-WIN",
+      "workflow": "action_navigation",
+      "claim": "Escape closes the action panel, then the child view, restoring parent query, selection and scroll.",
+      "evidence_replayed": [
+        "EV-DOC-QUICKSTART",
+        "EV-DESIGN-KEYBOARD"
+      ],
+      "identity_manifest": "ref-win-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "The exact escape layering and scroll/selection restoration are unknown for the reference build.",
+      "next_capture_step": "Seed procedure step 4: open a child view, open actions, press Escape twice and record each layer plus parent selection and scroll.",
+      "baseline_consistency_notes": "The vendor quickstart documents an action panel but not its Escape unwind order. The parent-state restoration claim is explicitly ours and remains unverified."
+    },
+    {
+      "scenario_id": "S29-MAC",
+      "workflow": "action_navigation",
+      "claim": "A secondary action names the exact target/effect and reports a truthful toast.",
+      "evidence_replayed": [
+        "EV-DESIGN-BLUEPRINT",
+        "EV-DOC-QUICKSTART"
+      ],
+      "identity_manifest": "ref-mac-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No macOS action-panel capture and no evidence for toast content, duration or accessibility.",
+      "next_capture_step": "Use a reversible synthetic secondary action, record the confirmation text and the observed effect, then compare the toast with the actual state.",
+      "baseline_consistency_notes": "The blueprint requires exact target/effect text and non-blocking feedback. Vendor documentation only establishes that actions exist; no toast wording or behavior was observed."
+    },
+    {
+      "scenario_id": "S31-WIN",
+      "workflow": "app_catalog",
+      "claim": "An installed app launches and a running app switches to a stable identity without shell interpolation.",
+      "evidence_replayed": [
+        "EV-DOC-QUICKSTART",
+        "EV-DOC-WINDOWS",
+        "EV-DESIGN-BLUEPRINT"
+      ],
+      "identity_manifest": "ref-win-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No reference build, no synthetic installed apps and no process/window identity trace.",
+      "next_capture_step": "Seed procedure app-catalog step: register two disposable targets, launch and switch, and record process/window identity before and after.",
+      "baseline_consistency_notes": "The Windows product page and quickstart establish app search/launch categories. Launch-versus-switch semantics and stable identity are our design requirements, not observed behavior."
+    },
+    {
+      "scenario_id": "S34-MAC",
+      "workflow": "app_catalog",
+      "claim": "Install/uninstall refreshes without restart and a missing target fails safely.",
+      "evidence_replayed": [
+        "EV-DOC-QUICKSTART",
+        "EV-DESIGN-BLUEPRINT"
+      ],
+      "identity_manifest": "ref-mac-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No macOS app install/uninstall fixture and no observation of ghost-entry handling.",
+      "next_capture_step": "Install and remove a disposable app while the launcher stays open, then activate the stale result and record the failure/refresh path.",
+      "baseline_consistency_notes": "The vendor quickstart does not establish refresh timing or uninstall reconciliation. The requirement comes from the blueprint's app-catalog acceptance boundary."
+    },
+    {
+      "scenario_id": "S38-WIN",
+      "workflow": "file_search",
+      "claim": "Scoped roots, exclusions, symlink cycles and denied directories remain bounded and recoverable.",
+      "evidence_replayed": [
+        "EV-DOC-FILE-SEARCH",
+        "EV-DOC-OS-PERMISSIONS",
+        "EV-DESIGN-BLUEPRINT"
+      ],
+      "identity_manifest": "ref-win-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No reference indexing run, no synthetic symlink loop and no permission-denied trace.",
+      "next_capture_step": "Configure a generated root with an exclusion, symlink loop and denied folder; record progress, cycle termination and partial-state reporting.",
+      "baseline_consistency_notes": "File Search documentation establishes scoped roots and optional content search. The proposed Windows ACL citation is supporting context for permission semantics, not a fetched verification. Neither source proves the reference app's cycle or denial behavior, so the bounded cycle/denial acceptance is explicitly attributed to EV-DESIGN-BLUEPRINT and remains unverified."
+    },
+    {
+      "scenario_id": "S41-MAC",
+      "workflow": "calculator",
+      "claim": "Units and date/time-zone calculations follow explicit tables and report dimensional errors.",
+      "evidence_replayed": [
+        "EV-DOC-MANUAL",
+        "EV-DESIGN-BLUEPRINT"
+      ],
+      "identity_manifest": "ref-mac-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No macOS calculation capture and no reference unit/date grammar.",
+      "next_capture_step": "Run generated unit conversions and a DST interval in a fixed time zone, then record every displayed and copied value.",
+      "baseline_consistency_notes": "The manual index documents calculator categories but not unit/date grammar or DST behavior. The deterministic fixture policy is our design proposal."
+    },
+    {
+      "scenario_id": "S45-WIN",
+      "workflow": "quicklinks",
+      "claim": "The preferred opener is used when available and a missing opener fails clearly or follows a documented default.",
+      "evidence_replayed": [
+        "EV-DOC-QUICKLINKS",
+        "EV-DOC-MANUAL"
+      ],
+      "identity_manifest": "ref-win-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No Windows quicklink capture and no removed-opener experiment.",
+      "next_capture_step": "Assign a disposable opener, open the link, remove the opener, repeat and record the actual fallback and message.",
+      "baseline_consistency_notes": "Quicklinks documentation establishes app override/preferred opener categories. It does not establish missing-opener fallback or its message."
+    },
+    {
+      "scenario_id": "S49-MAC",
+      "workflow": "emoji_symbols",
+      "claim": "Emoji and symbol results expose useful accessible names, role and selected state to VoiceOver.",
+      "evidence_replayed": [
+        "EV-DOC-MANUAL",
+        "EV-DESIGN-KEYBOARD",
+        "EV-DOC-OS-A11Y"
+      ],
+      "identity_manifest": "ref-mac-unknown-2026-11",
+      "identity_state": "unknown",
+      "observation_state": "not_observed",
+      "runtime_claim": false,
+      "replay_result": "design-consistent",
+      "gap": "No macOS screen-reader run and no reference accessibility-tree snapshot.",
+      "next_capture_step": "Search a generated emoji and symbol with VoiceOver, record announced name/role/selection and verify the list remains navigable.",
+      "baseline_consistency_notes": "Vendor documentation establishes that emoji search exists. Apple accessibility documentation is a proposed, unfetched supporting citation for the platform contract. No VoiceOver session or accessibility tree was captured."
+    }
+  ],
+  "fresh_web_fetch": false,
+  "sources_fetched_this_session": []
+}

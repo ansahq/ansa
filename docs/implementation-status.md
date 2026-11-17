@@ -6,7 +6,8 @@ Started 2026-11-11. This file tracks this repository, not reference-product beha
 
 | Backlog | Slice | Boundary |
 |---|---|---|
-| F03 | Workspace, CLI, CI configuration | Not signed artifacts or a three-OS desktop release pipeline |
+| F01 | Versioned 100-scenario planning ledger, checked schema, per-OS A-behavior coverage and design-evidence audit | Unknown-only reference identities; zero reference runtime captures or implementation-test passes |
+| F03 | Exact toolchain selection, three-OS desktop CI configuration, locked dependency/license inventory | Named local toolchain broken; remote matrix and macOS/Linux execution unverified; no signed releases or third-party legal clearance |
 | F04 | Retained GPUI window and checked best-effort Windows focus return | Foreground races handled conservatively; real focus/monitor/lifecycle gate open |
 | F05 | Shared Unicode input, bounded undo/redo, one transaction per IME composition, oversized-edit rejection | Physical IME and assistive-technology testing open; not a Notes editor |
 | F06 | Searchable snapshot-bound actions, stable selection, arrows/Enter/Escape and Tab focus | Synthetic native interaction test passes; full assistive-technology/control acceptance remains open |
@@ -16,6 +17,26 @@ Started 2026-11-11. This file tracks this repository, not reference-product beha
 | L07 | Bounded arithmetic, explicit `=` routing and user-visible error states | Approximate f64 only; no units, dates, currencies, or arbitrary natural language |
 
 These are partial implementations, **not closed backlog tickets**. No claim of screen-reader accessibility, cross-platform native support, security sandboxing or Raycast compatibility is made.
+
+### Foundation evidence/tooling follow-up (17 November)
+
+ANS-5 adds the [reference planning ledger](reference/README.md): 100 retained
+scenarios across Windows/macOS with explicit unknown target identities. Its
+validator checks schema, coverage and evidence boundaries; a planning-ledger pass
+is not a runtime capture or a passing implementation test.
+
+ANS-6 expands [ADR 0003](adr/0003-reuse-evaluation.md) to six pinned candidates
+and confirms a greenfield, zero-source-reuse scope decision. Four bounded build
+probes failed before tests ran; Vicinae was not built and Flare remains historical.
+Candidate build, per-file/dependency audit and runtime gaps are recorded explicitly.
+
+ANS-7 adds [build and inventory tooling](build/README.md). The lockfile contains
+717 packages, including 708 third-party packages whose review remains open. CI
+configuration is not a completed remote run. The exact named local Rust 1.99.1
+installation fails before compilation; separate `+stable` checks with compiler
+1.99.1 passed 138 unit tests, one doctest, Clippy, the Windows workspace build,
+startup smoke and 30 synthetic interaction stages. One UI example doctest remains
+ignored. See the [integration record](foundation-validation-2026-11-17.md).
 
 ## Test record
 
@@ -37,7 +58,7 @@ full-shell UIA observations do not validate these last appearance changes.
 3. Resolve the blocking [framework accessibility gate](framework-gate.md): the main pin has no bridge; the newer revision now runs the actual shell with bounded automated UIA coverage. Complete NVDA/Narrator journeys, RTL/mixed-bidi and scaling checks, offscreen-provider behavior and the remaining lifecycle/dependency review before promoting the new pin.
 4. Capture shortcut conflicts and 1,000 hide/show/focus cycles across monitors, sleep and locked sessions. Check the new conservative focus-return path with real apps; no automatic insertion is implemented.
 5. Freeze a 10k-command benchmark corpus and capture release-mode query/frame/open traces. No latency/memory budget is marked met yet.
-6. Complete the reuse evaluation beyond the bounded [Gauntlet inspection](adr/0003-reuse-evaluation.md), dependency/license inventory, reference-build capture and 100-scenario ledger.
+6. Close the remaining [reuse evidence/audit gaps](adr/0003-reuse-evaluation.md), third-party license review, exact-toolchain/remote CI verification, and reference-build capture. Repository planning/tooling deliverables do not replace these acceptance checks.
 7. Introduce a storage actor only with transactional migration/recovery fixtures. Do not persist clipboard text or notes in an unencrypted prototype shortcut.
 
 ## Security boundaries

@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "reference-identity-macos-2026-11",
+  "reference_identity_id": "ref-mac-unknown-2026-11",
+  "platform": "macos",
+  "state": "unknown",
+  "unknown_reason": "No macOS reference application, app bundle, installer, signed binary or license was available in this worktree or on the validation host. No download, installation, launch or bundle inspection was attempted, so every identity field remains unknown rather than inferred.",
+  "last_checked": "2026-11-17",
+  "identity_fields": {
+    "application": {
+      "path": {
+        "state": "unknown",
+        "value": null,
+        "reason": "The reference app bundle is not installed and no package was resolved, so no application path was observed.",
+        "evidence_id": null
+      },
+      "version": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference build was executed or read; documentation does not establish a pinned version for this plan.",
+        "evidence_id": null
+      },
+      "build": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No bundle build number, channel metadata or package manifest was observed for a frozen target.",
+        "evidence_id": null
+      },
+      "architecture": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No bundle executable was inspected, so arm64, x86_64 or universal architecture is not asserted.",
+        "evidence_id": null
+      },
+      "artifact_sha256": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No bundle or installer bytes were available to hash. No placeholder or borrowed checksum is recorded.",
+        "evidence_id": null
+      },
+      "signature_identity": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No Developer ID signature, team identifier or notarization ticket was read because no artifact was available.",
+        "evidence_id": null
+      },
+      "signature_status": {
+        "state": "unknown",
+        "value": null,
+        "reason": "Gatekeeper, notarization and signature validity could not be verified without the artifact and a macOS trust host.",
+        "evidence_id": null
+      }
+    },
+    "os": {
+      "name": "macOS",
+      "version": {
+        "state": "unknown",
+        "value": null,
+        "reason": "The future macOS capture host version is not frozen; the local Windows development host is not the reference environment.",
+        "evidence_id": null
+      },
+      "build": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference macOS build, update level or window-server configuration was recorded for the target environment.",
+        "evidence_id": null
+      },
+      "architecture": {
+        "state": "unknown",
+        "value": null,
+        "reason": "The reference capture host architecture was not selected or observed; arm64 is not asserted.",
+        "evidence_id": null
+      }
+    },
+    "account": {
+      "tier": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference account was used or inspected, so the active plan tier is unknown.",
+        "evidence_id": null
+      },
+      "signed_in": {
+        "state": "unknown",
+        "value": null,
+        "reason": "Sign-in and entitlement state were not observed and must be frozen before behavioral capture.",
+        "evidence_id": null
+      }
+    },
+    "extensions": {
+      "enabled": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference profile existed, so no enabled/disabled extension set could be enumerated or frozen.",
+        "evidence_id": null
+      }
+    },
+    "permissions": [
+      {
+        "name": "accessibility",
+        "state": "unknown",
+        "value": null,
+        "reason": "Reference Accessibility/AX authorization was not observed on a macOS capture host.",
+        "evidence_id": null
+      },
+      {
+        "name": "screen_recording",
+        "state": "unknown",
+        "value": null,
+        "reason": "Screen Recording TCC state was not queried or captured for the reference target.",
+        "evidence_id": null
+      },
+      {
+        "name": "automation",
+        "state": "unknown",
+        "value": null,
+        "reason": "Apple Events automation grants were not enumerated for the reference target.",
+        "evidence_id": null
+      },
+      {
+        "name": "full_disk_access",
+        "state": "unknown",
+        "value": null,
+        "reason": "Full Disk Access and Files-and-Folders grants were not enumerated or mapped.",
+        "evidence_id": null
+      },
+      {
+        "name": "input_monitoring",
+        "state": "unknown",
+        "value": null,
+        "reason": "Input Monitoring and synthetic-input authorization were not queried on the reference target.",
+        "evidence_id": null
+      }
+    ]
+  },
+  "capture_environment": {
+    "status": "specified_not_created",
+    "profile_name": "ansa-reference-test-profile",
+    "profile_kind": "dedicated_test_profile",
+    "user_data": "synthetic_only",
+    "fixtures_defined_in": "docs/reference/scenario-ledger.json",
+    "network_policy": "Offline by default. A later extension/OAuth track may use only an explicitly declared fixture endpoint; ordinary launcher, app, file, calculator, quicklink and emoji captures must not touch a network.",
+    "cleanup": "Delete the dedicated profile, generated fixture directory and any recording after evidence extraction; record cleanup result with the capture. Never copy a personal reference profile."
+  },
+  "evidence_boundary": {
+    "reference_app_available": false,
+    "runtime_observations": 0,
+    "rea_tools_available": false,
+    "rea_evidence_ids": [],
+    "invented_observations": false,
+    "notes": [
+      "Public documentation and design proposals are the only evidence used by the F01 ledger for this target.",
+      "No path, version, build, architecture, hash, signature, account tier, extension set or permission value is asserted.",
+      "A future capture must create a new dated manifest with verified values; this unknown manifest must not be edited to look captured."
+    ]
+  }
+}

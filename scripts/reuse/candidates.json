@@ -1,0 +1,32 @@
+[
+  {
+    "name": "gauntlet",
+    "repository": "https://github.com/project-gauntlet/gauntlet",
+    "commit": "ca066da5c9d56bd53a739c0dda1572fccc5019a8"
+  },
+  {
+    "name": "vicinae",
+    "repository": "https://github.com/vicinaehq/vicinae",
+    "commit": "23fec1e1da14c422fba01db5c286589b6e946d06"
+  },
+  {
+    "name": "pop-launcher",
+    "repository": "https://github.com/pop-os/launcher",
+    "commit": "4111617b7345134abe67332a7baa5ef12538f412"
+  },
+  {
+    "name": "anyrun",
+    "repository": "https://github.com/anyrun-org/anyrun",
+    "commit": "7997bc470cafc1d201ad4d8a8f0432d83fa6c161"
+  },
+  {
+    "name": "cosmic-launcher",
+    "repository": "https://github.com/pop-os/cosmic-launcher",
+    "commit": "29c1bac5e8f9f83b9e2cef03bb0259a04ffd7f2a"
+  },
+  {
+    "name": "flare",
+    "repository": "https://github.com/ByteAtATime/flare",
+    "commit": "09e126fc77f7716d912c85ce8f308ce708bc2530"
+  }
+]

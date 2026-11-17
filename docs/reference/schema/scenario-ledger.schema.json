@@ -1,0 +1,509 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ansa.local/schema/scenario-ledger.schema.json",
+  "title": "Ansa reference scenario ledger",
+  "description": "Checked schema for the F01 100-row behavioral reference ledger. It encodes the backlog section 7 fields, the A-behavior coverage keys and the rule that an observation cannot exist without a complete reference identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ledger_id",
+    "created",
+    "reference_app_available",
+    "capture_policy",
+    "denominator",
+    "workflows",
+    "rows"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "ledger_id": {
+      "type": "string",
+      "minLength": 8
+    },
+    "created": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "reference_app_available": {
+      "const": false
+    },
+    "capture_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "synthetic_profile_only",
+        "user_data",
+        "runtime_observation_requires_complete_identity",
+        "rea_ids"
+      ],
+      "properties": {
+        "synthetic_profile_only": {
+          "const": true
+        },
+        "user_data": {
+          "const": "prohibited"
+        },
+        "runtime_observation_requires_complete_identity": {
+          "const": true
+        },
+        "rea_ids": {
+          "const": "record_only_when_returned_by_tools"
+        }
+      }
+    },
+    "denominator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "included",
+        "excluded",
+        "policy"
+      ],
+      "properties": {
+        "total": {
+          "const": 100
+        },
+        "included": {
+          "const": 100
+        },
+        "excluded": {
+          "const": 0
+        },
+        "policy": {
+          "const": "retain_unsupported_and_deferred"
+        }
+      }
+    },
+    "workflows": {
+      "type": "array",
+      "minItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/workflow"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 100,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "workflow": {
+      "type": "string",
+      "enum": [
+        "launcher",
+        "action_navigation",
+        "app_catalog",
+        "file_search",
+        "calculator",
+        "quicklinks",
+        "emoji_symbols",
+        "clipboard",
+        "notes",
+        "window_management",
+        "scripts",
+        "extensions",
+        "sync",
+        "ai",
+        "release_update",
+        "platform_capability"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "documented",
+        "specified",
+        "unsupported",
+        "deferred"
+      ]
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "seed_id",
+        "title",
+        "workflow",
+        "priority",
+        "behaviors",
+        "target",
+        "preconditions",
+        "fixture",
+        "inputs",
+        "expected_observation",
+        "observation",
+        "evidence_refs",
+        "confidence",
+        "unknowns",
+        "implementation_test",
+        "parity_status",
+        "status_reason",
+        "denominator"
+      ],
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "pattern": "^S(0[1-9]|[1-4][0-9]|50)-(WIN|MAC)$"
+        },
+        "seed_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^S(0[1-9]|1[0-9]|20)$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 12
+        },
+        "workflow": {
+          "$ref": "#/$defs/workflow"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        },
+        "behaviors": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+          }
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "platform",
+            "reference_identity_id"
+          ],
+          "properties": {
+            "platform": {
+              "type": "string",
+              "enum": [
+                "windows",
+                "macos"
+              ]
+            },
+            "reference_identity_id": {
+              "type": "string",
+              "pattern": "^ref-(win|mac)-unknown-[0-9]{4}-[0-9]{2}$"
+            }
+          }
+        },
+        "preconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 10
+          }
+        },
+        "fixture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fixture_id",
+            "synthetic",
+            "profile",
+            "data_class",
+            "state"
+          ],
+          "properties": {
+            "fixture_id": {
+              "type": "string",
+              "pattern": "^FX-[A-Z0-9-]+$"
+            },
+            "synthetic": {
+              "const": true
+            },
+            "profile": {
+              "const": "ansa-reference-test-profile"
+            },
+            "data_class": {
+              "const": "synthetic_only"
+            },
+            "state": {
+              "const": "specified_not_created"
+            }
+          }
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "expected_observation": {
+          "type": "string",
+          "minLength": 40
+        },
+        "observation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "actual",
+            "evidence_id",
+            "recording",
+            "observed_at",
+            "note"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "not_observed",
+                "observed"
+              ]
+            },
+            "actual": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "recording": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "observed_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 10
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "state": {
+                    "const": "not_observed"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "actual": {
+                    "const": null
+                  },
+                  "evidence_id": {
+                    "const": null
+                  },
+                  "recording": {
+                    "const": null
+                  },
+                  "observed_at": {
+                    "const": null
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "state": {
+                    "const": "observed"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "actual": {
+                    "type": "string",
+                    "minLength": 20
+                  },
+                  "evidence_id": {
+                    "type": "string",
+                    "minLength": 4
+                  },
+                  "recording": {
+                    "type": "string",
+                    "minLength": 4
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^EV-[A-Z0-9-]+$"
+          }
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "unknowns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 20
+          }
+        },
+        "implementation_test": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "state",
+            "setup",
+            "action",
+            "command",
+            "pass_criteria",
+            "fail_criteria"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "executable",
+                "manual"
+              ]
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "planned",
+                "available",
+                "passed",
+                "failed"
+              ]
+            },
+            "setup": {
+              "type": "string",
+              "minLength": 20
+            },
+            "action": {
+              "type": "string",
+              "minLength": 20
+            },
+            "command": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "pass_criteria": {
+              "type": "string",
+              "minLength": 20
+            },
+            "fail_criteria": {
+              "type": "string",
+              "minLength": 20
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "mode": {
+                    "const": "executable"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "command": {
+                    "type": "string",
+                    "minLength": 20
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "mode": {
+                    "const": "manual"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "command": {
+                    "const": null
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "parity_status": {
+          "$ref": "#/$defs/status"
+        },
+        "status_reason": {
+          "type": "string",
+          "minLength": 20
+        },
+        "denominator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "included",
+            "bucket"
+          ],
+          "properties": {
+            "included": {
+              "const": true
+            },
+            "bucket": {
+              "type": "string",
+              "enum": [
+                "specified",
+                "unsupported",
+                "deferred"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

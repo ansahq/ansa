@@ -1,0 +1,400 @@
+{
+  "schema_version": "1.0.0",
+  "matrix_id": "ansa-a-behavior-coverage-2026-11",
+  "source": "outputs/rust-launcher-blueprint.md#4-product-scope-and-parity-map",
+  "policy": "Every behavior marked required_per_os=true must have at least one priority-A scenario row for Windows and one for macOS. A workflow label alone does not satisfy coverage.",
+  "behaviors": [
+    {
+      "behavior_id": "launcher.summon",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Global shortcut summons the launcher and preserves the previously focused target.",
+      "blueprint_ref": "Launcher: Global summon"
+    },
+    {
+      "behavior_id": "launcher.root_search",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Root query searches commands, apps and root providers with a focused search field.",
+      "blueprint_ref": "Launcher: root search"
+    },
+    {
+      "behavior_id": "launcher.favorites",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Pinned or favorite commands are available from the empty/root state.",
+      "blueprint_ref": "Launcher: favorites"
+    },
+    {
+      "behavior_id": "launcher.aliases",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Aliases resolve to stable command identities and interact predictably with ranking.",
+      "blueprint_ref": "Launcher: aliases"
+    },
+    {
+      "behavior_id": "launcher.frecency",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Recent/frequent commands are ranked and bounded by documented product rules.",
+      "blueprint_ref": "Launcher: recent/frequent commands"
+    },
+    {
+      "behavior_id": "launcher.per_command_shortcuts",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "A per-command shortcut bypasses root search but enters the same action and permission pipeline.",
+      "blueprint_ref": "Launcher: per-command shortcuts"
+    },
+    {
+      "behavior_id": "launcher.shortcut_conflicts",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Shortcut registration conflicts are surfaced and the user can choose an alternative.",
+      "blueprint_ref": "Launcher: conflicts explained"
+    },
+    {
+      "behavior_id": "launcher.stale_query_results",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "A stale query or provider response never overwrites current results or selection.",
+      "blueprint_ref": "Launcher: no stale query results"
+    },
+    {
+      "behavior_id": "launcher.ime_input",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "IME composition confirm and cancel do not accidentally execute or dismiss.",
+      "blueprint_ref": "Launcher: keyboard complete"
+    },
+    {
+      "behavior_id": "launcher.degraded_capability",
+      "workflow": "launcher",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "An unavailable global shortcut or capability is reported accurately with a usable fallback.",
+      "blueprint_ref": "Launcher: conflicts explained; integration status page"
+    },
+    {
+      "behavior_id": "actions.primary",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Enter runs the primary action of the selected stable result.",
+      "blueprint_ref": "Action/navigation: primary actions"
+    },
+    {
+      "behavior_id": "actions.secondary",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Secondary actions are reachable without losing the selected identity.",
+      "blueprint_ref": "Action/navigation: secondary actions"
+    },
+    {
+      "behavior_id": "actions.searchable_panel",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "The action panel is searchable and fully keyboard reachable without trapping focus.",
+      "blueprint_ref": "Action/navigation: searchable action panel"
+    },
+    {
+      "behavior_id": "actions.nested_views",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Nested child views keep stable identity and predictable parent state.",
+      "blueprint_ref": "Action/navigation: nested views"
+    },
+    {
+      "behavior_id": "actions.breadcrumbs",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Breadcrumbs and back navigation identify the current layer and restore the parent.",
+      "blueprint_ref": "Action/navigation: breadcrumbs; back navigation shortcut"
+    },
+    {
+      "behavior_id": "actions.toasts",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Action results and failures are reported through a non-blocking, truthful toast.",
+      "blueprint_ref": "Action/navigation: toasts"
+    },
+    {
+      "behavior_id": "actions.escape_hierarchy",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Escape unwinds IME/modal, action panel, child view and root in that order.",
+      "blueprint_ref": "Keyboard contract: Escape"
+    },
+    {
+      "behavior_id": "actions.focus_return",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Dismissal or an external action restores focus only to the expected target.",
+      "blueprint_ref": "Launcher: return focus"
+    },
+    {
+      "behavior_id": "actions.back_restores_state",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Back navigation restores parent query, selection and scroll position.",
+      "blueprint_ref": "Keyboard contract: Back navigation shortcut"
+    },
+    {
+      "behavior_id": "actions.consequence_clarity",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "The exact target and effect of a consequential action are visible before execution.",
+      "blueprint_ref": "Results: display exact target and effect"
+    },
+    {
+      "behavior_id": "apps.launch",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "An installed application can be launched without shell interpolation.",
+      "blueprint_ref": "App catalog: Launch"
+    },
+    {
+      "behavior_id": "apps.switch",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "An already running application is switched to using a stable target identity.",
+      "blueprint_ref": "App catalog: switch"
+    },
+    {
+      "behavior_id": "apps.reveal",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Reveal opens the exact packaged/desktop target or reports a missing target.",
+      "blueprint_ref": "App catalog: reveal"
+    },
+    {
+      "behavior_id": "apps.refresh_install",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "A newly installed app appears without restarting the launcher.",
+      "blueprint_ref": "App catalog: refresh after installation"
+    },
+    {
+      "behavior_id": "apps.refresh_uninstall",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "An uninstalled app disappears or fails its action without stale launch.",
+      "blueprint_ref": "App catalog: refresh after uninstallation"
+    },
+    {
+      "behavior_id": "apps.dedupe",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Packaged and desktop entries are deduplicated only when they are the same launch target.",
+      "blueprint_ref": "App catalog: packaged/desktop apps deduplicated"
+    },
+    {
+      "behavior_id": "apps.missing_target",
+      "workflow": "app_catalog",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "A missing or changed application target fails clearly and offers recovery.",
+      "blueprint_ref": "App catalog: missing targets handled"
+    },
+    {
+      "behavior_id": "files.names_paths",
+      "workflow": "file_search",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "File results match names and paths, including Unicode paths.",
+      "blueprint_ref": "File search: paths/names"
+    },
+    {
+      "behavior_id": "files.filters",
+      "workflow": "file_search",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Name/path and metadata filters are deterministic and scoped.",
+      "blueprint_ref": "File search: filters"
+    },
+    {
+      "behavior_id": "files.preview",
+      "workflow": "file_search",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Preview renders bounded content without an implicit cloud download.",
+      "blueprint_ref": "File search: preview"
+    },
+    {
+      "behavior_id": "files.open_reveal_copy",
+      "workflow": "file_search",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Open, reveal and copy-path act on the exact selected file.",
+      "blueprint_ref": "File search: open/reveal/copy path"
+    },
+    {
+      "behavior_id": "files.rename_delete_reconcile",
+      "workflow": "file_search",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Rename or deletion during search produces a clear stale result failure or refresh.",
+      "blueprint_ref": "File search: rename/delete reconciliation"
+    },
+    {
+      "behavior_id": "files.scoped_roots_permissions",
+      "workflow": "file_search",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Scoped roots, exclusions and permission revocation stay bounded and recoverable.",
+      "blueprint_ref": "File search: scoped roots; permission tests"
+    },
+    {
+      "behavior_id": "calculator.arithmetic",
+      "workflow": "calculator",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Ordinary arithmetic with precedence, parentheses and unary signs is deterministic and network-free.",
+      "blueprint_ref": "Calculator: Arithmetic"
+    },
+    {
+      "behavior_id": "calculator.precision_policy",
+      "workflow": "calculator",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Precision and invalid-operation policy is explicit; errors do not fall through to app execution.",
+      "blueprint_ref": "Calculator: precision policy; deterministic fixtures"
+    },
+    {
+      "behavior_id": "calculator.units_dates",
+      "workflow": "calculator",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Units and date/time-zone calculations use a deterministic fixture policy and report dimensional errors.",
+      "blueprint_ref": "Calculator: units, dates/time zones"
+    },
+    {
+      "behavior_id": "calculator.currency",
+      "workflow": "calculator",
+      "priority": "B",
+      "required_per_os": false,
+      "description": "Cached currency rates show source and age; currency remains a B extension with no network claim for ordinary math.",
+      "blueprint_ref": "Calculator: cached currencies; backlog calculator follow-up"
+    },
+    {
+      "behavior_id": "quicklinks.url_templates",
+      "workflow": "quicklinks",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "URL and deep-link templates resolve to the intended target.",
+      "blueprint_ref": "Quicklinks: URL templates"
+    },
+    {
+      "behavior_id": "quicklinks.path_targets",
+      "workflow": "quicklinks",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Path and file/folder quicklinks resolve without shell interpolation.",
+      "blueprint_ref": "Quicklinks: path templates"
+    },
+    {
+      "behavior_id": "quicklinks.arguments_encoding",
+      "workflow": "quicklinks",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Arguments with spaces, Unicode, ampersands and metacharacters are encoded as literal values.",
+      "blueprint_ref": "Quicklinks: correct encoding"
+    },
+    {
+      "behavior_id": "quicklinks.preferred_opener",
+      "workflow": "quicklinks",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "The preferred opener is used, and a missing opener fails clearly.",
+      "blueprint_ref": "Quicklinks: preferred opener"
+    },
+    {
+      "behavior_id": "quicklinks.aliases_tags",
+      "workflow": "quicklinks",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Aliases and tags search quicklinks without conflating them with plain bookmarks.",
+      "blueprint_ref": "Quicklinks: aliases/tags"
+    },
+    {
+      "behavior_id": "quicklinks.no_shell_interpolation",
+      "workflow": "quicklinks",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Quicklink arguments never become shell syntax or command substitution.",
+      "blueprint_ref": "Quicklinks: no shell interpolation"
+    },
+    {
+      "behavior_id": "emoji.local_search",
+      "workflow": "emoji_symbols",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Emoji and symbols are searchable from a local dataset without a network call.",
+      "blueprint_ref": "Emoji/symbols: local search"
+    },
+    {
+      "behavior_id": "emoji.variants",
+      "workflow": "emoji_symbols",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Variants such as skin tones, joined sequences and flags preserve exact graphemes.",
+      "blueprint_ref": "Emoji/symbols: variants"
+    },
+    {
+      "behavior_id": "emoji.recent_favorites",
+      "workflow": "emoji_symbols",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Recent and favorite emoji are selectable and bounded.",
+      "blueprint_ref": "Emoji/symbols: recent/favorite items"
+    },
+    {
+      "behavior_id": "emoji.copy_paste",
+      "workflow": "emoji_symbols",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Copy and paste/insertion paths preserve the exact grapheme and use a safe fallback.",
+      "blueprint_ref": "Emoji/symbols: copy/paste"
+    },
+    {
+      "behavior_id": "emoji.accessible_names",
+      "workflow": "emoji_symbols",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Emoji and symbol results expose useful screen-reader names rather than raw code points.",
+      "blueprint_ref": "Emoji/symbols: screen-reader names"
+    },
+    {
+      "behavior_id": "emoji.graphemes",
+      "workflow": "emoji_symbols",
+      "priority": "A",
+      "required_per_os": true,
+      "description": "Selection and copy operate on grapheme clusters without splitting UTF-8/UTF-16 sequences.",
+      "blueprint_ref": "Emoji/symbols: correct graphemes"
+    }
+  ]
+}

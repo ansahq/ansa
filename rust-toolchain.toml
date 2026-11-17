@@ -1,4 +1,6 @@
+# Exact compiler pin. Update this file, .github/workflows/ci.yml and
+# docs/build/toolchain.md together; do not float this repository on stable.
 [toolchain]
-channel = "stable"
+channel = "1.99.1"
 profile = "minimal"
 components = ["rustfmt", "clippy"]

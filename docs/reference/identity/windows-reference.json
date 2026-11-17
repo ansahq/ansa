@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "reference-identity-windows-2026-11",
+  "reference_identity_id": "ref-win-unknown-2026-11",
+  "platform": "windows",
+  "state": "unknown",
+  "unknown_reason": "No Windows reference application, installer, package, signed binary or license was available in this worktree or on the validation host. No installation, download, launch or binary inspection was attempted, so every identity field remains unknown rather than inferred.",
+  "last_checked": "2026-11-17",
+  "identity_fields": {
+    "application": {
+      "path": {
+        "state": "unknown",
+        "value": null,
+        "reason": "The reference application is not installed and no package was resolved, so no executable or bundle path was observed.",
+        "evidence_id": null
+      },
+      "version": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference build was executed or read; cached download version strings are inconsistent and are not accepted as identity.",
+        "evidence_id": null
+      },
+      "build": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No build number, channel metadata or package manifest was observed for a frozen target.",
+        "evidence_id": null
+      },
+      "architecture": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No executable was inspected, so the actual reference artifact architecture cannot be recorded.",
+        "evidence_id": null
+      },
+      "artifact_sha256": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No artifact bytes were available to hash. No placeholder or borrowed checksum is recorded.",
+        "evidence_id": null
+      },
+      "signature_identity": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No signature or certificate chain was read because no reference artifact was available.",
+        "evidence_id": null
+      },
+      "signature_status": {
+        "state": "unknown",
+        "value": null,
+        "reason": "Code-signing validity and timestamp status could not be verified without the artifact and platform trust tooling.",
+        "evidence_id": null
+      }
+    },
+    "os": {
+      "name": "Windows",
+      "version": {
+        "state": "unknown",
+        "value": null,
+        "reason": "The future capture host OS version is not frozen; the local development host is not the reference environment.",
+        "evidence_id": null
+      },
+      "build": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference Windows build, update level or display stack was recorded for the target environment.",
+        "evidence_id": null
+      },
+      "architecture": {
+        "state": "unknown",
+        "value": null,
+        "reason": "The reference capture host architecture was not selected or observed; x86_64 is not asserted.",
+        "evidence_id": null
+      }
+    },
+    "account": {
+      "tier": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference account was used or inspected, so the active plan tier is unknown.",
+        "evidence_id": null
+      },
+      "signed_in": {
+        "state": "unknown",
+        "value": null,
+        "reason": "Sign-in and entitlement state were not observed and must be frozen before behavioral capture.",
+        "evidence_id": null
+      }
+    },
+    "extensions": {
+      "enabled": {
+        "state": "unknown",
+        "value": null,
+        "reason": "No reference profile existed, so no enabled/disabled extension set could be enumerated or frozen.",
+        "evidence_id": null
+      }
+    },
+    "permissions": [
+      {
+        "name": "accessibility",
+        "state": "unknown",
+        "value": null,
+        "reason": "Reference accessibility/UIA authorization was not observed on a capture host.",
+        "evidence_id": null
+      },
+      {
+        "name": "screen_recording",
+        "state": "unknown",
+        "value": null,
+        "reason": "Screen-capture permission and its platform applicability were not assessed for this target.",
+        "evidence_id": null
+      },
+      {
+        "name": "automation",
+        "state": "unknown",
+        "value": null,
+        "reason": "Automation or cross-process control grants were not enumerated for the reference target.",
+        "evidence_id": null
+      },
+      {
+        "name": "full_disk_access",
+        "state": "unknown",
+        "value": null,
+        "reason": "Broad filesystem access scope and any platform-equivalent grant were not observed or mapped.",
+        "evidence_id": null
+      },
+      {
+        "name": "input_monitoring",
+        "state": "unknown",
+        "value": null,
+        "reason": "Input-monitoring or synthetic-input permission state was not queried on the reference target.",
+        "evidence_id": null
+      }
+    ]
+  },
+  "capture_environment": {
+    "status": "specified_not_created",
+    "profile_name": "ansa-reference-test-profile",
+    "profile_kind": "dedicated_test_profile",
+    "user_data": "synthetic_only",
+    "fixtures_defined_in": "docs/reference/scenario-ledger.json",
+    "network_policy": "Offline by default. A later extension/OAuth track may use only an explicitly declared fixture endpoint; ordinary launcher, app, file, calculator, quicklink and emoji captures must not touch a network.",
+    "cleanup": "Delete the dedicated profile, generated fixture directory and any recording after evidence extraction; record cleanup result with the capture. Never copy a personal reference profile."
+  },
+  "evidence_boundary": {
+    "reference_app_available": false,
+    "runtime_observations": 0,
+    "rea_tools_available": false,
+    "rea_evidence_ids": [],
+    "invented_observations": false,
+    "notes": [
+      "Public documentation and design proposals are the only evidence used by the F01 ledger for this target.",
+      "No path, version, build, architecture, hash, signature, account tier, extension set or permission value is asserted.",
+      "A future capture must create a new dated manifest with verified values; this unknown manifest must not be edited to look captured."
+    ]
+  }
+}

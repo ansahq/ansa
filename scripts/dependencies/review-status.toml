@@ -1,0 +1,13 @@
+# Curated third-party license/review records for docs/build/dependency-inventory.*
+#
+# Absence is meaningful: a third-party package not listed here is emitted as
+# "unreviewed" in the generated inventory. Do not add an entry without evidence
+# (for example a reviewed LICENSE/NOTICE file or an approved exception).
+#
+# Key format is "name@version" and the value must state the evidence/reason.
+# First-party workspace members are marked reviewed automatically because their
+# Apache-2.0 declaration is part of this repository; they do not belong here.
+
+schema = 1
+
+[reviewed]

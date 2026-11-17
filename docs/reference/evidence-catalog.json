@@ -1,0 +1,562 @@
+{
+  "schema_version": "1.0.0",
+  "catalog_id": "ansa-reference-evidence-2026-11",
+  "created": "2026-11-17",
+  "kind_policy": {
+    "vendor_documentation": {
+      "used": true,
+      "reason": "Public Raycast, standards and OS vendor documentation, inherited or proposed as labelled, establishes documented categories and platform constraints; never this build's observed behavior."
+    },
+    "source_inspection": {
+      "used": false,
+      "reason": "No reference source tree, decompiler output or reference SDK package was inspected in this F01 pass."
+    },
+    "static_artifact_analysis": {
+      "used": false,
+      "reason": "No reference artifact or hash was available, so no strings, imports, signatures or package contents were analysed."
+    },
+    "runtime_observation": {
+      "used": false,
+      "reason": "No reference application was available; zero launches, probes or recordings exist."
+    },
+    "design_proposal": {
+      "used": true,
+      "reason": "Our own blueprint, backlog and keyboard contract specify planned acceptance criteria and are labelled as proposals, not reference behavior."
+    }
+  },
+  "entries": [
+    {
+      "evidence_id": "EV-DOC-MANUAL",
+      "kind": "vendor_documentation",
+      "title": "Raycast manual index",
+      "source": "https://manual.raycast.com/",
+      "confidence": "medium",
+      "limitations": [
+        "Category-level documentation, not per-build behavior.",
+        "Documentation is mutable and no reference binary was inspected.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Exact behavior, timing and platform parity for any frozen reference build."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-QUICKSTART",
+      "kind": "vendor_documentation",
+      "title": "Raycast quickstart and root keyboard workflow",
+      "source": "https://manual.raycast.com/quickstart",
+      "confidence": "medium",
+      "limitations": [
+        "Describes the documented summon/search/action flow, not measured focus or timing.",
+        "Does not establish identical Windows and macOS behavior.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Actual shortcut chords, focus restoration and selection behavior in a frozen build."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-WINDOWS",
+      "kind": "vendor_documentation",
+      "title": "Raycast Windows product page",
+      "source": "https://www.raycast.com/windows",
+      "confidence": "medium",
+      "limitations": [
+        "Advertises Windows availability and feature surface; it is not a frozen build identity.",
+        "Cached download version strings disagreed during research and are not used as identity.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Exact Windows build, package architecture, signature and per-feature parity."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-FILE-SEARCH",
+      "kind": "vendor_documentation",
+      "title": "Raycast File Search documentation",
+      "source": "https://manual.raycast.com/file-search",
+      "confidence": "medium",
+      "limitations": [
+        "Documents root and detail views, name-first search and optional content search.",
+        "Platform indexing, permission and cloud-placeholder behavior still require capture.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Exact rename/delete reconciliation and permission failure states on each OS."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-QUICKLINKS",
+      "kind": "vendor_documentation",
+      "title": "Raycast Quicklinks documentation",
+      "source": "https://manual.raycast.com/quicklinks",
+      "confidence": "medium",
+      "limitations": [
+        "Documents URL/path/deep-link templates, parameters, tags and preferred app.",
+        "Does not provide the exact escaping or failure matrix for every argument type.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Reference handling of malformed placeholders and missing opener applications."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-CLIPBOARD",
+      "kind": "vendor_documentation",
+      "title": "Raycast Clipboard History documentation",
+      "source": "https://manual.raycast.com/clipboard-history",
+      "confidence": "medium",
+      "limitations": [
+        "Documents formats, filtering, pins, retention, exclusions and OCR/QR.",
+        "Does not establish concurrent-copy or permission-failure behavior for a frozen build.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Clipboard generation handling and retention defaults in the target build."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-SNIPPETS",
+      "kind": "vendor_documentation",
+      "title": "Raycast Snippets documentation",
+      "source": "https://manual.raycast.com/snippets",
+      "confidence": "medium",
+      "limitations": [
+        "Documents manual insertion, keyword expansion, placeholders, tags and import.",
+        "Secure-input and IME boundaries require focused platform capture.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Exact expansion limits and secure-field behavior on each OS."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-NOTES",
+      "kind": "vendor_documentation",
+      "title": "Raycast Notes documentation",
+      "source": "https://manual.raycast.com/notes",
+      "confidence": "medium",
+      "limitations": [
+        "Documents the separate notes window, search and Markdown-style editing.",
+        "Crash durability and selection/undo semantics are not established by the page.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Last acknowledged save behavior and editor undo grouping."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-WINDOW",
+      "kind": "vendor_documentation",
+      "title": "Raycast Window Management documentation",
+      "source": "https://manual.raycast.com/window-management",
+      "confidence": "medium",
+      "limitations": [
+        "Documents geometry operations, restore, displays and custom layouts.",
+        "Platform geometry and DPI contracts differ and require real-device tests.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Mixed-DPI and display-disconnect behavior in the target builds."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-SCRIPTS",
+      "kind": "vendor_documentation",
+      "title": "Raycast Script Commands documentation",
+      "source": "https://manual.raycast.com/script-commands",
+      "confidence": "medium",
+      "limitations": [
+        "Documents metadata discovery, languages, arguments and output modes.",
+        "Interpreter availability and argument quoting require a versioned harness.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Actual argv construction and descendant cleanup in the target runtime."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-EXTENSIONS",
+      "kind": "vendor_documentation",
+      "title": "Raycast API reference",
+      "source": "https://developers.raycast.com/api-reference",
+      "confidence": "medium",
+      "limitations": [
+        "Documents UI, navigation, storage, OAuth, clipboard and system APIs.",
+        "It is an SDK contract, not proof of host compatibility or confinement.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Crash quarantine, callback routing and secret handling in the reference host."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-SYNC",
+      "kind": "vendor_documentation",
+      "title": "Raycast Cloud Sync documentation",
+      "source": "https://manual.raycast.com/cloud-sync",
+      "confidence": "medium",
+      "limitations": [
+        "Documents selective sync categories and explicit exclusions.",
+        "Conflict, tombstone and revoked-device behavior require protocol tests.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Exact offline merge and device-revocation semantics."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-AI",
+      "kind": "vendor_documentation",
+      "title": "Raycast AI Agents documentation",
+      "source": "https://manual.raycast.com/ai/agents",
+      "confidence": "medium",
+      "limitations": [
+        "Documents saved instructions, model and tool configuration.",
+        "It is not evidence that prompt injection is contained.",
+        "Inherited from the 2026-11-11 research snapshot; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Actual authority boundaries and tool approval behavior."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research snapshot date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (Raycast product reference map); work/raycast-features.md"
+    },
+    {
+      "evidence_id": "EV-DOC-OAUTH",
+      "kind": "vendor_documentation",
+      "title": "RFC 8252 OAuth for native applications",
+      "source": "https://www.rfc-editor.org/rfc/rfc8252",
+      "confidence": "medium",
+      "limitations": [
+        "A standards requirement, not a description of the reference implementation.",
+        "PKCE and redirect handling still require an implementation test.",
+        "Inherited from the 2026-11-11 research ledger; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Reference token storage and reauthorization UX."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research ledger date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (OS and security sources)"
+    },
+    {
+      "evidence_id": "EV-DOC-OS-PERMISSIONS",
+      "kind": "vendor_documentation",
+      "title": "Apple privacy/TCC and Windows ACL documentation",
+      "source": "https://developer.apple.com/documentation/bundleresources/information-property-list; https://learn.microsoft.com/en-us/windows/win32/secauthz/access-control-lists",
+      "confidence": "low",
+      "limitations": [
+        "OS platform contracts, not reference app behavior.",
+        "Specific grant states and prompts must be observed on real machines.",
+        "Proposed supporting citation; not fetched or inspected in this session. Do not treat it as verified vendor behavior."
+      ],
+      "unknowns": [
+        "How the reference app handles revocation and partial file access."
+      ],
+      "fetch_state": "proposed_unverified",
+      "source_date": null,
+      "date_meaning": "No retrieval date; this supporting citation was not fetched or inspected by this session.",
+      "source_locator": "No baseline locator; proposed supporting citation only."
+    },
+    {
+      "evidence_id": "EV-DOC-OS-HOTKEY",
+      "kind": "vendor_documentation",
+      "title": "Windows RegisterHotKey documentation",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey",
+      "confidence": "medium",
+      "limitations": [
+        "Windows API contract only; it does not describe the reference app's shortcut policy.",
+        "macOS global shortcut registration requires separate Apple API evidence.",
+        "Inherited from the 2026-11-11 research ledger; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Reference conflict messaging and fallback behavior on both OSes."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research ledger date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (OS and security sources)"
+    },
+    {
+      "evidence_id": "EV-DOC-OS-INPUT",
+      "kind": "vendor_documentation",
+      "title": "Windows TSF and Apple NSTextInputClient documentation",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/tsf/text-services-framework; https://developer.apple.com/documentation/appkit/nstextinputclient",
+      "confidence": "low",
+      "limitations": [
+        "Documents platform composition contracts, not this launcher's IME handling.",
+        "Physical IME behavior and screen-reader interaction require device tests.",
+        "Proposed supporting citation; not fetched or inspected in this session. Do not treat it as verified vendor behavior."
+      ],
+      "unknowns": [
+        "Exact key routing while marked text owns the field in the reference build."
+      ],
+      "fetch_state": "proposed_unverified",
+      "source_date": null,
+      "date_meaning": "No retrieval date; this supporting citation was not fetched or inspected by this session.",
+      "source_locator": "No baseline locator; proposed supporting citation only."
+    },
+    {
+      "evidence_id": "EV-DOC-OS-FOCUS",
+      "kind": "vendor_documentation",
+      "title": "Windows SetForegroundWindow and Apple NSApplication activation documentation",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow; https://developer.apple.com/documentation/appkit/nsapplication",
+      "confidence": "low",
+      "limitations": [
+        "Describes platform activation rules, not guaranteed focus restoration.",
+        "Window identity recycling and denial paths require instrumentation.",
+        "Proposed supporting citation; not fetched or inspected in this session. Do not treat it as verified vendor behavior."
+      ],
+      "unknowns": [
+        "Reference behavior when activation is denied or the target exits."
+      ],
+      "fetch_state": "proposed_unverified",
+      "source_date": null,
+      "date_meaning": "No retrieval date; this supporting citation was not fetched or inspected by this session.",
+      "source_locator": "No baseline locator; proposed supporting citation only."
+    },
+    {
+      "evidence_id": "EV-DOC-OS-A11Y",
+      "kind": "vendor_documentation",
+      "title": "Microsoft UI Automation and Apple Accessibility documentation",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/accessibility/accessibility; https://developer.apple.com/documentation/accessibility",
+      "confidence": "low",
+      "limitations": [
+        "Platform accessibility contracts, not proof that a reference launcher announces correctly.",
+        "Screen-reader journeys must be run with NVDA/Narrator and VoiceOver.",
+        "Proposed supporting citation; not fetched or inspected in this session. Do not treat it as verified vendor behavior."
+      ],
+      "unknowns": [
+        "Reference names, roles and live-region behavior for emoji and result rows."
+      ],
+      "fetch_state": "proposed_unverified",
+      "source_date": null,
+      "date_meaning": "No retrieval date; this supporting citation was not fetched or inspected by this session.",
+      "source_locator": "No baseline locator; proposed supporting citation only."
+    },
+    {
+      "evidence_id": "EV-DOC-OS-POWER",
+      "kind": "vendor_documentation",
+      "title": "Windows power management and Apple workspace sleep notification documentation",
+      "source": "https://learn.microsoft.com/en-us/windows/win32/power/power-management-functions; https://developer.apple.com/documentation/appkit/nsworkspace",
+      "confidence": "low",
+      "limitations": [
+        "Platform lifecycle contracts, not reference job or hotkey behavior.",
+        "Locked-session and wake timing must be observed.",
+        "Proposed supporting citation; not fetched or inspected in this session. Do not treat it as verified vendor behavior."
+      ],
+      "unknowns": [
+        "Reference duplicate-effect and input-replay behavior across sleep/wake."
+      ],
+      "fetch_state": "proposed_unverified",
+      "source_date": null,
+      "date_meaning": "No retrieval date; this supporting citation was not fetched or inspected by this session.",
+      "source_locator": "No baseline locator; proposed supporting citation only."
+    },
+    {
+      "evidence_id": "EV-DOC-TUF",
+      "kind": "vendor_documentation",
+      "title": "The Update Framework security documentation",
+      "source": "https://theupdateframework.io/docs/security/",
+      "confidence": "medium",
+      "limitations": [
+        "Update-security guidance, not the reference app's updater design.",
+        "Interrupted-install recovery remains an implementation test.",
+        "Inherited from the 2026-11-11 research ledger; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Reference rollback and partial-update behavior."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research ledger date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (OS and security sources)"
+    },
+    {
+      "evidence_id": "EV-DOC-WAYLAND",
+      "kind": "vendor_documentation",
+      "title": "XDG GlobalShortcuts portal documentation",
+      "source": "https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html",
+      "confidence": "medium",
+      "limitations": [
+        "Linux/Wayland capability documentation, outside the Windows and macOS F01 targets.",
+        "No claim is made about Windows or macOS capability gaps.",
+        "Inherited from the 2026-11-11 research ledger; not re-fetched in this session."
+      ],
+      "unknowns": [
+        "Whether an equivalent capability negotiation exists in either reference build."
+      ],
+      "fetch_state": "inherited_not_refetched",
+      "source_date": "2026-11-11",
+      "date_meaning": "Inherited research ledger date; not a fetch by this F01 session.",
+      "source_locator": "outputs/research-and-sources.md (OS and security sources)"
+    },
+    {
+      "evidence_id": "EV-DESIGN-BLUEPRINT",
+      "kind": "design_proposal",
+      "title": "Ansa launcher blueprint",
+      "source": "outputs/rust-launcher-blueprint.md",
+      "confidence": "low",
+      "limitations": [
+        "Our design recommendation, not observed reference behavior.",
+        "Acceptance boundaries and platform choices are proposals.",
+        "Local repository design document; not external evidence of reference behavior."
+      ],
+      "unknowns": [
+        "Whether the reference product accepts any proposed behavior."
+      ],
+      "fetch_state": "local_repository_source",
+      "source_date": "2026-11-11",
+      "date_meaning": "Local design document date; not a web retrieval or reference observation.",
+      "source_locator": "outputs/rust-launcher-blueprint.md"
+    },
+    {
+      "evidence_id": "EV-DESIGN-BACKLOG",
+      "kind": "design_proposal",
+      "title": "Ansa implementation backlog and evidence plan",
+      "source": "outputs/implementation-backlog.md",
+      "confidence": "low",
+      "limitations": [
+        "Ticket scope and evidence rules are proposals.",
+        "No ticket result is claimed by this ledger.",
+        "Local repository design document; not external evidence of reference behavior."
+      ],
+      "unknowns": [
+        "Future capture ownership and schedule."
+      ],
+      "fetch_state": "local_repository_source",
+      "source_date": "2026-11-11",
+      "date_meaning": "Local design document date; not a web retrieval or reference observation.",
+      "source_locator": "outputs/implementation-backlog.md"
+    },
+    {
+      "evidence_id": "EV-DESIGN-KEYBOARD",
+      "kind": "design_proposal",
+      "title": "Ansa keyboard and interaction contract",
+      "source": "outputs/rust-launcher-blueprint.md#5-interaction-and-visual-design",
+      "confidence": "low",
+      "limitations": [
+        "Proposed key handling, Escape hierarchy and focus rules.",
+        "Not measured on the reference product or a completed native build.",
+        "Local repository design document; not external evidence of reference behavior."
+      ],
+      "unknowns": [
+        "Real IME, screen-reader and focus behavior on each OS."
+      ],
+      "fetch_state": "local_repository_source",
+      "source_date": "2026-11-11",
+      "date_meaning": "Local design document date; not a web retrieval or reference observation.",
+      "source_locator": "outputs/rust-launcher-blueprint.md#5-interaction-and-visual-design"
+    },
+    {
+      "evidence_id": "EV-DESIGN-PARITY",
+      "kind": "design_proposal",
+      "title": "Ansa parity map and denominator policy",
+      "source": "outputs/rust-launcher-blueprint.md#4-product-scope-and-parity-map",
+      "confidence": "low",
+      "limitations": [
+        "Priority and support boundaries are planning decisions.",
+        "A/B labels do not imply implementation or reference parity.",
+        "Local repository design document; not external evidence of reference behavior."
+      ],
+      "unknowns": [
+        "Which priority-A behaviors the reference build actually supports per OS."
+      ],
+      "fetch_state": "local_repository_source",
+      "source_date": "2026-11-11",
+      "date_meaning": "Local design document date; not a web retrieval or reference observation.",
+      "source_locator": "outputs/rust-launcher-blueprint.md#4-product-scope-and-parity-map"
+    },
+    {
+      "evidence_id": "EV-DESIGN-CAPTURE",
+      "kind": "design_proposal",
+      "title": "Ansa behavioral reference and REA investigation plan",
+      "source": "outputs/implementation-backlog.md#7-behavioral-reference-and-rea-investigation-plan",
+      "confidence": "low",
+      "limitations": [
+        "Defines the intended capture discipline, not captured evidence.",
+        "Seed S01-S20 are capture prompts, not completed scenarios.",
+        "Local repository design document; not external evidence of reference behavior."
+      ],
+      "unknowns": [
+        "Actual observations, build identity and REA tool availability."
+      ],
+      "fetch_state": "local_repository_source",
+      "source_date": "2026-11-11",
+      "date_meaning": "Local design document date; not a web retrieval or reference observation.",
+      "source_locator": "outputs/implementation-backlog.md#7-behavioral-reference-and-rea-investigation-plan"
+    }
+  ],
+  "provenance": {
+    "baseline": "outputs/research-and-sources.md together with work/raycast-features.md",
+    "baseline_date": "2026-11-11",
+    "baseline_date_meaning": "Date of the inherited documentation research snapshot; not a fetch by this F01 session.",
+    "external_fetches_this_session": [],
+    "local_sources_read_this_session": [
+      "outputs/research-and-sources.md",
+      "work/raycast-features.md",
+      "outputs/rust-launcher-blueprint.md",
+      "outputs/implementation-backlog.md"
+    ],
+    "unverified_supporting_citations": [
+      "EV-DOC-OS-A11Y",
+      "EV-DOC-OS-FOCUS",
+      "EV-DOC-OS-INPUT",
+      "EV-DOC-OS-PERMISSIONS",
+      "EV-DOC-OS-POWER"
+    ],
+    "notes": "No external page was fetched in this session. Raycast categories are inherited baseline claims from the 2026-11-11 research snapshot. OS/standards URLs that were not present in that baseline are proposed supporting citations with low confidence."
+  }
+}

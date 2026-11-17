@@ -8,6 +8,11 @@ An open-source, local-first keyboard launcher. Rust core, Rust GPUI interface, n
 
 Prerequisites: Rust 1.99.1, a C/C++ linker and the native dependencies required by [GPUI 0.2.2](https://docs.rs/gpui/0.2.2). On Windows use the Visual Studio C++ Build Tools and Windows SDK. The desktop renderer requires a supported GPU/driver.
 
+Foundation validators also require Python 3.11+ (standard library only). The
+[toolchain guide](docs/build/toolchain.md) describes pin updates and the current
+host's broken named-toolchain installation; fallback checks are explicitly
+separate from verification of the exact pin.
+
 ```sh
 cargo test --locked
 cargo run --locked -p ansa-desktop
@@ -67,6 +72,12 @@ and uses an opaque surface rather than claiming glass is enabled.
 Escape dismisses the launcher and Ctrl+Q exits, without needing native window controls.
 
 ## Boundaries
+
+Foundation planning and reproducibility work is tracked separately from runtime
+features: the [reference ledger](docs/reference/), [reuse evaluation](docs/adr/0003-reuse-evaluation.md),
+and [build/inventory tooling](docs/build/). See the
+[ANS-5/6/7 validation record](docs/foundation-validation-2026-11-17.md) for actual
+checks and outstanding capture, audit, and cross-platform acceptance gaps.
 
 Windows is the first integration target. macOS/Linux native adapters, packaged Windows app discovery, launch/switch semantics, configurable shortcuts, persistent settings, clipboard history, indexing and extension compatibility are **not implemented**. Focus return is conservative: exited/changed targets and unrelated foreground windows are left alone; Windows may deny activation, and same-process/thread HWND recycling cannot be completely detected. The renderer and core remain separable. Screen-reader support, IME behavior on real devices, DPI handling and performance targets have not passed their release gates. See the blocking [framework accessibility gate](docs/framework-gate.md) before expanding the feature surface.
 

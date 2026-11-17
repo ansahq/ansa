@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0.0",
+  "seed_set_id": "ansa-seeds-s01-s20",
+  "source": "outputs/implementation-backlog.md#7-behavioral-reference-and-rea-investigation-plan",
+  "seeds": [
+    {
+      "seed_id": "S01",
+      "title": "summon from an editor",
+      "workflow": "launcher",
+      "priority": "A",
+      "intent": "Summoning must make input ready while preserving the previously focused editor target identity.",
+      "capture_question": "Where does focus go, what query state is shown, and is the editor identity preserved after dismissal?",
+      "behavior_ids": [
+        "launcher.summon",
+        "launcher.root_search"
+      ],
+      "windows_scenario_id": "S01-WIN",
+      "macos_scenario_id": "S01-MAC"
+    },
+    {
+      "seed_id": "S02",
+      "title": "rapid typing and backspace",
+      "workflow": "launcher",
+      "priority": "A",
+      "intent": "Query ordering, loading and selection must prevent an old query from overwriting the current one.",
+      "capture_question": "What results/selection appear during rapid edits, and can a late response replace the current query?",
+      "behavior_ids": [
+        "launcher.root_search",
+        "launcher.stale_query_results"
+      ],
+      "windows_scenario_id": "S02-WIN",
+      "macos_scenario_id": "S02-MAC"
+    },
+    {
+      "seed_id": "S03",
+      "title": "exact alias versus frequent item",
+      "workflow": "launcher",
+      "priority": "A",
+      "intent": "Ranking must be captured and then implemented deterministically, without assuming an unobserved scoring rule.",
+      "capture_question": "When an exact alias and a frequent item both match, which ranks first and what tie-break applies?",
+      "behavior_ids": [
+        "launcher.aliases",
+        "launcher.frecency"
+      ],
+      "windows_scenario_id": "S03-WIN",
+      "macos_scenario_id": "S03-MAC"
+    },
+    {
+      "seed_id": "S04",
+      "title": "child view to actions to Escape",
+      "workflow": "action_navigation",
+      "priority": "A",
+      "intent": "Nested views and Escape must unwind one layer at a time and restore parent state.",
+      "capture_question": "Which layer does each Escape close, and are parent selection and scroll restored?",
+      "behavior_ids": [
+        "actions.nested_views",
+        "actions.escape_hierarchy"
+      ],
+      "windows_scenario_id": "S04-WIN",
+      "macos_scenario_id": "S04-MAC"
+    },
+    {
+      "seed_id": "S05",
+      "title": "IME confirm and cancel",
+      "workflow": "launcher",
+      "priority": "A",
+      "intent": "IME composition must not cause accidental execution or dismissal.",
+      "capture_question": "While marked text owns the field, what do Enter and Escape do to composition, results and the window?",
+      "behavior_ids": [
+        "launcher.ime_input",
+        "launcher.root_search"
+      ],
+      "windows_scenario_id": "S05-WIN",
+      "macos_scenario_id": "S05-MAC"
+    },
+    {
+      "seed_id": "S06",
+      "title": "copy while clipboard chooser is open",
+      "workflow": "clipboard",
+      "priority": "B",
+      "intent": "Clipboard generations must prevent an old chooser selection from overwriting a new user copy.",
+      "capture_question": "What clipboard generation is recorded, and what happens when an external copy occurs before paste?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S06-WIN",
+      "macos_scenario_id": "S06-MAC"
+    },
+    {
+      "seed_id": "S07",
+      "title": "paste after target exits",
+      "workflow": "clipboard",
+      "priority": "B",
+      "intent": "A paste must never land in an unrelated window when the original target exits.",
+      "capture_question": "What error or fallback appears, and can any synthetic input reach another foreground window?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S07-WIN",
+      "macos_scenario_id": "S07-MAC"
+    },
+    {
+      "seed_id": "S08",
+      "title": "permission revoked mid-command",
+      "workflow": "file_search",
+      "priority": "A",
+      "intent": "A revoked filesystem permission must fail safely with actionable recovery.",
+      "capture_question": "What state/message appears when a scoped root becomes unreadable during search or action?",
+      "behavior_ids": [
+        "files.scoped_roots_permissions"
+      ],
+      "windows_scenario_id": "S08-WIN",
+      "macos_scenario_id": "S08-MAC"
+    },
+    {
+      "seed_id": "S09",
+      "title": "window moved to another DPI monitor",
+      "workflow": "window_management",
+      "priority": "B",
+      "intent": "Geometry must remain valid and proportional across mixed-DPI displays.",
+      "capture_question": "How do bounds, scale and restore behavior change when moved to another DPI monitor?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S09-WIN",
+      "macos_scenario_id": "S09-MAC"
+    },
+    {
+      "seed_id": "S10",
+      "title": "file renamed or deleted during search",
+      "workflow": "file_search",
+      "priority": "A",
+      "intent": "A stale file result must fail clearly or refresh without acting on a substituted path.",
+      "capture_question": "What happens to the selected result and action when the file is renamed or deleted after indexing?",
+      "behavior_ids": [
+        "files.rename_delete_reconcile"
+      ],
+      "windows_scenario_id": "S10-WIN",
+      "macos_scenario_id": "S10-MAC"
+    },
+    {
+      "seed_id": "S11",
+      "title": "local note crash during save",
+      "workflow": "notes",
+      "priority": "B",
+      "intent": "The last acknowledged edit must be recoverable after a crash during save.",
+      "capture_question": "Which content is durable after a kill during write, and what recovery surface appears?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S11-WIN",
+      "macos_scenario_id": "S11-MAC"
+    },
+    {
+      "seed_id": "S12",
+      "title": "extension crash or infinite loop",
+      "workflow": "extensions",
+      "priority": "B",
+      "intent": "A faulty worker must not freeze the core launcher and must be quarantined.",
+      "capture_question": "What stays responsive, what worker lifetime remains, and what quarantine/retry UI appears?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S12-WIN",
+      "macos_scenario_id": "S12-MAC"
+    },
+    {
+      "seed_id": "S13",
+      "title": "OAuth denial and token expiry",
+      "workflow": "extensions",
+      "priority": "B",
+      "intent": "Denial and expiry must be recoverable without leaking tokens.",
+      "capture_question": "What messages and retry/re-authorize paths appear on denial and expiry?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S13-WIN",
+      "macos_scenario_id": "S13-MAC"
+    },
+    {
+      "seed_id": "S14",
+      "title": "script arguments with spaces and metacharacters",
+      "workflow": "scripts",
+      "priority": "B",
+      "intent": "Arguments must remain literal argv values, never shell syntax.",
+      "capture_question": "What argv does the target script receive for spaces, quotes, ampersands and command substitution?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S14-WIN",
+      "macos_scenario_id": "S14-MAC"
+    },
+    {
+      "seed_id": "S15",
+      "title": "sleep, wake and locked session",
+      "workflow": "launcher",
+      "priority": "B",
+      "intent": "Lifecycle transitions must not replay input or duplicate effects.",
+      "capture_question": "Which hotkeys, jobs and captures resume after wake or unlock, and are effects duplicated?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S15-WIN",
+      "macos_scenario_id": "S15-MAC"
+    },
+    {
+      "seed_id": "S16",
+      "title": "interrupted update",
+      "workflow": "release_update",
+      "priority": "B",
+      "intent": "After interruption, either the previous version or a verified new version must start.",
+      "capture_question": "What starts after a kill at each update phase, and what recovery state is shown?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S16-WIN",
+      "macos_scenario_id": "S16-MAC"
+    },
+    {
+      "seed_id": "S17",
+      "title": "offline concurrent sync edits",
+      "workflow": "sync",
+      "priority": "D",
+      "intent": "Concurrent offline edits and deletions must not be silently lost.",
+      "capture_question": "What conflict/deletion behavior appears when two offline devices edit the same object?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S17-WIN",
+      "macos_scenario_id": "S17-MAC"
+    },
+    {
+      "seed_id": "S18",
+      "title": "revoked sync device",
+      "workflow": "sync",
+      "priority": "D",
+      "intent": "A revoked device must be denied future access with the historical-data limit stated.",
+      "capture_question": "What future reads/writes are denied, and how is the old-data limitation communicated?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S18-WIN",
+      "macos_scenario_id": "S18-MAC"
+    },
+    {
+      "seed_id": "S19",
+      "title": "AI tool with injected instructions",
+      "workflow": "ai",
+      "priority": "C",
+      "intent": "Untrusted content cannot expand the authority granted to an AI tool.",
+      "capture_question": "What authority does the tool request, and can injected content widen data access or side effects?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S19-WIN",
+      "macos_scenario_id": "S19-MAC"
+    },
+    {
+      "seed_id": "S20",
+      "title": "Wayland unavailable capability",
+      "workflow": "platform_capability",
+      "priority": "D",
+      "intent": "An unavailable platform capability must be represented accurately with a degraded fallback. The original Wayland case is outside Windows/macOS F01 scope, so S24-WIN and S24-MAC carry the degraded-capability intent while S20 stays in the denominator.",
+      "capture_question": "What capability is unavailable, what fallback remains, and is the unsupported state stated truthfully?",
+      "behavior_ids": [],
+      "windows_scenario_id": "S20-WIN",
+      "macos_scenario_id": "S20-MAC"
+    }
+  ]
+}

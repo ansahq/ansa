@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Remove this line to confirm you've reviewed this PR before submitting.
-
 # Ansa
 
 An open-source, local-first keyboard launcher. Rust core, Rust GPUI interface, no account and no webview.

@@ -25,6 +25,17 @@
 //! Input that would exceed [`MAX_TEXT_SCALARS`] is rejected without changing
 //! text, selection or history, and is reported through [`EditRejected`].
 //!
+//! Caret movement, selection extension, word movement and deletion operate on
+//! grapheme clusters. Clipboard cut, copy and paste have a pure model layer so
+//! their contracts are testable without the operating-system clipboard.
+//! [`TextInput::cancel_composition`] restores the exact pre-composition text
+//! and selection instead of committing it.
+//!
+//! Hosts must consult [`TextInput::action_outcome`] before running Enter,
+//! Escape or an editing application action: while an IME composition is active
+//! every such intent defers to the input method, and Escape cancels the
+//! composition instead of dismissing the view.
+//!
 //! With the `upstream-candidate` feature (only for the immutable newer GPUI
 //! revision), the field publishes a single AccessKit `SearchInput` node: the
 //! same focus-tracked element carries the label, value, placeholder, current
@@ -35,6 +46,9 @@
 //! against it.
 
 mod model;
+
+#[cfg(test)]
+mod contracts;
 
 #[cfg(feature = "upstream-candidate")]
 mod a11y;
@@ -62,11 +76,17 @@ actions!(
     text_input,
     [
         Backspace,
+        DeleteWordBackward,
+        DeleteWordForward,
         Delete,
         Left,
         Right,
+        WordLeft,
+        WordRight,
         SelectLeft,
         SelectRight,
+        SelectWordLeft,
+        SelectWordRight,
         SelectAll,
         Home,
         End,
@@ -112,6 +132,84 @@ impl EditRejected {
     /// A short user-facing message suitable for a status line.
     pub fn message(&self) -> &'static str {
         self.reason.message()
+    }
+}
+
+/// A user action that can compete with an active IME composition.
+///
+/// The launcher and form hosts consult [`EditIntents::outcome`] before running
+/// an application action such as "execute" or "dismiss". While text is marked,
+/// every editing or activation intent must defer to the input method; only
+/// Escape has a defined composition-specific result (cancel the composition).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EditIntent {
+    /// Undo the most recent committed edit.
+    Undo,
+    /// Redo the most recently undone edit.
+    Redo,
+    /// Copy the selection.
+    Copy,
+    /// Cut the selection.
+    Cut,
+    /// Paste clipboard text.
+    Paste,
+    /// Move the caret.
+    MoveCaret,
+    /// Extend or collapse the selection.
+    ExtendSelection,
+    /// Delete the grapheme or selection before the caret.
+    Backspace,
+    /// Delete the grapheme or selection after the caret.
+    Delete,
+    /// Activate the focused control (for example the launcher's selected row).
+    Enter,
+    /// Dismiss the current view.
+    Escape,
+}
+
+/// What a host should do with an [`EditIntent`] right now.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EditOutcome {
+    /// No composition is active: run the action normally.
+    Execute,
+    /// An IME composition owns the text: discard the key instead of acting.
+    DeferToComposition,
+    /// Cancel the active composition and consume the key.
+    CancelComposition,
+}
+
+/// A snapshot of the input's composition state for action gating.
+///
+/// This is a typed query so callers do not have to remember that Enter, Escape
+/// and every editing action have different composition semantics.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EditIntents {
+    composing: bool,
+}
+
+impl EditIntents {
+    /// Capture whether an IME composition is active.
+    pub fn new(composing: bool) -> Self {
+        Self { composing }
+    }
+
+    /// Whether an IME composition is active.
+    pub fn is_composing(self) -> bool {
+        self.composing
+    }
+
+    /// Decide what the host should do with `intent`.
+    pub fn outcome(self, intent: EditIntent) -> EditOutcome {
+        match (self.composing, intent) {
+            (false, _) => EditOutcome::Execute,
+            (true, EditIntent::Escape) => EditOutcome::CancelComposition,
+            (true, _) => EditOutcome::DeferToComposition,
+        }
+    }
+
+    /// Whether `intent` may run as an application action.
+    pub fn allows(self, intent: EditIntent) -> bool {
+        self.outcome(intent) == EditOutcome::Execute
     }
 }
 
@@ -168,6 +266,42 @@ impl TextInput {
     /// Whether an IME composition is currently marked.
     pub fn is_composing(&self) -> bool {
         self.model.is_composing()
+    }
+
+    /// A typed snapshot for gating actions that may conflict with composition.
+    pub fn edit_intents(&self) -> EditIntents {
+        EditIntents::new(self.model.is_composing())
+    }
+
+    /// Whether `intent` may run as an application action right now.
+    pub fn is_action_allowed(&self, intent: EditIntent) -> bool {
+        self.edit_intents().allows(intent)
+    }
+
+    /// What the host should do with `intent` right now.
+    pub fn action_outcome(&self, intent: EditIntent) -> EditOutcome {
+        self.edit_intents().outcome(intent)
+    }
+
+    /// Cancel an active IME composition and restore the pre-composition state.
+    ///
+    /// Cancelling is not an edit: text, selection and selection direction are
+    /// restored exactly, no undo entry is created and redo history is kept.
+    /// Returns `false` when no composition is active. Call this when
+    /// [`Self::action_outcome`] returns [`EditOutcome::CancelComposition`].
+    pub fn cancel_composition(&mut self, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        let before = self.model.content().to_owned();
+        if !self.model.cancel_composition() {
+            return false;
+        }
+
+        self.last_layout = None;
+        self.last_bounds = None;
+        self.is_selecting = false;
+        let changed = self.model.content() != before;
+        self.after_text_change(changed, cx);
+        window.invalidate_character_coordinates();
+        true
     }
 
     /// Whether [`Self::undo`] would currently restore an edit.
@@ -378,6 +512,9 @@ impl TextInput {
     }
 
     fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::MoveCaret) {
+            return;
+        }
         if self.model.selected_range().is_empty() {
             let offset = self.model.previous_boundary(self.model.cursor_offset());
             self.move_to(offset, cx);
@@ -387,6 +524,9 @@ impl TextInput {
     }
 
     fn right(&mut self, _: &Right, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::MoveCaret) {
+            return;
+        }
         if self.model.selected_range().is_empty() {
             let offset = self.model.next_boundary(self.model.cursor_offset());
             self.move_to(offset, cx);
@@ -395,42 +535,102 @@ impl TextInput {
         }
     }
 
+    fn word_left(&mut self, _: &WordLeft, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::MoveCaret) {
+            return;
+        }
+        let offset = self
+            .model
+            .previous_word_boundary(self.model.cursor_offset());
+        self.move_to(offset, cx);
+    }
+
+    fn word_right(&mut self, _: &WordRight, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::MoveCaret) {
+            return;
+        }
+        let offset = self.model.next_word_boundary(self.model.cursor_offset());
+        self.move_to(offset, cx);
+    }
+
     fn select_left(&mut self, _: &SelectLeft, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::ExtendSelection) {
+            return;
+        }
         let offset = self.model.previous_boundary(self.model.cursor_offset());
         self.select_to(offset, cx);
     }
 
     fn select_right(&mut self, _: &SelectRight, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::ExtendSelection) {
+            return;
+        }
         let offset = self.model.next_boundary(self.model.cursor_offset());
         self.select_to(offset, cx);
     }
 
+    fn select_word_left(&mut self, _: &SelectWordLeft, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::ExtendSelection) {
+            return;
+        }
+        let offset = self
+            .model
+            .previous_word_boundary(self.model.cursor_offset());
+        self.select_to(offset, cx);
+    }
+
+    fn select_word_right(&mut self, _: &SelectWordRight, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::ExtendSelection) {
+            return;
+        }
+        let offset = self.model.next_word_boundary(self.model.cursor_offset());
+        self.select_to(offset, cx);
+    }
+
     fn select_all(&mut self, _: &SelectAll, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::ExtendSelection) {
+            return;
+        }
         self.model.select_all();
         cx.notify();
     }
 
     fn undo_action(&mut self, _: &Undo, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::Undo) {
+            return;
+        }
         if self.undo(cx) {
             window.invalidate_character_coordinates();
         }
     }
 
     fn redo_action(&mut self, _: &Redo, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::Redo) {
+            return;
+        }
         if self.redo(cx) {
             window.invalidate_character_coordinates();
         }
     }
 
     fn home(&mut self, _: &Home, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::MoveCaret) {
+            return;
+        }
         self.move_to(0, cx);
     }
 
     fn end(&mut self, _: &End, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::MoveCaret) {
+            return;
+        }
         self.move_to(self.model.content().len(), cx);
     }
 
     fn backspace(&mut self, _: &Backspace, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::Backspace) {
+            return;
+        }
         if self.model.selected_range().is_empty() {
             let offset = self.model.previous_boundary(self.model.cursor_offset());
             self.select_to(offset, cx);
@@ -439,8 +639,45 @@ impl TextInput {
     }
 
     fn delete(&mut self, _: &Delete, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::Delete) {
+            return;
+        }
         if self.model.selected_range().is_empty() {
             let offset = self.model.next_boundary(self.model.cursor_offset());
+            self.select_to(offset, cx);
+        }
+        self.replace_text_in_range(None, "", window, cx);
+    }
+
+    fn delete_word_backward(
+        &mut self,
+        _: &DeleteWordBackward,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !self.is_action_allowed(EditIntent::Backspace) {
+            return;
+        }
+        if self.model.selected_range().is_empty() {
+            let offset = self
+                .model
+                .previous_word_boundary(self.model.cursor_offset());
+            self.select_to(offset, cx);
+        }
+        self.replace_text_in_range(None, "", window, cx);
+    }
+
+    fn delete_word_forward(
+        &mut self,
+        _: &DeleteWordForward,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !self.is_action_allowed(EditIntent::Delete) {
+            return;
+        }
+        if self.model.selected_range().is_empty() {
+            let offset = self.model.next_word_boundary(self.model.cursor_offset());
             self.select_to(offset, cx);
         }
         self.replace_text_in_range(None, "", window, cx);
@@ -489,28 +726,44 @@ impl TextInput {
     }
 
     fn paste(&mut self, _: &Paste, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.is_action_allowed(EditIntent::Paste) {
+            return;
+        }
         if let Some(text) = cx.read_from_clipboard().and_then(|item| item.text()) {
             let text = single_line(&text);
-            self.replace_text_in_range(None, text.as_ref(), window, cx);
+            match self.model.paste_text(text.as_ref()) {
+                None => {}
+                Some(Ok(changed)) => {
+                    if changed {
+                        window.invalidate_character_coordinates();
+                    }
+                    self.after_text_change(changed, cx);
+                }
+                Some(Err(rejection)) => self.reject_edit(rejection, cx),
+            }
         }
     }
 
     fn copy(&mut self, _: &Copy, _: &mut Window, cx: &mut Context<Self>) {
-        let selected_range = self.model.selected_range();
-        if !selected_range.is_empty() {
-            cx.write_to_clipboard(ClipboardItem::new_string(
-                self.model.content()[selected_range].to_string(),
-            ));
+        if !self.is_action_allowed(EditIntent::Copy) {
+            return;
+        }
+        if let Some(text) = self.model.selected_text() {
+            cx.write_to_clipboard(ClipboardItem::new_string(text));
         }
     }
 
     fn cut(&mut self, _: &Cut, window: &mut Window, cx: &mut Context<Self>) {
-        let selected_range = self.model.selected_range();
-        if !selected_range.is_empty() {
-            cx.write_to_clipboard(ClipboardItem::new_string(
-                self.model.content()[selected_range].to_string(),
-            ));
-            self.replace_text_in_range(None, "", window, cx);
+        if !self.is_action_allowed(EditIntent::Cut) {
+            return;
+        }
+        if let Some(text) = self.model.cut_selection() {
+            cx.write_to_clipboard(ClipboardItem::new_string(text));
+            self.last_layout = None;
+            self.last_bounds = None;
+            self.is_selecting = false;
+            self.after_text_change(true, cx);
+            window.invalidate_character_coordinates();
         }
     }
 
@@ -599,18 +852,22 @@ impl EntityInputHandler for TextInput {
 
         // Round a native UTF-16 range down to scalar and then UTF-8
         // boundaries. A code-unit offset inside a surrogate pair cannot select
-        // half an astral character.
+        // half an astral character. Reversed ranges are normalised rather than
+        // collapsed.
         let content = self.model.content();
+        let (start_utf16, end_utf16) = if range_utf16.start <= range_utf16.end {
+            (range_utf16.start, range_utf16.end)
+        } else {
+            (range_utf16.end, range_utf16.start)
+        };
         let start = a11y::byte_offset_for_scalar(
             content,
-            a11y::scalar_index_for_utf16(content, range_utf16.start),
+            a11y::scalar_index_for_utf16(content, start_utf16),
         )
         .unwrap_or(0);
-        let end = a11y::byte_offset_for_scalar(
-            content,
-            a11y::scalar_index_for_utf16(content, range_utf16.end),
-        )
-        .unwrap_or(content.len());
+        let end =
+            a11y::byte_offset_for_scalar(content, a11y::scalar_index_for_utf16(content, end_utf16))
+                .unwrap_or(content.len());
 
         self.model.set_selected_range(start..end);
         cx.notify();
@@ -712,7 +969,9 @@ impl EntityInputHandler for TextInput {
 
         let line_point = self.last_bounds?.localize(&point)?;
         let last_layout = self.last_layout.as_ref()?;
-        let utf8_index = last_layout.index_for_x(point.x - line_point.x)?;
+        let utf8_index = last_layout
+            .index_for_x(point.x - line_point.x)?
+            .min(self.model.content().len());
         Some(self.model.offset_to_utf16(utf8_index))
     }
 }
@@ -936,11 +1195,17 @@ impl Render for TextInput {
             .track_focus(&self.focus_handle(cx))
             .cursor(CursorStyle::IBeam)
             .on_action(cx.listener(Self::backspace))
+            .on_action(cx.listener(Self::delete_word_backward))
+            .on_action(cx.listener(Self::delete_word_forward))
             .on_action(cx.listener(Self::delete))
             .on_action(cx.listener(Self::left))
             .on_action(cx.listener(Self::right))
+            .on_action(cx.listener(Self::word_left))
+            .on_action(cx.listener(Self::word_right))
             .on_action(cx.listener(Self::select_left))
             .on_action(cx.listener(Self::select_right))
+            .on_action(cx.listener(Self::select_word_left))
+            .on_action(cx.listener(Self::select_word_right))
             .on_action(cx.listener(Self::select_all))
             .on_action(cx.listener(Self::undo_action))
             .on_action(cx.listener(Self::redo_action))
@@ -1054,6 +1319,18 @@ pub fn install_keybindings(cx: &mut App) {
     const COPY: &str = "cmd-c";
     #[cfg(target_os = "macos")]
     const CUT: &str = "cmd-x";
+    #[cfg(target_os = "macos")]
+    const WORD_LEFT: &str = "alt-left";
+    #[cfg(target_os = "macos")]
+    const WORD_RIGHT: &str = "alt-right";
+    #[cfg(target_os = "macos")]
+    const SELECT_WORD_LEFT: &str = "alt-shift-left";
+    #[cfg(target_os = "macos")]
+    const SELECT_WORD_RIGHT: &str = "alt-shift-right";
+    #[cfg(target_os = "macos")]
+    const DELETE_WORD_BACKWARD: &str = "alt-backspace";
+    #[cfg(target_os = "macos")]
+    const DELETE_WORD_FORWARD: &str = "alt-delete";
 
     #[cfg(not(target_os = "macos"))]
     const UNDO: &str = "ctrl-z";
@@ -1065,14 +1342,32 @@ pub fn install_keybindings(cx: &mut App) {
     const COPY: &str = "ctrl-c";
     #[cfg(not(target_os = "macos"))]
     const CUT: &str = "ctrl-x";
+    #[cfg(not(target_os = "macos"))]
+    const WORD_LEFT: &str = "ctrl-left";
+    #[cfg(not(target_os = "macos"))]
+    const WORD_RIGHT: &str = "ctrl-right";
+    #[cfg(not(target_os = "macos"))]
+    const SELECT_WORD_LEFT: &str = "ctrl-shift-left";
+    #[cfg(not(target_os = "macos"))]
+    const SELECT_WORD_RIGHT: &str = "ctrl-shift-right";
+    #[cfg(not(target_os = "macos"))]
+    const DELETE_WORD_BACKWARD: &str = "ctrl-backspace";
+    #[cfg(not(target_os = "macos"))]
+    const DELETE_WORD_FORWARD: &str = "ctrl-delete";
 
     let mut bindings = vec![
         KeyBinding::new("backspace", Backspace, Some(KEY_CONTEXT)),
+        KeyBinding::new(DELETE_WORD_BACKWARD, DeleteWordBackward, Some(KEY_CONTEXT)),
+        KeyBinding::new(DELETE_WORD_FORWARD, DeleteWordForward, Some(KEY_CONTEXT)),
         KeyBinding::new("delete", Delete, Some(KEY_CONTEXT)),
         KeyBinding::new("left", Left, Some(KEY_CONTEXT)),
         KeyBinding::new("right", Right, Some(KEY_CONTEXT)),
+        KeyBinding::new(WORD_LEFT, WordLeft, Some(KEY_CONTEXT)),
+        KeyBinding::new(WORD_RIGHT, WordRight, Some(KEY_CONTEXT)),
         KeyBinding::new("shift-left", SelectLeft, Some(KEY_CONTEXT)),
         KeyBinding::new("shift-right", SelectRight, Some(KEY_CONTEXT)),
+        KeyBinding::new(SELECT_WORD_LEFT, SelectWordLeft, Some(KEY_CONTEXT)),
+        KeyBinding::new(SELECT_WORD_RIGHT, SelectWordRight, Some(KEY_CONTEXT)),
         KeyBinding::new(UNDO, Undo, Some(KEY_CONTEXT)),
         KeyBinding::new(SELECT_ALL, SelectAll, Some(KEY_CONTEXT)),
         KeyBinding::new(PASTE, Paste, Some(KEY_CONTEXT)),

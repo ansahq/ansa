@@ -12,3 +12,6 @@ name = "ansa_platform_windows"
 path = "src/lib.rs"
 
 # Native integrations use checked, isolated Win32 FFI without external crates.
+# The platform-neutral lifecycle contract is shared with the UI crate.
+[dependencies]
+ansa-host = { path = "../host" }

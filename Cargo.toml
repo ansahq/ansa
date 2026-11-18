@@ -3,7 +3,8 @@ resolver = "2"
 exclude = ["experiments/gpui-accessibility", "target/framework-candidates/pinned-zed"]
 members = [
     "apps/desktop", "apps/cli", "crates/domain", "crates/search", "crates/core",
-    "crates/platform-api", "crates/platform-windows", "crates/ui-components", "crates/ui-gpui",
+    "crates/host", "crates/platform-api", "crates/platform-windows", "crates/ui-components",
+    "crates/ui-gpui",
 ]
 default-members = ["apps/cli", "crates/domain", "crates/search", "crates/core", "crates/platform-api", "crates/platform-windows"]
 

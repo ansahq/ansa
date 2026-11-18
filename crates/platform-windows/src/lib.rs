@@ -5,8 +5,10 @@
 //!   Menu `Programs` folders with bounded, non-recursive-looping traversal.
 //! * Launch a validated `.lnk`/`.exe` path with `ShellExecuteW`.
 //! * Open absolute `http`/`https` URLs only with `ShellExecuteW`.
-//! * Register the default `Ctrl+Space` global hotkey on a dedicated,
-//!   event-driven message-loop thread with deterministic cleanup.
+//! * Register a validated global-hotkey chord (`Ctrl+Space` by default) on a
+//!   dedicated, event-driven message-loop thread with deterministic cleanup,
+//!   typed conflict/denial/invalid-chord errors and explicit
+//!   suspend/resume/rearm lifecycle support.
 //! * Show/hide the launcher's own HWND on the UI thread, including an explicit
 //!   check for denied foreground activation.
 //! * Capture the foreground top-level window before showing the launcher and
@@ -28,6 +30,7 @@
 mod focus;
 #[cfg(windows)]
 mod hotkey;
+mod lifecycle;
 #[cfg(windows)]
 mod start_menu;
 mod types;
@@ -42,7 +45,17 @@ pub use focus::{
     FocusTarget,
 };
 #[cfg(windows)]
-pub use hotkey::HotkeyRegistration;
+pub use hotkey::{global_hotkey_capability, probe_chord};
+#[cfg(windows)]
+pub use hotkey::{
+    HotkeyParseError, HotkeyRegistration, HotkeyRegistrationError, KeyChord, LifecycleOutcome,
+    ProbeOutcome,
+};
+pub use lifecycle::{
+    cursor_position, enumerate_monitors, hide_launcher, launcher_window_live, launcher_window_rect,
+    place_and_show_launcher, place_launcher_window, read_apps_theme, request_launcher_focus,
+    show_launcher_checked, ThemeError,
+};
 pub use types::{AppEntry, CapabilityStatus, HostCapabilities, Platform};
 #[cfg(windows)]
 pub use visibility::{
@@ -143,7 +156,7 @@ pub fn host_capabilities() -> HostCapabilities {
             application_catalog: start_menu::probe_catalog_status(),
             application_launch: CapabilityStatus::Available,
             url_open: CapabilityStatus::Available,
-            global_hotkey: CapabilityStatus::Available,
+            global_hotkey: hotkey::global_hotkey_capability(),
             packaged_applications: CapabilityStatus::Unsupported,
             clipboard_capture: CapabilityStatus::Unsupported,
             window_control: CapabilityStatus::Unsupported,
@@ -151,7 +164,10 @@ pub fn host_capabilities() -> HostCapabilities {
                 "Application discovery scans only the per-user and all-users Start Menu Programs folders for .lnk and .exe entries.",
                 "Shortcut targets are not resolved during discovery; the shell resolves them at launch.",
                 "Packaged/MSIX application enumeration is not implemented and is reported as unsupported.",
-                "The default Ctrl+Space hotkey is registered with RegisterHotKey on a dedicated message-loop thread; a conflicting registration is reported as an error instead of silently intercepting another shortcut.",
+                "The global hotkey is registered with RegisterHotKey on a dedicated message-loop thread; the adapter accepts a validated chord and reports conflict, denial, invalid-chord and worker failures as typed errors instead of silently intercepting another shortcut.",
+                "Global hotkey support is probed with a transient RegisterHotKey call on each capability query; if the development-default Ctrl+Space is owned by an IME or another application, global summon is reported as degraded and a rebind or desktop-shortcut fallback is offered.",
+                "The hotkey lifecycle exposes explicit suspend/resume/rearm operations. Automatic sleep/lock/wake re-registration is not wired: no message-only WM_POWERBROADCAST/WTSSESSION_CHANGE observer is created, so the host must call rearm after its own lifecycle event.",
+                "The rebinding, persistence and recorder contracts live in ansa-platform-api; no rebinding UI is wired in this slice.",
                 "Global hotkey callbacks carry no content and only wake the UI.",
                 "Focus restoration is checked and best-effort: capture_foreground_target records the foreground top-level window, its PID, creating thread, process creation time and an open query-only process handle; dismiss_launcher hides the launcher only on its owning UI thread and restores the captured window only while the launcher still owns the foreground and the target still passes verification.",
                 "launcher_is_foreground lets the UI distinguish Ctrl+Space while the launcher owns focus (dismiss) from Ctrl+Space after the user switched away (capture a new target and activate the launcher instead of hiding it).",
@@ -181,6 +197,7 @@ pub fn host_capabilities() -> HostCapabilities {
             notes: vec![
                 "This adapter supports Windows only.",
                 "No host capability is claimed on this platform.",
+                "No global-hotkey adapter exists for this platform; a desktop shortcut or direct launch is the documented fallback.",
             ],
         }
     }
@@ -237,7 +254,30 @@ mod tests {
         );
         assert_eq!(capabilities.application_launch, CapabilityStatus::Available);
         assert_eq!(capabilities.url_open, CapabilityStatus::Available);
-        assert_eq!(capabilities.global_hotkey, CapabilityStatus::Available);
+        assert!(
+            matches!(
+                capabilities.global_hotkey,
+                CapabilityStatus::Available
+                    | CapabilityStatus::Degraded { .. }
+                    | CapabilityStatus::PermissionRequired
+            ),
+            "global hotkeys must be probed and reported honestly: {:?}",
+            capabilities.global_hotkey
+        );
+        assert!(
+            capabilities
+                .notes
+                .iter()
+                .any(|note| note.contains("probed with a transient RegisterHotKey")),
+            "capability notes must disclose that hotkey support is probed"
+        );
+        assert!(
+            capabilities
+                .notes
+                .iter()
+                .any(|note| note.contains("Automatic sleep/lock/wake re-registration is not wired")),
+            "capability notes must not claim automatic sleep/lock handling"
+        );
         assert_eq!(
             capabilities.packaged_applications,
             CapabilityStatus::Unsupported

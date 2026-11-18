@@ -15,6 +15,7 @@ use gpui::{
 };
 
 mod compat;
+mod host_lifecycle;
 #[cfg(feature = "upstream-candidate")]
 mod live_status;
 
@@ -51,11 +52,11 @@ struct Launcher {
     #[cfg(feature = "upstream-candidate")]
     selection_announcement: Option<String>,
     detail: Option<String>,
-    hotkey: Option<ansa_platform_windows::HotkeyRegistration>,
+    host: host_lifecycle::LauncherHost,
     hotkey_notice: Option<String>,
-    visible: bool,
     glass: bool,
     light: bool,
+    theme_notice: Option<String>,
     appearance_notice: Option<String>,
     #[cfg(target_os = "windows")]
     native_shape: Option<(i32, i32, i32)>,
@@ -130,7 +131,30 @@ impl Launcher {
         a11y_fixture: bool,
         glass: bool,
         light: bool,
+        system_theme: bool,
     ) -> Self {
+        let native_handle = native_handle(window);
+        let host = host_lifecycle::create_host(native_handle);
+        // Observe the system appearance once at startup. If the value is
+        // unavailable, keep the explicit CLI/default choice but report it in
+        // the status line instead of silently pretending the OS was read.
+        // Deterministic debug fixtures keep the CLI/default choice so the
+        // existing interaction smoke does not depend on the machine theme.
+        let (observed_light, theme_notice) = if system_theme {
+            match host.borrow_mut().observe_theme() {
+                Ok(observation) => (
+                    observation.appearance == ansa_host::ThemeAppearance::Light,
+                    None,
+                ),
+                Err(error) => (
+                    false,
+                    Some(format!("System appearance unavailable: {error}")),
+                ),
+            }
+        } else {
+            (false, None)
+        };
+        let light = light || observed_light;
         let input = cx.new(TextInput::new);
         let action_input = cx.new(|cx| {
             let mut input = TextInput::new(cx);
@@ -184,7 +208,7 @@ impl Launcher {
                 })
             })
             .collect();
-        Self {
+        let launcher = Self {
             input,
             action_input,
             panel: None,
@@ -195,21 +219,26 @@ impl Launcher {
             selection_announcement: None,
             detail: None,
             scroll: UniformListScrollHandle::new(),
-            hotkey: None,
+            host: host.clone(),
             hotkey_notice: None,
-            visible: true,
             glass,
             light,
+            theme_notice,
             appearance_notice: None,
             #[cfg(target_os = "windows")]
             native_shape: None,
-            native_handle: native_handle(window),
+            native_handle,
             previous_target: None,
             catalog_refresh: Default::default(),
             _input_subscription: subscription,
             _action_subscription: action_subscription,
             _rejection_subscriptions: rejection_subscriptions,
-        }
+        };
+        // Adopt the window GPUI already created. Window close/quit shutdown is
+        // provided by Drop for Launcher (and the controller's Drop backstop),
+        // so no per-version `on_window_closed` signature is needed here.
+        let _ = host.borrow_mut().adopt_visible();
+        launcher
     }
 
     fn toggle_glass(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
@@ -282,37 +311,7 @@ impl Launcher {
     }
 
     fn dismiss(&mut self, restore: bool, window: &mut Window, cx: &mut Context<Self>) {
-        if self.is_composing(cx) {
-            return;
-        }
-        if self.hotkey.is_some() {
-            if let Some(handle) = self.native_handle {
-                let result = if restore {
-                    ansa_platform_windows::dismiss_launcher(handle, self.previous_target.as_ref())
-                        .map(|outcome| match outcome {
-                            ansa_platform_windows::FocusRestoreOutcome::Restored => {}
-                            ansa_platform_windows::FocusRestoreOutcome::Skipped { reason }
-                            | ansa_platform_windows::FocusRestoreOutcome::Denied { reason } => {
-                                self.status = reason
-                            }
-                        })
-                } else {
-                    ansa_platform_windows::set_launcher_visible(handle, false)
-                };
-                match result {
-                    Ok(()) => {
-                        self.visible = false;
-                        self.engine.hide_root();
-                        self.close_actions(window, cx);
-                        self.previous_target = None;
-                    }
-                    Err(error) => self.status = format!("Cannot hide launcher: {error}"),
-                }
-            }
-        } else {
-            self.status = "Global summon unavailable — use the window or Ctrl+Q to quit".into();
-        }
-        cx.notify();
+        self.dismiss_from_host(restore, window, cx);
     }
 
     fn execute(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -604,6 +603,16 @@ impl Render for Launcher {
                     self.appearance_notice = Some(error);
                     self.glass = false;
                 }
+                // Reapply physical placement when the window size or scale
+                // factor changes. This never re-shows, refocuses or issues a
+                // new invocation.
+                if let Err(error) = self
+                    .host
+                    .borrow_mut()
+                    .reapply_placement(ansa_host::Size::new(shape.0, shape.1))
+                {
+                    eprintln!("Launcher placement: {error}");
+                }
             }
         }
         let theme = self.theme();
@@ -627,6 +636,10 @@ impl Render for Launcher {
         let status_text = match &self.hotkey_notice {
             Some(notice) => format!("{notice} · {}", self.status),
             None => self.status.clone(),
+        };
+        let status_text = match &self.theme_notice {
+            Some(notice) => format!("{notice} · {status_text}"),
+            None => status_text,
         };
         #[cfg(feature = "upstream-candidate")]
         let status_text = self.selection_announcement.clone().unwrap_or(status_text);
@@ -772,7 +785,10 @@ impl Render for Launcher {
                 }
                 cx.notify();
             }))
-            .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
+            .on_action(cx.listener(|this, _: &Quit, _, cx| {
+                this.shutdown_host();
+                cx.quit();
+            }))
             .child(
                 div()
                     .flex()
@@ -1142,6 +1158,15 @@ impl Render for Launcher {
     }
 }
 
+impl Drop for Launcher {
+    fn drop(&mut self) {
+        // Window close and app quit drop the root view. Run the ordered
+        // shutdown here so the hotkey and worker channel are released even if
+        // no explicit Ctrl+Q path ran.
+        self.shutdown_host();
+    }
+}
+
 /// Run the launcher with the platform application built by this crate.
 #[cfg(not(feature = "upstream-candidate"))]
 pub fn run() -> Result<(), String> {
@@ -1169,6 +1194,11 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
     let light = std::env::args().any(|arg| arg == "--light");
     let interaction_smoke =
         cfg!(debug_assertions) && std::env::args().any(|arg| arg == "--interaction-smoke-test");
+    #[cfg(debug_assertions)]
+    let lifecycle_smoke = std::env::args().any(|arg| arg == "--lifecycle-smoke-test");
+    #[cfg(not(debug_assertions))]
+    let lifecycle_smoke = false;
+    let system_theme = !a11y_fixture && !interaction_smoke && !lifecycle_smoke;
     let initial_target = if a11y_fixture {
         None
     } else {
@@ -1203,7 +1233,7 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             window_background: WindowBackgroundAppearance::Transparent,
             app_id: Some("dev.ansa.launcher".into()),
             ..Default::default()
-        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, glass, light))) else {
+        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, glass, light, system_theme))) else {
             *error_for_app.borrow_mut() = Some("Ansa could not create a GPUI window. Check your GPU driver and native dependencies.".to_string());
             cx.quit(); return;
         };
@@ -1234,6 +1264,23 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             cx.quit();
             return;
         }
+        #[cfg(debug_assertions)]
+        if lifecycle_smoke {
+            let cycles = match host_lifecycle::lifecycle_cycles() {
+                Ok(cycles) => cycles,
+                Err(error) => {
+                    *error_for_app.borrow_mut() = Some(error);
+                    cx.quit();
+                    return;
+                }
+            };
+            let failure = error_for_app.clone();
+            let _ = handle.update(cx, |_, window, cx| {
+                host_lifecycle::run_lifecycle_smoke(cx.entity(), window, cycles, failure);
+            });
+            cx.activate(true);
+            return;
+        }
         if a11y_fixture {
             // Built-ins only, no discovery, account state, clipboard writes or
             // external actions. The probe starts this process and talks to it.
@@ -1257,38 +1304,36 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                 this.native_handle
             }).ok().flatten();
             let (sender, receiver) = async_channel::bounded(1);
-            let hotkey = ansa_platform_windows::HotkeyRegistration::register(move || {
-                let captured = ansa_platform_windows::capture_foreground_target(hwnd);
-                let _ = sender.try_send((std::time::Instant::now(), captured));
+            let hotkey = ansa_platform_windows::HotkeyRegistration::register({
+                let sender = sender.clone();
+                move || {
+                    let captured = ansa_platform_windows::capture_foreground_target(hwnd);
+                    let _ = sender.try_send((std::time::Instant::now(), captured));
+                }
             });
             let _ = handle.update(cx, |this, _, cx| {
                 match hotkey {
-                    Ok(hotkey) => { this.hotkey = Some(hotkey); this.status.push_str(" · Ctrl+Space to summon"); }
+                    Ok(hotkey) => {
+                        this.install_hotkey(hotkey, sender);
+                        this.status.push_str(" · Ctrl+Space to summon");
+                    }
                     Err(error) => this.hotkey_notice = Some(format!("Ctrl+Space unavailable: {error}")),
                 }
                 if !interaction_smoke { this.refresh_catalog(cx); }
                 cx.notify();
             });
+            host_lifecycle::watch_environment(handle, cx);
             cx.spawn(async move |cx| {
                 while let Ok((captured_at, target)) = receiver.recv().await {
                     // A blocked UI must not act on a stale summon intent later.
                     if captured_at.elapsed() > std::time::Duration::from_secs(1) { continue; }
                     if handle.update(cx, |this, window, cx| {
-                        if this.visible && this.native_handle.is_some_and(ansa_platform_windows::launcher_is_foreground) {
+                        if this.host.borrow().state().is_visible()
+                            && this.native_handle.is_some_and(ansa_platform_windows::launcher_is_foreground)
+                        {
                             this.dismiss(true, window, cx);
-                        }
-                        else {
-                            this.previous_target = target;
-                            if let Some(handle) = this.native_handle
-                                && let Err(error) = ansa_platform_windows::set_launcher_visible(handle, true)
-                            {
-                                this.status = format!("Activation needs attention: {error}");
-                            }
-                            this.visible = true;
-                            this.engine.begin_invocation();
-                            window.activate_window();
-                            compat::focus(window, &this.input.focus_handle(cx), cx);
-                            cx.notify();
+                        } else {
+                            this.summon_from_host(target, window, cx);
                         }
                     }).is_err() { break; }
                 }

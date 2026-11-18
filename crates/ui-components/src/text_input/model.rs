@@ -4,6 +4,21 @@
 //! history. It has no GPUI dependency so grapheme, UTF-16 and history behavior
 //! can be tested without a window. All offsets stored here are UTF-8 byte
 //! offsets; the platform-facing conversions live in the same type.
+//!
+//! Caret positions and selections produced by editing or pointer input always
+//! land on a grapheme boundary. Accessibility text ranges use AccessKit's
+//! character unit (a Unicode scalar value) and may therefore name the base or a
+//! combining mark inside one grapheme; the model accepts those requests but
+//! never stores an offset inside a UTF-8 scalar.
+//!
+//! Clipboard, word movement and composition cancellation are pure model
+//! operations so their contracts can be tested without an operating-system
+//! clipboard or a window.
+//!
+//! Coalescing policy: every `replace_text`, accessibility replacement, cut or
+//! paste is exactly one undo transaction. All marked updates between the first
+//! [`TextModel::replace_and_mark_text`] and its commit or cancel form one
+//! transaction; a cancelled composition records nothing and preserves redo.
 
 use std::ops::Range;
 use unicode_segmentation::UnicodeSegmentation;
@@ -128,14 +143,19 @@ impl TextModel {
         }
     }
 
+    /// Round `offset` down to the nearest grapheme boundary.
+    pub(crate) fn snap_to_grapheme(&self, offset: usize) -> usize {
+        floor_grapheme_boundary(&self.content, offset)
+    }
+
     pub(crate) fn move_to(&mut self, offset: usize) {
-        let offset = offset.min(self.content.len());
+        let offset = self.snap_to_grapheme(offset);
         self.selected_range = offset..offset;
         self.selection_reversed = false;
     }
 
     pub(crate) fn select_to(&mut self, offset: usize) {
-        let offset = offset.min(self.content.len());
+        let offset = self.snap_to_grapheme(offset);
         if self.selection_reversed {
             self.selected_range.start = offset;
         } else {
@@ -167,16 +187,51 @@ impl TextModel {
             .unwrap_or(self.content.len())
     }
 
+    /// Start of the word before `offset`, skipping trailing punctuation and
+    /// whitespace. Word boundaries come from Unicode word segmentation, not
+    /// ASCII whitespace splitting.
+    pub(crate) fn previous_word_boundary(&self, offset: usize) -> usize {
+        let offset = offset.min(self.content.len());
+        let mut candidate = 0;
+        for (index, segment) in self.content.split_word_bound_indices() {
+            if index >= offset {
+                break;
+            }
+            if is_word_segment(segment) {
+                candidate = index;
+            }
+        }
+        floor_grapheme_boundary(&self.content, candidate)
+    }
+
+    /// End of the word containing or following `offset`, skipping punctuation
+    /// and whitespace between words.
+    pub(crate) fn next_word_boundary(&self, offset: usize) -> usize {
+        let offset = offset.min(self.content.len());
+        for (index, segment) in self.content.split_word_bound_indices() {
+            if is_word_segment(segment) && index + segment.len() > offset {
+                return floor_grapheme_boundary(&self.content, index + segment.len());
+            }
+        }
+        self.content.len()
+    }
+
     pub(crate) fn offset_from_utf16(&self, offset: usize) -> usize {
         utf16_offset_to_utf8(&self.content, offset)
     }
 
+    /// Convert a UTF-8 byte offset to UTF-16 code units.
+    ///
+    /// An offset inside a scalar rounds down to that scalar's start, so a host
+    /// text service never receives a position in the middle of a surrogate
+    /// pair.
     pub(crate) fn offset_to_utf16(&self, offset: usize) -> usize {
+        let offset = offset.min(self.content.len());
         let mut utf8_count = 0;
         let mut utf16_count = 0;
 
         for character in self.content.chars() {
-            if utf8_count >= offset {
+            if utf8_count + character.len_utf8() > offset {
                 break;
             }
             utf8_count += character.len_utf8();
@@ -186,12 +241,36 @@ impl TextModel {
         utf16_count
     }
 
-    pub(crate) fn range_to_utf16(&self, range: &Range<usize>) -> Range<usize> {
-        self.offset_to_utf16(range.start)..self.offset_to_utf16(range.end)
+    /// Total document length in UTF-16 code units.
+    pub(crate) fn utf16_len(&self) -> usize {
+        self.content.encode_utf16().count()
     }
 
+    /// Convert a document range to UTF-16, normalising reversed ranges.
+    pub(crate) fn range_to_utf16(&self, range: &Range<usize>) -> Range<usize> {
+        let (start, end) = if range.start <= range.end {
+            (range.start, range.end)
+        } else {
+            (range.end, range.start)
+        };
+        self.offset_to_utf16(start)..self.offset_to_utf16(end)
+    }
+
+    /// Convert a UTF-16 host range to UTF-8 bytes.
+    ///
+    /// Out-of-bounds offsets clamp to the document and reversed ranges are
+    /// normalised. Offsets inside a surrogate pair round down to the start of
+    /// the scalar, so the returned range always indexes valid UTF-8.
     pub(crate) fn range_from_utf16(&self, range_utf16: &Range<usize>) -> Range<usize> {
-        self.offset_from_utf16(range_utf16.start)..self.offset_from_utf16(range_utf16.end)
+        let len = self.utf16_len();
+        let start = range_utf16.start.min(len);
+        let end = range_utf16.end.min(len);
+        let (start, end) = if start <= end {
+            (start, end)
+        } else {
+            (end, start)
+        };
+        self.offset_from_utf16(start)..self.offset_from_utf16(end)
     }
 
     /// The fixed and active ends of the selection, in UTF-8 bytes.
@@ -444,7 +523,10 @@ impl TextModel {
         }
 
         self.content.replace_range(range.clone(), new_text);
-        let caret = range.start + new_text.len();
+        // Inserted text can merge with the following cluster (for example a
+        // dead-key mark before an existing base character). Keep the caret on
+        // a grapheme boundary by moving it to the end of the merged cluster.
+        let caret = ceil_grapheme_boundary(&self.content, range.start + new_text.len());
         self.selected_range = caret..caret;
         self.selection_reversed = false;
         self.marked_range = None;
@@ -485,11 +567,25 @@ impl TextModel {
             self.marked_range = Some(range.start..range.start + new_text.len());
         }
 
-        let caret = range.start + new_text.len();
+        let caret = ceil_grapheme_boundary(&self.content, range.start + new_text.len());
         self.selected_range = new_selected_range_utf16
             .map(|selected| {
-                let start = range.start + utf16_offset_to_utf8(new_text, selected.start);
-                let end = range.start + utf16_offset_to_utf8(new_text, selected.end);
+                // The host range is relative to `new_text`, may be reversed
+                // and may name a code unit inside a surrogate pair. Clamp to
+                // the inserted text, then keep the preedit selection on
+                // grapheme boundaries in the final document as well: the
+                // replacement itself can start inside a cluster.
+                let (start, end) = if selected.start <= selected.end {
+                    (selected.start, selected.end)
+                } else {
+                    (selected.end, selected.start)
+                };
+                let start =
+                    floor_grapheme_boundary(new_text, utf16_offset_to_utf8(new_text, start));
+                let end = floor_grapheme_boundary(new_text, utf16_offset_to_utf8(new_text, end))
+                    .max(start);
+                let start = floor_grapheme_boundary(&self.content, range.start + start);
+                let end = floor_grapheme_boundary(&self.content, range.start + end).max(start);
                 start..end
             })
             .unwrap_or(caret..caret);
@@ -510,6 +606,72 @@ impl TextModel {
         if let Some(origin) = self.composition_origin.take() {
             self.finish_composition(origin);
         }
+    }
+
+    /// Abandon an active composition and restore the state before it started.
+    ///
+    /// Restores text, selection and selection direction exactly. No undo entry
+    /// is recorded and existing redo history is preserved, so cancelling an IME
+    /// composition is not an edit. Returns `false` when no composition is
+    /// active.
+    pub(crate) fn cancel_composition(&mut self) -> bool {
+        let Some(origin) = self.composition_origin.take() else {
+            return false;
+        };
+        self.content = origin.content;
+        self.selected_range = origin.selected_range;
+        self.selection_reversed = origin.selection_reversed;
+        self.marked_range = None;
+        true
+    }
+
+    /// The selected text, for a model-level copy.
+    ///
+    /// Returns `None` for an empty selection or while an IME composition owns
+    /// the text.
+    pub(crate) fn selected_text(&self) -> Option<String> {
+        if self.is_composing() || self.composition_origin.is_some() {
+            return None;
+        }
+        let range = self.selected_range.clone();
+        (range.start < range.end && range.end <= self.content.len())
+            .then(|| self.content[range].to_owned())
+    }
+
+    /// Remove the selection and return it, for a model-level cut.
+    ///
+    /// The removal is one undo transaction and restores the pre-cut selection
+    /// on undo. Returns `None` while composing or when the selection is empty.
+    pub(crate) fn cut_selection(&mut self) -> Option<String> {
+        let text = self.selected_text()?;
+        match self.replace_text(None, "") {
+            Ok(_) => Some(text),
+            // Removing text can never exceed the size limit.
+            Err(_) => None,
+        }
+    }
+
+    /// Replace the selection with clipboard content, for a model-level paste.
+    ///
+    /// `None` means an IME composition is active and the input method owns the
+    /// text. A size violation is returned as an [`EditRejection`] before any
+    /// mutation, exactly like [`Self::replace_text`].
+    pub(crate) fn paste_text(&mut self, text: &str) -> Option<Result<bool, EditRejection>> {
+        if self.is_composing() || self.composition_origin.is_some() {
+            return None;
+        }
+        Some(self.replace_text(None, text))
+    }
+
+    /// Undo/redo entry and byte counts, for invariant tests.
+    #[cfg(test)]
+    pub(crate) fn history_sizes(&self) -> (usize, usize, usize, usize) {
+        (
+            self.undo.len(),
+            self.redo.len(),
+            self.undo_bytes,
+            self.redo_bytes,
+        )
     }
 
     /// Reset all text, selection and composition state, and discard history.
@@ -534,10 +696,14 @@ impl TextModel {
 }
 
 /// Convert a UTF-16 code-unit offset within `text` to a UTF-8 byte offset.
+///
+/// A UTF-16 offset can point at the second code unit of a surrogate pair. In
+/// that case the offset rounds down to the start of the astral scalar, never
+/// past it and never into the middle of its UTF-8 encoding.
 fn utf16_offset_to_utf8(text: &str, offset: usize) -> usize {
     let mut utf16_count = 0;
     for (index, character) in text.char_indices() {
-        if utf16_count >= offset {
+        if utf16_count + character.len_utf16() > offset {
             return index;
         }
         utf16_count += character.len_utf16();
@@ -545,9 +711,56 @@ fn utf16_offset_to_utf8(text: &str, offset: usize) -> usize {
     text.len()
 }
 
+/// Round a byte offset down to a grapheme-cluster boundary.
+fn floor_grapheme_boundary(text: &str, offset: usize) -> usize {
+    let mut offset = offset.min(text.len());
+    while offset > 0 && !text.is_char_boundary(offset) {
+        offset -= 1;
+    }
+
+    for (start, grapheme) in text.grapheme_indices(true) {
+        let end = start + grapheme.len();
+        if offset == end {
+            return offset;
+        }
+        if offset < end {
+            return start;
+        }
+    }
+    text.len()
+}
+
+/// Round a byte offset up to the next grapheme-cluster boundary.
+fn ceil_grapheme_boundary(text: &str, offset: usize) -> usize {
+    let offset = offset.min(text.len());
+    for (start, grapheme) in text.grapheme_indices(true) {
+        if offset <= start {
+            return start;
+        }
+        let end = start + grapheme.len();
+        if offset <= end {
+            return end;
+        }
+    }
+    text.len()
+}
+
+/// Whether a Unicode word segment contains letters, digits or an underscore.
+fn is_word_segment(segment: &str) -> bool {
+    segment
+        .chars()
+        .any(|character| character.is_alphanumeric() || character == '_')
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Build a range without the compile-time `reversed_empty_ranges` lint;
+    /// the model must accept reversed host ranges at runtime.
+    fn range(start: usize, end: usize) -> Range<usize> {
+        start..end
+    }
 
     fn model_with(text: &str) -> TextModel {
         let mut model = TextModel::default();
@@ -984,6 +1197,364 @@ mod tests {
         }
         assert_eq!(undone, MAX_HISTORY_ENTRIES);
         assert_eq!(model.content().len(), 20);
+        assert!(model.undo.len() + model.redo.len() <= MAX_HISTORY_ENTRIES);
+    }
+
+    #[test]
+    fn utf16_conversion_rounds_down_inside_surrogate_pairs() {
+        let model = model_with("A😀B");
+
+        assert_eq!(model.utf16_len(), 4);
+        assert_eq!(model.offset_from_utf16(0), 0);
+        assert_eq!(model.offset_from_utf16(1), 1);
+        assert_eq!(model.offset_from_utf16(2), 1);
+        assert_eq!(model.offset_from_utf16(3), 5);
+        assert_eq!(model.offset_from_utf16(4), 6);
+        assert_eq!(model.offset_from_utf16(usize::MAX), 6);
+
+        assert_eq!(model.offset_to_utf16(0), 0);
+        assert_eq!(model.offset_to_utf16(1), 1);
+        for byte_offset in 2..5 {
+            assert_eq!(model.offset_to_utf16(byte_offset), 1);
+        }
+        assert_eq!(model.offset_to_utf16(5), 3);
+        assert_eq!(model.offset_to_utf16(6), 4);
+        assert_eq!(model.offset_to_utf16(usize::MAX), 4);
+    }
+
+    #[test]
+    fn host_ranges_clamp_and_normalise_instead_of_slicing() {
+        let model = model_with("abc");
+
+        assert_eq!(model.range_from_utf16(&range(5, 2)), 2..3);
+        assert_eq!(model.range_from_utf16(&(0..usize::MAX)), 0..3);
+        assert_eq!(model.range_to_utf16(&range(2, 1)), 1..2);
+
+        let astral = model_with("A😀");
+        // A range that starts inside the surrogate pair and ends before it is
+        // normalised, then rounded to the start of the astral scalar.
+        assert_eq!(astral.range_from_utf16(&range(3, 1)), 1..5);
+    }
+
+    #[test]
+    fn caret_and_selection_snap_to_grapheme_boundaries() {
+        let mut model = model_with("a👨‍👩‍👧‍👦e\u{301}b");
+        let family_start = "a".len();
+        let family_end = "a👨‍👩‍👧‍👦".len();
+        let mark_end = "a👨‍👩‍👧‍👦e\u{301}".len();
+
+        model.move_to(family_start + 2);
+        assert_eq!(model.cursor_offset(), family_start);
+
+        model.move_to(family_end);
+        assert_eq!(model.cursor_offset(), family_end);
+
+        model.select_to(family_start + 3);
+        assert_eq!(model.selected_range(), family_start..family_end);
+        assert!(model.selection_reversed());
+        assert_eq!(model.cursor_offset(), family_start);
+
+        model.move_to(mark_end - 1);
+        assert_eq!(model.cursor_offset(), mark_end - "e\u{301}".len());
+
+        model.move_to(model.content().len());
+        assert_eq!(model.cursor_offset(), model.content().len());
+    }
+
+    #[test]
+    fn backspace_and_delete_remove_whole_extended_graphemes() {
+        for grapheme in ["🇯🇵", "👍🏽", "👨‍👩‍👧‍👦", "e\u{301}", "क्ष"]
+        {
+            let mut model = model_without_history(grapheme);
+            model.move_to(model.content().len());
+            let start = model.previous_boundary(model.cursor_offset());
+            assert_eq!(start, 0, "{grapheme} must delete as one cluster");
+            model.select_to(start);
+            assert!(model.replace_text(None, "").unwrap());
+            assert_eq!(model.content(), "");
+
+            let mut model = model_without_history("");
+            assert!(model.replace_text(None, grapheme).unwrap());
+            model.move_to(0);
+            let end = model.next_boundary(0);
+            assert_eq!(end, grapheme.len(), "{grapheme} must delete forwards");
+            model.select_to(end);
+            assert!(model.replace_text(None, "").unwrap());
+            assert_eq!(model.content(), "");
+        }
+    }
+
+    #[test]
+    fn movement_through_mixed_bidi_text_is_logical() {
+        let text = "abc שלום 123";
+        let mut model = model_without_history(text);
+
+        let expected: Vec<usize> = text
+            .grapheme_indices(true)
+            .map(|(index, _)| index)
+            .chain(std::iter::once(text.len()))
+            .collect();
+        let mut actual = vec![0];
+        model.move_to(0);
+        loop {
+            let next = model.next_boundary(model.cursor_offset());
+            if next == model.cursor_offset() {
+                break;
+            }
+            actual.push(next);
+            model.move_to(next);
+        }
+        assert_eq!(actual, expected, "logical offsets must increase");
+
+        // Reversed movement visits the same logical boundaries in reverse.
+        let mut reverse = vec![model.cursor_offset()];
+        while model.cursor_offset() > 0 {
+            model.move_to(model.previous_boundary(model.cursor_offset()));
+            reverse.push(model.cursor_offset());
+        }
+        reverse.reverse();
+        assert_eq!(reverse, expected);
+    }
+
+    #[test]
+    fn word_movement_uses_unicode_word_boundaries() {
+        let model = model_with("hello, world 123");
+
+        assert_eq!(model.previous_word_boundary(0), 0);
+        assert_eq!(model.next_word_boundary(0), "hello".len());
+        assert_eq!(
+            model.previous_word_boundary("hello".len()),
+            0,
+            "an offset at a word start moves to the previous word"
+        );
+        assert_eq!(
+            model.next_word_boundary("hello".len()),
+            "hello, world".len(),
+            "punctuation and spaces are skipped"
+        );
+        assert_eq!(
+            model.previous_word_boundary("hello, world".len()),
+            "hello, ".len()
+        );
+        assert_eq!(
+            model.next_word_boundary(model.content().len()),
+            model.content().len()
+        );
+
+        // Word boundaries are also grapheme boundaries for combining marks.
+        let devanagari = model_with("नमस्ते दुनिया");
+        let boundaries = [
+            devanagari.previous_word_boundary(4),
+            devanagari.next_word_boundary(0),
+            devanagari.next_word_boundary(4),
+        ];
+        for boundary in boundaries {
+            assert_eq!(devanagari.snap_to_grapheme(boundary), boundary);
+        }
+    }
+
+    #[test]
+    fn cancel_composition_restores_text_selection_and_direction() {
+        let mut model = model_without_history("abcdef");
+        model.move_to(4);
+        model.select_to(2);
+        let selection = model.selected_range();
+        let reversed = model.selection_reversed();
+
+        assert!(
+            model
+                .replace_and_mark_text(Some(0..6), "にほん", Some(1..1))
+                .unwrap()
+        );
+        assert_eq!(model.content(), "にほん");
+        assert!(model.is_composing());
+
+        // Cancelling is not an edit: existing redo history survives.
+        assert!(model.cancel_composition());
+        assert_eq!(model.content(), "abcdef");
+        assert_eq!(model.selected_range(), selection);
+        assert_eq!(model.selection_reversed(), reversed);
+        assert!(!model.is_composing());
+        assert!(!model.can_undo());
+        assert!(!model.cancel_composition());
+    }
+
+    #[test]
+    fn cancel_composition_keeps_redo_history() {
+        let mut model = model_without_history("abc");
+        assert!(model.replace_text(None, "d").unwrap());
+        assert!(model.undo());
+        assert!(model.can_redo());
+
+        model.move_to(3);
+        assert!(model.replace_and_mark_text(None, "に", Some(1..1)).unwrap());
+        assert!(model.cancel_composition());
+
+        assert_eq!(model.content(), "abc");
+        assert!(model.can_redo());
+        assert!(model.redo());
+        assert_eq!(model.content(), "abcd");
+    }
+
+    #[test]
+    fn composition_commit_undoes_to_the_pre_composition_selection() {
+        let mut model = model_without_history("abcdef");
+        model.move_to(4);
+        model.select_to(2);
+
+        assert!(model.replace_and_mark_text(None, "X", Some(1..1)).unwrap());
+        model.unmark();
+        assert_eq!(model.content(), "abXef");
+        assert_eq!(model.selected_range(), 3..3);
+
+        assert!(model.undo());
+        assert_eq!(model.content(), "abcdef");
+        assert_eq!(model.selected_range(), 2..4);
+        assert!(model.selection_reversed());
+
+        assert!(model.redo());
+        assert_eq!(model.content(), "abXef");
+        assert_eq!(model.selected_range(), 3..3);
+        assert!(!model.selection_reversed());
+    }
+
+    #[test]
+    fn composition_selection_rounds_to_grapheme_boundaries() {
+        let mut model = model_without_history("");
+        let family_end = "a👨‍👩‍👧‍👦".len();
+
+        // The platform reports a reversed UTF-16 selection whose start falls
+        // inside the family emoji's scalar sequence.
+        assert!(
+            model
+                .replace_and_mark_text(Some(0..0), "a👨‍👩‍👧‍👦b", Some(range(12, 2)))
+                .unwrap()
+        );
+        assert_eq!(model.selected_range(), "a".len()..family_end);
+        assert!(!model.selection_reversed());
+        assert_eq!(
+            model.selected_range().start,
+            model.snap_to_grapheme(model.selected_range().start)
+        );
+        assert_eq!(
+            model.selected_range().end,
+            model.snap_to_grapheme(model.selected_range().end)
+        );
+    }
+
+    #[test]
+    fn model_clipboard_operations_round_trip_without_an_os_clipboard() {
+        let mut model = model_without_history("hello world");
+        model.move_to(6);
+        model.select_to(11);
+
+        assert_eq!(model.selected_text().as_deref(), Some("world"));
+        assert_eq!(model.cut_selection().as_deref(), Some("world"));
+        assert_eq!(model.content(), "hello ");
+        assert_eq!(model.selected_range(), 6..6);
+
+        assert!(model.undo());
+        assert_eq!(model.content(), "hello world");
+        assert_eq!(model.selected_range(), 6..11);
+
+        assert_eq!(
+            model.paste_text("there"),
+            Some(Ok(true)),
+            "paste replaces the selection as one transaction"
+        );
+        assert_eq!(model.content(), "hello there");
+        assert_eq!(model.selected_range(), 11..11);
+
+        assert_eq!(model.paste_text("!"), Some(Ok(true)));
+        assert_eq!(model.content(), "hello there!");
+        assert!(model.undo());
+        assert_eq!(model.content(), "hello there");
+        assert!(model.undo());
+        assert_eq!(model.content(), "hello world");
+    }
+
+    #[test]
+    fn clipboard_operations_are_deferred_during_composition() {
+        let mut model = model_without_history("abc");
+        model.move_to(3);
+        assert!(model.replace_and_mark_text(None, "に", Some(1..1)).unwrap());
+        let composing = model.content().to_owned();
+
+        assert_eq!(model.selected_text(), None);
+        assert_eq!(model.cut_selection(), None);
+        assert_eq!(model.paste_text("x"), None);
+        assert_eq!(model.content(), composing);
+        assert!(model.is_composing());
+        assert!(!model.can_undo());
+    }
+
+    #[test]
+    fn dead_key_marks_and_altgr_characters_are_text_transactions() {
+        let mut model = model_without_history("e");
+        model.move_to(1);
+        assert!(model.replace_text(None, "\u{301}").unwrap());
+        assert_eq!(model.content(), "e\u{301}");
+        assert_eq!(model.previous_boundary(model.cursor_offset()), 0);
+        assert!(model.undo());
+        assert_eq!(model.content(), "e");
+
+        for character in ["€", "@", "ß", "æ", "œ"] {
+            let mut model = model_without_history("");
+            assert!(model.replace_text(None, character).unwrap());
+            assert_eq!(model.content(), character);
+            assert!(model.undo());
+            assert_eq!(model.content(), "");
+        }
+    }
+
+    #[test]
+    fn paste_and_marked_text_reject_at_exactly_one_over_the_limit() {
+        let at_limit = "a".repeat(MAX_TEXT_SCALARS);
+        let mut model = model_without_history(&at_limit);
+        model.move_to(0);
+        model.select_to(1);
+        assert_eq!(model.paste_text("b"), Some(Ok(true)));
+        assert_eq!(model.content().chars().count(), MAX_TEXT_SCALARS);
+
+        model.move_to(model.content().len());
+        let rejection = model.paste_text("b").unwrap().unwrap_err();
+        assert_eq!(
+            rejection,
+            EditRejection::TextTooLong {
+                limit: MAX_TEXT_SCALARS,
+                would_be: MAX_TEXT_SCALARS + 1,
+            }
+        );
+        assert_eq!(model.content().chars().count(), MAX_TEXT_SCALARS);
+        assert_eq!(model.selected_range(), at_limit.len()..at_limit.len());
+
+        let mut composing = model_without_history(&"a".repeat(MAX_TEXT_SCALARS - 1));
+        composing.move_to(composing.content().len());
+        assert!(
+            composing
+                .replace_and_mark_text(None, "b", Some(1..1))
+                .unwrap()
+        );
+        assert_eq!(composing.content().chars().count(), MAX_TEXT_SCALARS);
+        assert!(composing.replace_and_mark_text(None, "cc", None).is_err());
+        assert_eq!(composing.content().chars().count(), MAX_TEXT_SCALARS);
+        assert!(composing.is_composing());
+    }
+
+    #[test]
+    fn composition_commits_count_as_single_bounded_transactions() {
+        let mut model = model_without_history("");
+        for index in 0..(MAX_HISTORY_ENTRIES + 10) {
+            let piece = if index % 2 == 0 { "に" } else { "本" };
+            assert!(
+                model
+                    .replace_and_mark_text(None, piece, Some(1..1))
+                    .unwrap()
+            );
+            model.unmark();
+        }
+
+        assert_eq!(model.undo.len(), MAX_HISTORY_ENTRIES);
         assert!(model.undo.len() + model.redo.len() <= MAX_HISTORY_ENTRIES);
     }
 

@@ -5,6 +5,8 @@
 //! * [`AppEntry`] describes a launchable application discovered on the host.
 //! * [`CapabilityStatus`] reports honestly whether a host feature works.
 //! * [`HostCapabilities`] is a fresh capability probe, not a cached promise.
+//! * [`hotkey`] defines the platform-neutral chord grammar, registration
+//!   outcomes, persisted configuration, manager state machine and recorder.
 //!
 //! The caller maps [`AppEntry`] into its own domain command type (for example
 //! `ansa_domain::Command`) at the boundary. This crate intentionally does not
@@ -20,6 +22,21 @@
 #![deny(missing_debug_implementations)]
 
 use std::fmt;
+
+pub mod hotkey;
+
+pub use hotkey::{
+    ChordParseError, ConflictCheck, Hotkey, HotkeyBackend, HotkeyBinding, HotkeyConfig,
+    HotkeyConfigError, HotkeyConfigLoad, HotkeyError, HotkeyManager, HotkeyRecovery, HotkeyStatus,
+    HotkeyStore, HotkeyStoreError, HotkeyWake, IgnoreReason, Key, KeyChord, Modifier, Modifiers,
+    RearmOutcome, RebindOutcome, RecordOutcome, RecorderCancel, RecorderError, RecorderEvent,
+    RecorderKey, RecorderPhase, RegistrationOutcome, ResumeOutcome, ShortcutRecorder,
+    ShutdownOutcome, SuspendOutcome, DEFAULT_SUMMON_CHORD, HOTKEY_CONFIG_HEADER,
+    HOTKEY_CONFIG_VERSION, SUMMON_ACTION,
+};
+
+#[cfg(windows)]
+pub use hotkey::WindowsHotkeyBackend;
 
 /// A launchable application entry returned by discovery.
 ///
@@ -231,7 +248,10 @@ mod imp {
     }
 
     pub(super) fn host_capabilities() -> HostCapabilities {
-        let capabilities = host::host_capabilities();
+        let mut capabilities = host::host_capabilities();
+        capabilities.notes.push(
+            "The hotkey chord, persistence, manager and recorder contracts are implemented in ansa-platform-api; no desktop rebinding UI is wired in this slice.",
+        );
         HostCapabilities {
             platform: map_platform(capabilities.platform),
             adapter: capabilities.adapter,
@@ -311,6 +331,7 @@ mod imp {
             notes: vec![
                 "This slice implements the Windows adapter only.",
                 "No application discovery, launch or URL handler is claimed on this platform.",
+                "No global-hotkey adapter exists on this platform; global_hotkey is unsupported and the fallback is a desktop shortcut or direct launch.",
             ],
         }
     }
@@ -392,7 +413,16 @@ mod tests {
             capabilities.packaged_applications,
             CapabilityStatus::Unsupported
         );
-        assert_eq!(capabilities.global_hotkey, CapabilityStatus::Available);
+        assert!(
+            matches!(
+                capabilities.global_hotkey,
+                CapabilityStatus::Available
+                    | CapabilityStatus::Degraded { .. }
+                    | CapabilityStatus::PermissionRequired
+            ),
+            "global hotkeys must be probed and reported honestly: {:?}",
+            capabilities.global_hotkey
+        );
         assert_eq!(
             capabilities.clipboard_capture,
             CapabilityStatus::Unsupported

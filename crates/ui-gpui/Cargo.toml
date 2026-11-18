@@ -16,4 +16,5 @@ raw-window-handle = "=0.6.2"
 ansa-ui-components = { path = "../ui-components" }
 ansa-core = { path = "../core" }
 ansa-domain = { path = "../domain" }
+ansa-host = { path = "../host" }
 ansa-platform-windows = { path = "../platform-windows" }

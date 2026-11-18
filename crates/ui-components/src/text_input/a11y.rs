@@ -106,6 +106,36 @@ pub(crate) fn scalar_index_for_utf16(text: &str, utf16_offset: usize) -> usize {
     index
 }
 
+/// Whether a character belongs to a right-to-left script.
+///
+/// This is a cheap first-strong-character test, not a full bidi
+/// implementation: it decides the direction AccessKit should announce for the
+/// whole single-line run. Ranges cover Hebrew, Arabic, Syriac, Thaana, NKo,
+/// Samaritan, Mandaic, Adlam and their presentation forms.
+fn is_rtl_strong(character: char) -> bool {
+    matches!(
+        character as u32,
+        0x0590..=0x08FF | 0xFB1D..=0xFDFF | 0xFE70..=0xFEFF | 0x1E800..=0x1EFFF
+    )
+}
+
+/// Direction of the first strong character in `text`.
+///
+/// Digits, punctuation and whitespace are neutral; text with no strong
+/// character defaults to left-to-right. Indexes stay logical regardless of
+/// this value; it only tells assistive technology how to present the run.
+pub(crate) fn text_direction(text: &str) -> TextDirection {
+    for character in text.chars() {
+        if is_rtl_strong(character) {
+            return TextDirection::RightToLeft;
+        }
+        if character.is_alphabetic() {
+            return TextDirection::LeftToRight;
+        }
+    }
+    TextDirection::LeftToRight
+}
+
 /// Word starts as AccessKit `u8` indices, or an empty slice when too long.
 fn word_starts(text: &str) -> Vec<u8> {
     if scalar_count(text) > MAX_WORD_START_INDEX {
@@ -233,7 +263,7 @@ impl A11ySnapshot {
         self.run_id.set(Some(run_id));
 
         let mut node = Node::new(Role::TextRun);
-        node.set_text_direction(TextDirection::LeftToRight);
+        node.set_text_direction(text_direction(&self.text));
         node.set_value(self.text.clone());
         node.set_character_lengths(self.character_lengths.clone());
         if !self.word_starts.is_empty() {
@@ -555,5 +585,73 @@ mod tests {
         assert_eq!(model.a11y_replace_selected("there"), Some(Ok(true)));
         assert_eq!(model.content(), "hello there");
         assert_eq!(model.selected_range(), 11..11);
+    }
+
+    #[test]
+    fn text_direction_uses_the_first_strong_character() {
+        assert_eq!(text_direction(""), TextDirection::LeftToRight);
+        assert_eq!(text_direction("123 456"), TextDirection::LeftToRight);
+        assert_eq!(text_direction("hello שלום"), TextDirection::LeftToRight);
+        assert_eq!(text_direction("שלום hello"), TextDirection::RightToLeft);
+        assert_eq!(text_direction("123 שלום abc"), TextDirection::RightToLeft);
+        assert_eq!(text_direction("مرحبا"), TextDirection::RightToLeft);
+        assert_eq!(text_direction("漢字"), TextDirection::LeftToRight);
+    }
+
+    #[test]
+    fn physical_bounds_scale_at_100_150_200_percent() {
+        use gpui::{point, px, size};
+
+        let bounds = Bounds::new(point(px(10.0), px(20.0)), size(px(100.0), px(32.0)));
+
+        assert_eq!(
+            physical_bounds(bounds, 1.0),
+            Rect {
+                x0: 10.0,
+                y0: 20.0,
+                x1: 110.0,
+                y1: 52.0,
+            }
+        );
+        assert_eq!(
+            physical_bounds(bounds, 1.5),
+            Rect {
+                x0: 15.0,
+                y0: 30.0,
+                x1: 165.0,
+                y1: 78.0,
+            }
+        );
+        assert_eq!(
+            physical_bounds(bounds, 2.0),
+            Rect {
+                x0: 20.0,
+                y0: 40.0,
+                x1: 220.0,
+                y1: 104.0,
+            }
+        );
+    }
+
+    #[test]
+    fn logical_selection_is_independent_of_reported_scale() {
+        let text = "abc שלום 123";
+        let hebrew_start = text.find('ש').expect("mixed fixture contains Hebrew");
+        let hebrew_end = hebrew_start + "שלום".len();
+        let run = NodeId(21);
+
+        // The published selection is reversed and spans the logical byte range
+        // of the Hebrew word, with Latin text on either side.
+        let selection = selection_positions(text, hebrew_end, hebrew_start, run);
+
+        for scale in [1.0_f32, 1.5, 2.0] {
+            let snapshot = A11ySnapshot::new(text, hebrew_end, hebrew_start, None);
+            snapshot.run_id.set(Some(run));
+            assert_eq!(
+                snapshot.selection_byte_offsets(&selection),
+                Some((hebrew_end, hebrew_start)),
+                "logical selection must not depend on scale {scale}"
+            );
+        }
     }
 }

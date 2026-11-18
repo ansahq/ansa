@@ -89,6 +89,10 @@ name = "ansa-domain"
 version = "0.1.0"
 
 [[package]]
+name = "ansa-host"
+version = "0.1.0"
+
+[[package]]
 name = "ansa-platform-api"
 version = "0.1.0"
 dependencies = [
@@ -98,6 +102,9 @@ dependencies = [
 [[package]]
 name = "ansa-platform-windows"
 version = "0.1.0"
+dependencies = [
+ "ansa-host",
+]
 
 [[package]]
 name = "ansa-search"
@@ -120,6 +127,7 @@ version = "0.1.0"
 dependencies = [
  "ansa-core",
  "ansa-domain",
+ "ansa-host",
  "ansa-platform-windows",
  "ansa-ui-components",
  "async-channel 2.5.0",

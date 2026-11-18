@@ -12,6 +12,7 @@ pub use text_input::Changed;
 pub use text_input::DEFAULT_ACCESSIBILITY_LABEL;
 pub use text_input::{DEFAULT_PLACEHOLDER, TextInput, install_keybindings};
 pub use text_input::{
-    EditRejected, EditRejection, MAX_HISTORY_BYTES, MAX_HISTORY_ENTRIES, MAX_TEXT_SCALARS,
+    EditIntent, EditIntents, EditOutcome, EditRejected, EditRejection, MAX_HISTORY_BYTES,
+    MAX_HISTORY_ENTRIES, MAX_TEXT_SCALARS,
 };
 pub use theme::Theme;

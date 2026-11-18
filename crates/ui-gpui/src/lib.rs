@@ -44,6 +44,8 @@ actions!(
 );
 
 #[cfg(debug_assertions)]
+mod perf;
+#[cfg(debug_assertions)]
 mod smoke;
 
 struct Launcher {
@@ -139,6 +141,7 @@ impl Launcher {
         window: &mut Window,
         cx: &mut Context<Self>,
         a11y_fixture: bool,
+        perf_fixture: bool,
         glass: bool,
         light: bool,
         system_theme: bool,
@@ -180,7 +183,9 @@ impl Launcher {
         });
         compat::focus(window, &input.focus_handle(cx), cx);
         let commands = builtin_commands();
-        let status = if a11y_fixture {
+        let status = if perf_fixture {
+            format!("{} built-in commands - performance fixture", commands.len())
+        } else if a11y_fixture {
             format!(
                 "{} built-in commands · accessibility fixture",
                 commands.len()
@@ -1367,11 +1372,17 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
     let interaction_smoke =
         cfg!(debug_assertions) && std::env::args().any(|arg| arg == "--interaction-smoke-test");
     #[cfg(debug_assertions)]
+    let perf_smoke = std::env::args().any(|arg| arg == "--perf-smoke-test");
+    #[cfg(not(debug_assertions))]
+    let perf_smoke = false;
+    #[cfg(debug_assertions)]
+    let perf_start = std::time::Instant::now();
+    #[cfg(debug_assertions)]
     let lifecycle_smoke = std::env::args().any(|arg| arg == "--lifecycle-smoke-test");
     #[cfg(not(debug_assertions))]
     let lifecycle_smoke = false;
-    let system_theme = !a11y_fixture && !interaction_smoke && !lifecycle_smoke;
-    let initial_target = if a11y_fixture {
+    let system_theme = !a11y_fixture && !interaction_smoke && !lifecycle_smoke && !perf_smoke;
+    let initial_target = if a11y_fixture || perf_smoke {
         None
     } else {
         ansa_platform_windows::capture_foreground_target(None)
@@ -1405,7 +1416,7 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             window_background: WindowBackgroundAppearance::Transparent,
             app_id: Some("dev.ansa.launcher".into()),
             ..Default::default()
-        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, glass, light, system_theme))) else {
+        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, perf_smoke, glass, light, system_theme))) else {
             *error_for_app.borrow_mut() = Some("Ansa could not create a GPUI window. Check your GPU driver and native dependencies.".to_string());
             cx.quit(); return;
         };
@@ -1434,6 +1445,22 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
         }).map_err(|error| error.to_string()).and_then(|result| result) {
             *error_for_app.borrow_mut() = Some(error);
             cx.quit();
+            return;
+        }
+        #[cfg(debug_assertions)]
+        if perf_smoke {
+            let frames = match perf::frame_count() {
+                Ok(frames) => frames,
+                Err(error) => {
+                    *error_for_app.borrow_mut() = Some(error);
+                    cx.quit();
+                    return;
+                }
+            };
+            let _ = handle.update(cx, |_, window, cx| {
+                perf::start(cx.entity(), window, perf_start, frames);
+            });
+            cx.activate(true);
             return;
         }
         #[cfg(debug_assertions)]

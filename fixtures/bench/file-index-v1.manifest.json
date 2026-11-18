@@ -1,0 +1,11 @@
+{
+  "name": "ansa-file-index-1m-v1",
+  "version": "ansa-file-index-1m-v1",
+  "generator": "ansa-bench::corpus::file_index_line",
+  "seed": "0x1f11e00120261118",
+  "count": 1000000,
+  "line_ending": "\n",
+  "sha256": "82dd01f9fca14493c56fcd56d6be253cd66e1e0781dc424edb4f6933cab1fab4",
+  "bytes": 144958066,
+  "note": "Deterministic synthetic file paths/titles. Never committed as one million lines; generated and hashed by ansa-bench."
+}

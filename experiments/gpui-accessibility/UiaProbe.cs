@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Windows.Automation;
 using System.Windows.Automation.Text;
@@ -10,6 +13,7 @@ public sealed class AnsaNavigationObservation {
     public int LogicalCount { get; set; }
     public int LiveEvents { get; set; }
     public string LiveAnnouncement { get; set; }
+    public string RuntimeId { get; set; }
     public bool SearchFocusRetained { get; set; }
 }
 
@@ -21,6 +25,10 @@ public sealed class AnsaTextObservation {
     public bool OversizedValueRejectedAtomically { get; set; }
     public bool GeometryWithinField { get; set; }
     public bool PointRangeWithinSelectedScalar { get; set; }
+    public bool CaretAtDocumentStart { get; set; }
+    public bool CaretAtDocumentEnd { get; set; }
+    public bool BoundaryMovementClamps { get; set; }
+    public bool RejectionLiveAnnouncementObserved { get; set; }
 }
 
 public sealed class AnsaShellObservation {
@@ -30,12 +38,30 @@ public sealed class AnsaShellObservation {
     public bool ThemeToggleRoundTrip { get; set; }
     public bool AppearanceBoundsUnchanged { get; set; }
     public int FixtureRows { get; set; }
+    public string ListRole { get; set; }
+    public object ListLogicalSetSize { get; set; }
+    public int[] RealizedPositions { get; set; }
+    public int ItemLogicalSetSize { get; set; }
+    public bool AllRowsOnscreen { get; set; }
+    public string SelectedRowLabel { get; set; }
     public bool RowSelectionDidNotExecute { get; set; }
     public bool ActionSearchIndependent { get; set; }
     public bool PinAndUnpinWorked { get; set; }
     public bool RowRuntimeIdSurvivedReordering { get; set; }
+    public bool StaleActionSurfaceExercised { get; set; }
+    public bool StaleActionSelectionBlockedByMenu { get; set; }
+    public bool StaleActionRejected { get; set; }
+    public bool StaleActionAnnouncementObserved { get; set; }
     public bool DetailsOpenedAndClosed { get; set; }
     public bool CalculatorErrorExposed { get; set; }
+    public bool CalculatorErrorLiveEventObserved { get; set; }
+    public string CalculatorErrorControlType { get; set; }
+    public string CalculatorErrorLiveSetting { get; set; }
+    public string StatusLabel { get; set; }
+    public string StatusLiveSetting { get; set; }
+    public string DetailsDocumentLabel { get; set; }
+    public int WindowScalePercent { get; set; }
+    public bool UiaBoundsMatchNativePhysicalPixels { get; set; }
     public AnsaTextObservation TextRangeSmoke { get; set; }
     public bool ScreenReaderAcceptance { get; set; }
     public bool ClipboardActionsInvoked { get; set; }
@@ -63,6 +89,12 @@ public static class AnsaCandidateValueProbe {
     static extern IntPtr GetForegroundWindow();
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     static extern bool SetForegroundWindow(IntPtr hwnd);
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern int GetWindowText(IntPtr hwnd, System.Text.StringBuilder text, int maxCount);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern uint GetDpiForWindow(IntPtr hwnd);
     sealed class Changes : IDisposable {
         readonly AutomationElement root;
         readonly AutoResetEvent changed = new AutoResetEvent(false);
@@ -71,6 +103,7 @@ public static class AnsaCandidateValueProbe {
         readonly AutomationEventHandler selection;
         readonly AutomationEventHandler live;
         readonly AutomationEvent liveEvent;
+        readonly ConcurrentQueue<string> liveLabels = new ConcurrentQueue<string>();
         volatile bool disposed;
         public volatile string LastLiveLabel;
         public int LiveEvents;
@@ -85,6 +118,7 @@ public static class AnsaCandidateValueProbe {
                     var element = sender as AutomationElement;
                     if (element != null) {
                         LastLiveLabel = element.Current.Name;
+                        liveLabels.Enqueue(LastLiveLabel ?? "");
                         Interlocked.Increment(ref LiveEvents);
                     }
                 } catch (ElementNotAvailableException) { }
@@ -100,6 +134,13 @@ public static class AnsaCandidateValueProbe {
             Automation.AddAutomationEventHandler(liveEvent, root, TreeScope.Subtree, live);
         }
 
+        public bool Announced(string text) {
+            foreach (string label in liveLabels) {
+                if (label.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            }
+            return false;
+        }
+
         void Wake() {
             if (disposed) return;
             // A callback may already be queued when its registration is removed.
@@ -113,6 +154,18 @@ public static class AnsaCandidateValueProbe {
                 catch (ElementNotAvailableException) { }
                 int remaining = 10000 - (int)timer.ElapsedMilliseconds;
                 if (remaining <= 0) throw new TimeoutException(description);
+                changed.WaitOne(remaining);
+            }
+        }
+
+        /// <summary>Bounded observation used for record-only checks; never fails the probe.</summary>
+        public bool Observe(Func<bool> condition, int milliseconds) {
+            var timer = Stopwatch.StartNew();
+            for (;;) {
+                try { if (condition()) return true; }
+                catch (ElementNotAvailableException) { }
+                int remaining = milliseconds - (int)timer.ElapsedMilliseconds;
+                if (remaining <= 0) return false;
                 changed.WaitOne(remaining);
             }
         }
@@ -160,9 +213,94 @@ public static class AnsaCandidateValueProbe {
         return true;
     }
 
+    static string FormatRuntimeId(int[] id) {
+        return String.Join(".", id.Select(value => value.ToString(CultureInfo.InvariantCulture)));
+    }
+
+    /// <summary>Physical-pixel scale of the monitor that owns this window, 0 if unavailable.</summary>
+    public static int WindowScalePercent(IntPtr hwnd) {
+        try {
+            uint dpi = GetDpiForWindow(hwnd);
+            return dpi == 0 ? 0 : (int)Math.Round(dpi * 100.0 / 96.0);
+        } catch (EntryPointNotFoundException) {
+            // GetDpiForWindow requires Windows 10 1607; absence is reported, not assumed.
+            return 0;
+        }
+    }
+
+    /// <summary>Confirms the UIA client receives physical pixels, not scaled virtual coordinates.</summary>
+    public static bool UiaBoundsMatchNativePhysicalPixels(AutomationElement root) {
+        NativeRect native;
+        if (!GetWindowRect(new IntPtr(root.Current.NativeWindowHandle), out native)) return false;
+        var bounds = root.Current.BoundingRectangle;
+        return Math.Abs(bounds.Width - (native.Right - native.Left)) <= 1
+            && Math.Abs(bounds.Height - (native.Bottom - native.Top)) <= 1;
+    }
+
+    /// <summary>
+    /// Requests foreground for the fixture window this probe started. Never targets
+    /// a discovered window. Returns false when Windows' foreground lock refuses.
+    /// </summary>
+    public static bool ActivateOwned(IntPtr hwnd) {
+        if (GetForegroundWindow() == hwnd) return true;
+        SetForegroundWindow(hwnd);
+        var timer = Stopwatch.StartNew();
+        while (timer.ElapsedMilliseconds < 2000) {
+            if (GetForegroundWindow() == hwnd) return true;
+            Thread.Sleep(25);
+        }
+        return GetForegroundWindow() == hwnd;
+    }
+
+    public static string ForegroundInfo() {
+        var handle = GetForegroundWindow();
+        var title = new System.Text.StringBuilder(256);
+        GetWindowText(handle, title, title.Capacity);
+        uint pid;
+        GetWindowThreadProcessId(handle, out pid);
+        return "hwnd=" + handle.ToInt64() + "; pid=" + pid + "; title=" + title;
+    }
+
+    /// <summary>Waits on a UIA property change rather than sleeping for focus.</summary>
+    public static bool WaitForSearchFocus(AutomationElement root, AutomationElement search) {
+        if (search.Current.HasKeyboardFocus) return true;
+        using (var changes = new Changes(root)) {
+            changes.Wait(() => search.Current.HasKeyboardFocus,
+                "Search element never received keyboard focus (owned window not foreground?)");
+        }
+        return true;
+    }
+
     static int PositionOf(AutomationElement root, string prefix) {
         var row = FindPrefix(root, prefix, ControlType.ListItem);
         return row == null ? -1 : (int)row.GetCurrentPropertyValue(AutomationProperty.LookupById(30152));
+    }
+
+    /// <summary>
+    /// UIA_LiveSettingPropertyId is 30135 in windows 0.62.2. Providers may reject
+    /// it; the resulting state is returned as text instead of an exception object.
+    /// </summary>
+    static string ReadLiveSetting(AutomationElement element) {
+        if (element == null) return null;
+        var property = AutomationProperty.LookupById(30135);
+        if (property == null) return "unavailable: client has no property 30135";
+        try {
+            object value = element.GetCurrentPropertyValue(property);
+            var exception = value as Exception;
+            if (exception != null) return "unsupported: " + exception.Message;
+            return Convert.ToString(value, CultureInfo.InvariantCulture);
+        } catch (InvalidOperationException error) {
+            return "unsupported: " + error.Message;
+        } catch (ArgumentException error) {
+            return "unsupported: " + error.Message;
+        }
+    }
+
+    static AutomationElement FindByNameContains(AutomationElement root, string text) {
+        foreach (AutomationElement element in root.FindAll(TreeScope.Descendants, Condition.TrueCondition)) {
+            if (element.Current.Name.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) return element;
+        }
+        return null;
     }
 
     static void Invoke(AutomationElement element) {
@@ -238,13 +376,40 @@ public static class AnsaCandidateValueProbe {
 
     public static AnsaShellObservation InspectShell(AutomationElement root, AutomationElement search) {
         var result = new AnsaShellObservation();
-        int style = GetWindowStyle(new IntPtr(root.Current.NativeWindowHandle), -16);
+        var ownedHwnd = new IntPtr(root.Current.NativeWindowHandle);
+        result.WindowScalePercent = WindowScalePercent(ownedHwnd);
+        result.UiaBoundsMatchNativePhysicalPixels = UiaBoundsMatchNativePhysicalPixels(root);
+        int style = GetWindowStyle(ownedHwnd, -16);
         // WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
         if ((style & 0x00CF0000) != 0) throw new InvalidOperationException("Launcher still has native window chrome: " + style.ToString("X8"));
         result.NativeWindowChromeAbsent = true;
         result.FixtureRows = root.FindAll(TreeScope.Descendants,
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Count;
         if (result.FixtureRows != 3) throw new InvalidOperationException("Launcher fixture must contain only three built-in commands");
+        var resultsList = Find(root, "Search results", ControlType.List);
+        if (resultsList == null) throw new InvalidOperationException("Launcher results list is missing");
+        result.ListRole = resultsList.Current.ControlType.ProgrammaticName;
+        var positionProperty = AutomationProperty.LookupById(30152);
+        var sizeProperty = AutomationProperty.LookupById(30153);
+        if (positionProperty != null && sizeProperty != null) {
+            result.ListLogicalSetSize = resultsList.GetCurrentPropertyValue(sizeProperty);
+            var positions = new System.Collections.Generic.List<int>();
+            bool allOnscreen = true;
+            foreach (AutomationElement row in root.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem))) {
+                positions.Add((int)row.GetCurrentPropertyValue(positionProperty));
+                allOnscreen &= !row.Current.IsOffscreen;
+                result.ItemLogicalSetSize = (int)row.GetCurrentPropertyValue(sizeProperty);
+            }
+            positions.Sort();
+            for (int index = 0; index < positions.Count; index++) {
+                if (positions[index] != index + 1)
+                    throw new InvalidOperationException("Launcher logical positions are not consecutive from 1: "
+                        + String.Join(", ", positions));
+            }
+            result.RealizedPositions = positions.ToArray();
+            result.AllRowsOnscreen = allOnscreen;
+        }
         using (var changes = new Changes(root)) {
             var originalBounds = root.Current.BoundingRectangle;
             var originalSearchBounds = search.Current.BoundingRectangle;
@@ -288,6 +453,10 @@ public static class AnsaCandidateValueProbe {
             if (root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document)) != null)
                 throw new InvalidOperationException("Selecting a row executed it");
             result.RowSelectionDidNotExecute = true;
+            foreach (AutomationElement row in root.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem))) {
+                if (IsSelected(row)) result.SelectedRowLabel = row.Current.Name;
+            }
 
             var actions = OpenActions(root, changes);
             ((ValuePattern)actions.GetCurrentPattern(ValuePattern.Pattern)).SetValue("pin");
@@ -312,14 +481,48 @@ public static class AnsaCandidateValueProbe {
                 "Unpinning did not restore fixture order");
             result.PinAndUnpinWorked = true;
 
+            // Stale-action rejection surface. Record-only: while the menu is
+            // open, an underlying row may refuse the UIA Select (overlay
+            // hit-testing). That refusal is evidence too, not a pass.
+            OpenActions(root, changes);
+            var staleAbout = FindPrefix(root, "About Ansa", ControlType.ListItem);
+            if (staleAbout == null) throw new InvalidOperationException("Stale-action fixture row is missing");
+            ((SelectionItemPattern)staleAbout.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
+            if (!changes.Observe(() => IsSelected(FindPrefix(root, "About Ansa", ControlType.ListItem)), 3000)) {
+                result.StaleActionSelectionBlockedByMenu = true;
+                Invoke(Find(root, "Actions", ControlType.Button));
+                changes.Wait(() => Find(root, "Search actions", ControlType.Edit) == null,
+                    "Actions menu did not close after the stale-surface probe");
+            } else {
+                var staleRun = FindPrefix(root, "Run command", ControlType.MenuItem);
+                if (staleRun != null) {
+                    result.StaleActionSurfaceExercised = true;
+                    Invoke(staleRun);
+                    result.StaleActionRejected = changes.Observe(
+                        () => Find(root, "Search actions", ControlType.Edit) == null
+                            && LabelContains(root, "Action target changed"), 3000);
+                    result.StaleActionAnnouncementObserved = changes.Announced("Action target changed");
+                    if (!result.StaleActionRejected
+                        && Find(root, "Search actions", ControlType.Edit) != null) {
+                        Invoke(Find(root, "Actions", ControlType.Button));
+                        changes.Wait(() => Find(root, "Search actions", ControlType.Edit) == null,
+                            "Actions menu did not close after the stale-surface probe");
+                    }
+                }
+            }
+
             var about = FindPrefix(root, "About Ansa", ControlType.ListItem);
             ((SelectionItemPattern)about.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
             changes.Wait(() => IsSelected(FindPrefix(root, "About Ansa", ControlType.ListItem)), "About fixture did not select");
             OpenActions(root, changes);
             Invoke(FindPrefix(root, "Run command", ControlType.MenuItem));
-            changes.Wait(() => root.FindFirst(TreeScope.Descendants,
-                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document)) != null,
+            var details = null as AutomationElement;
+            changes.Wait(() => (details = root.FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document))) != null,
                 "Explicit Run command did not expose command details");
+            if (String.IsNullOrEmpty(details.Current.Name))
+                throw new InvalidOperationException("Details document has no accessible name");
+            result.DetailsDocumentLabel = details.Current.Name;
             Invoke(Find(root, "Back", ControlType.Button));
             changes.Wait(() => root.FindFirst(TreeScope.Descendants,
                 new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document)) == null
@@ -329,6 +532,20 @@ public static class AnsaCandidateValueProbe {
             ((ValuePattern)search.GetCurrentPattern(ValuePattern.Pattern)).SetValue("1/0");
             changes.Wait(() => LabelContains(root, "division by zero"), "Calculator error reason is not exposed");
             result.CalculatorErrorExposed = true;
+            var calculatorAlert = FindByNameContains(root, "Cannot calculate");
+            if (calculatorAlert == null) throw new InvalidOperationException("Calculator error element is missing");
+            result.CalculatorErrorControlType = calculatorAlert.Current.ControlType.ProgrammaticName;
+            result.CalculatorErrorLiveSetting = ReadLiveSetting(calculatorAlert);
+            var status = root.FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.StatusBar));
+            if (status != null) {
+                result.StatusLabel = status.Current.Name;
+                result.StatusLiveSetting = ReadLiveSetting(status);
+            }
+            // Record-only: the static Alert/status text is not by itself an
+            // announcement. A missing event is reported, not silently passed.
+            result.CalculatorErrorLiveEventObserved = changes.Observe(
+                () => changes.Announced("Cannot calculate"), 3000);
         }
         result.TextRangeSmoke = TextRangesAndWait(root, search);
         return result;
@@ -363,20 +580,30 @@ public static class AnsaCandidateValueProbe {
             if (((ValuePattern)search.GetCurrentPattern(ValuePattern.Pattern)).Current.Value != "") throw new InvalidOperationException("Navigation changed the query");
             return new AnsaNavigationObservation {
                 SelectedLabel = row.Current.Name, Position = observedPosition, LogicalCount = observedCount,
-                LiveEvents = changes.LiveEvents, LiveAnnouncement = changes.LastLiveLabel, SearchFocusRetained = true
+                LiveEvents = changes.LiveEvents, LiveAnnouncement = changes.LastLiveLabel,
+                RuntimeId = FormatRuntimeId(row.GetRuntimeId()), SearchFocusRetained = true
             };
         }
     }
 
-    public static bool SelectRowAndWait(AutomationElement root, AutomationElement search) {
+    public static AnsaNavigationObservation SelectRowAndWait(AutomationElement root, AutomationElement search,
+        string label, int position, int count) {
+        string expectedAnnouncement = label + ", result " + position + " of " + count;
         using (var changes = new Changes(root)) {
-            var row = Find(root, "Project 00001 Terminal", ControlType.ListItem);
-            if (row == null) throw new InvalidOperationException("Second fixture row is not realized");
+            var row = Find(root, label, ControlType.ListItem);
+            if (row == null) throw new InvalidOperationException("Fixture row is not realized: " + label);
             ((SelectionItemPattern)row.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
-            changes.Wait(() => IsSelected(Find(root, "Project 00001 Terminal", ControlType.ListItem))
-                && !IsSelected(Find(root, "Project 00000 Terminal", ControlType.ListItem)),
-                "SelectionItem.Select did not select only its target");
-            return search.Current.HasKeyboardFocus;
+            changes.Wait(() => IsSelected(Find(root, label, ControlType.ListItem))
+                && !IsSelected(Find(root, "Project 00000 Terminal", ControlType.ListItem))
+                && changes.LastLiveLabel == expectedAnnouncement,
+                "SelectionItem.Select did not select only its target and publish a polite announcement");
+            if (!search.Current.HasKeyboardFocus) throw new InvalidOperationException("Selection moved keyboard focus away from search");
+            return new AnsaNavigationObservation {
+                SelectedLabel = label, Position = position, LogicalCount = count,
+                LiveEvents = changes.LiveEvents, LiveAnnouncement = changes.LastLiveLabel,
+                RuntimeId = FormatRuntimeId(Find(root, label, ControlType.ListItem).GetRuntimeId()),
+                SearchFocusRetained = true
+            };
         }
     }
 
@@ -409,15 +636,46 @@ public static class AnsaCandidateValueProbe {
             if (point.CompareEndpoints(TextPatternRangeEndpoint.Start, emoji, TextPatternRangeEndpoint.Start) < 0
                 || point.CompareEndpoints(TextPatternRangeEndpoint.Start, emoji, TextPatternRangeEndpoint.End) > 0)
                 throw new InvalidOperationException("Point-to-text range is outside the selected scalar");
+            // Caret at boundaries: UIA clients must be able to place a collapsed
+            // selection at document start/end, and movement past them must clamp
+            // rather than grow the range or split a scalar.
+            var caretStart = document.Clone();
+            caretStart.MoveEndpointByRange(TextPatternRangeEndpoint.End, document, TextPatternRangeEndpoint.Start);
+            caretStart.Select();
+            changes.Wait(() => {
+                var ranges = text.GetSelection();
+                return ranges.Length == 1 && ranges[0].GetText(-1) == "";
+            }, "Caret at document start did not round-trip through UIA");
+            if (caretStart.CompareEndpoints(TextPatternRangeEndpoint.Start, document, TextPatternRangeEndpoint.Start) != 0)
+                throw new InvalidOperationException("Caret at document start shifted off the boundary");
+            if (caretStart.MoveEndpointByUnit(TextPatternRangeEndpoint.Start, TextUnit.Character, -1) != 0)
+                throw new InvalidOperationException("Caret movement before the document start was not clamped");
+            var caretEnd = document.Clone();
+            caretEnd.MoveEndpointByRange(TextPatternRangeEndpoint.Start, document, TextPatternRangeEndpoint.End);
+            caretEnd.Select();
+            changes.Wait(() => {
+                var ranges = text.GetSelection();
+                return ranges.Length == 1 && ranges[0].GetText(-1) == "";
+            }, "Caret at document end did not round-trip through UIA");
+            if (caretEnd.CompareEndpoints(TextPatternRangeEndpoint.Start, document, TextPatternRangeEndpoint.End) != 0)
+                throw new InvalidOperationException("Caret at document end shifted off the boundary");
+            if (caretEnd.MoveEndpointByUnit(TextPatternRangeEndpoint.End, TextUnit.Character, 1) != 0)
+                throw new InvalidOperationException("Caret movement past the document end was not clamped");
+            if (document.GetText(-1) != value) throw new InvalidOperationException("Boundary caret movement mutated the document text");
+            emoji.Select();
+            changes.Wait(() => {
+                var ranges = text.GetSelection();
+                return ranges.Length == 1 && ranges[0].GetText(-1) == "\U0001F600";
+            }, "Emoji selection did not restore after boundary checks");
             string oversized = new string('x', 4097);
             pattern.SetValue(oversized);
             changes.Wait(() => {
                 foreach (AutomationElement status in root.FindAll(TreeScope.Descendants,
                     new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.StatusBar))) {
-                    if (status.Current.Name.Contains("Input not changed:")) return true;
+                    if (status.Current.Name.Contains("Input not changed:")) return changes.Announced("Input not changed:");
                 }
                 return false;
-            }, "Oversized UIA edit was not acknowledged as rejected");
+            }, "Oversized UIA edit was not acknowledged through a polite live-region event");
             if (pattern.Current.Value != value || text.DocumentRange.GetText(-1) != value)
                 throw new InvalidOperationException("Rejected UIA edit mutated text");
             if (text.GetSelection()[0].GetText(-1) != "\U0001F600")
@@ -426,7 +684,9 @@ public static class AnsaCandidateValueProbe {
                 DocumentTextMatches = true, SelectedText = text.GetSelection()[0].GetText(-1),
                 BoundingRectangles = rectangles.Length, SelectionRoundTrip = true,
                 OversizedValueRejectedAtomically = true, GeometryWithinField = true,
-                PointRangeWithinSelectedScalar = true
+                PointRangeWithinSelectedScalar = true, CaretAtDocumentStart = true,
+                CaretAtDocumentEnd = true, BoundaryMovementClamps = true,
+                RejectionLiveAnnouncementObserved = true
             };
         }
     }

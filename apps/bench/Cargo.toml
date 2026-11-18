@@ -1,0 +1,16 @@
+[package]
+name = "ansa-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Reproducible performance measurement harness for the Ansa foundation slice"
+
+[[bin]]
+name = "ansa-bench"
+path = "src/main.rs"
+
+[dependencies]
+ansa-core = { path = "../../crates/core" }
+ansa-domain = { path = "../../crates/domain" }
+ansa-search = { path = "../../crates/search" }

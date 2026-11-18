@@ -217,6 +217,35 @@ Existing smoke paths were re-run after the integration:
 | `cargo run -q -p ansa-desktop -- --interaction-smoke-test` | 30 stages passed, exit 0 |
 | `ansa-desktop.exe --a11y-fixture` | printed `ANSA_UIA_READY:<hwnd>`; process stopped after capture |
 
+Independent rerun after stopping the stale process, in the normal target
+directory and with the exact requested command:
+
+```text
+$ cargo run -q -p ansa-desktop -- --lifecycle-smoke-test --lifecycle-cycles=1000
+ANSA_LIFECYCLE_FOCUS succeeded=0 denied=1000 skipped=0 unsupported=0
+ANSA_LIFECYCLE_OK cycles=1000
+exit 0
+```
+
+The earlier binary-lock failure was environmental (a leftover process from a
+prior manual run), not a code failure. After the later navigation integration
+the interaction smoke reports 46 stages; that count belongs to the ANS-8 change,
+not this ticket.
+
+A later rerun from the same automation session, after the workspace had been
+rebuilt, observed real foreground activation rather than denial:
+
+```text
+$ cargo run -q -p ansa-desktop -- --lifecycle-smoke-test --lifecycle-cycles=1000
+ANSA_LIFECYCLE_FOCUS succeeded=1000 denied=0 skipped=0 unsupported=0
+ANSA_LIFECYCLE_OK cycles=1000
+exit 0
+```
+
+This is the first native `Succeeded` observation on this machine. The earlier
+`denied=1000` run remains recorded because it demonstrates the honest-denial
+path; neither run proves focus succeeds on every desktop/foreground policy.
+
 ## Public API summary (additive)
 
 `ansa_host`:
@@ -261,9 +290,10 @@ hotkey APIs remain source-compatible.
 - The real keyboard route after focus denial. The 1000-cycle run observed
   denied focus but did not send physical keystrokes to prove typing still
   reaches the launcher.
-- A native `FocusOutcome::Succeeded` observation on this machine. It was not
-  observed in the 1000-cycle run; only the controller-level success path is
-  tested.
+- A native `FocusOutcome::Succeeded` observation on this machine was missing in
+  the first 1000-cycle run (all denied). A later 1000-cycle rerun observed
+  1000/1000 `Succeeded`; the denial path is still real and remains part of the
+  contract. Neither run proves success under every foreground-lock policy.
 - OS theme-change events. The launcher polls the registry every 2 seconds; it
   does not subscribe to a Windows theme-change notification.
 - Screen-reader/accessibility journeys; the framework gate remains open.

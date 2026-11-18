@@ -1,0 +1,20 @@
+{
+    "ObservedAtUtc":  "2026-11-18T07:31:38.2988428Z",
+    "Executable":  "C:\\Users\\abhir\\ansa\\target\\debug\\ansa-desktop.exe",
+    "ExecutableLastWriteTimeUtc":  "2026-11-18T07:19:48.6916286Z",
+    "OsVersion":  "Microsoft Windows NT 10.0.26200.0",
+    "Command":  "ansa-desktop.exe --a11y-fixture with an active UIA client",
+    "RootControlType":  "ControlType.Pane",
+    "DescendantCount":  0,
+    "ControlTypes":  {
+
+                     },
+    "NamedDescendants":  [
+
+                         ],
+    "LabelSearchElements":  0,
+    "EditElements":  0,
+    "ListElements":  0,
+    "SemanticTreePresent":  false,
+    "ScreenReaderAcceptance":  false
+}

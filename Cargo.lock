@@ -61,6 +61,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansa-bench"
+version = "0.1.0"
+dependencies = [
+ "ansa-core",
+ "ansa-domain",
+ "ansa-search",
+]
+
+[[package]]
 name = "ansa-cli"
 version = "0.1.0"
 dependencies = [

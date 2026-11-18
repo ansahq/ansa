@@ -11,11 +11,14 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use ansa_host::{
-    FocusOutcome, FocusOutcomeCounts, HostBackend, HostController, HostError, LifecycleState,
-    MainThreadDispatcher, MainThreadOnly, MonitorChange, MonitorInfo, Rect, ReleaseStep,
-    ShowOutcome, ShowRequest, Size, ThemeAppearance,
+    FocusOutcome, HostBackend, HostController, HostError, MainThreadDispatcher, MainThreadOnly,
+    MonitorChange, MonitorInfo, Rect, ReleaseStep, ShowOutcome, ShowRequest, Size, ThemeAppearance,
 };
-use gpui::{App, Entity, Focusable, Timer, Window, WindowHandle};
+#[cfg(debug_assertions)]
+use ansa_host::{FocusOutcomeCounts, LifecycleState};
+#[cfg(debug_assertions)]
+use gpui::Entity;
+use gpui::{App, Focusable, Window, WindowHandle};
 
 use crate::Launcher;
 
@@ -420,7 +423,7 @@ impl Launcher {
 pub(crate) fn watch_environment(handle: WindowHandle<Launcher>, cx: &mut App) {
     cx.spawn(async move |cx| {
         loop {
-            Timer::after(Duration::from_secs(2)).await;
+            cx.background_executor().timer(Duration::from_secs(2)).await;
             if handle
                 .update(cx, |this, _window, cx| this.poll_environment(cx))
                 .is_err()

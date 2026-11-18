@@ -14,9 +14,9 @@ cargo run --locked -p ansa-desktop
 cargo run --locked -p ansa-cli -- search terminal
 ```
 
-Run `cargo test --workspace --locked` to include the UI text-model tests, or `cargo run --locked -p ansa-desktop -- --smoke-test` for an automatically closing native startup check. The local validation record is in [`docs/validation-2026-11-11.md`](docs/validation-2026-11-11.md).
+Run `cargo test --workspace --locked` to include the UI text-model tests, or `cargo run --locked -p ansa-desktop -- --smoke-test` for an automatically closing native startup check. The current status and test record are in [`docs/implementation-status.md`](docs/implementation-status.md); dated evidence is under [`docs/evidence/`](docs/evidence/).
 
-For the debug-only synthetic widget/action test, run `cargo run --locked -p ansa-desktop -- --interaction-smoke-test`. It uses a built-in fixture, runs 30 stages and exits without writing the clipboard or launching another app. It includes synthetic keybindings, input rejection, IME transaction boundaries and appearance toggling, but is not a physical keyboard, real-IME, screen-reader or focus-restoration test.
+For the debug-only synthetic widget/action test, run `cargo run --locked -p ansa-desktop -- --interaction-smoke-test`. It uses a built-in fixture, runs 46 stages and exits without writing the clipboard or launching another app. It includes synthetic keybindings, typed view navigation and restoration, stale action references, input rejection, IME transaction boundaries, hotkey-independent root dismissal and appearance toggling, but is not a physical keyboard, real-IME, screen-reader or focus-restoration test. The latest evidence is in [`docs/evidence/`](docs/evidence/).
 
 On Windows, `pwsh -File scripts/validate.ps1 -NativeSmoke -Offline` runs all local checks against already-downloaded dependencies. Omit `-Offline` when dependencies need fetching.
 

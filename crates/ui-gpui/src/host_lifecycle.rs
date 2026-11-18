@@ -287,11 +287,7 @@ impl Launcher {
         if self.is_composing(cx) {
             return;
         }
-        if !self.host_hotkey_registered() {
-            self.status = "Global summon unavailable — use the window or Ctrl+Q to quit".into();
-            cx.notify();
-            return;
-        }
+        let summon_unavailable = !self.host_hotkey_registered();
         let Some(invocation) = self.host.borrow().active_invocation() else {
             self.status = "Launcher is already hidden".into();
             cx.notify();
@@ -319,6 +315,10 @@ impl Launcher {
                         }
                     }
                     self.after_hide(window, cx);
+                    if summon_unavailable {
+                        self.status = "Launcher hidden. Global summon is unavailable — relaunch from the desktop shortcut or quit with Ctrl+Q.".into();
+                        cx.notify();
+                    }
                 }
                 Ok((_report, None)) => {
                     // The controller was already hidden; nothing native ran.
@@ -335,6 +335,10 @@ impl Launcher {
                 Ok(_) => {
                     self.previous_target = None;
                     self.after_hide(window, cx);
+                    if summon_unavailable {
+                        self.status = "Launcher hidden. Global summon is unavailable — relaunch from the desktop shortcut or quit with Ctrl+Q.".into();
+                        cx.notify();
+                    }
                 }
                 Err(error) => self.report_hide_error(error, cx),
             }

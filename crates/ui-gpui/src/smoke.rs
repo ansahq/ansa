@@ -482,8 +482,14 @@ fn step(view: Entity<Launcher>, stage: u8, window: &mut Window, cx: &mut App) {
             assert_eq!(this.input.read(cx).text(), "About");
             assert_eq!(this.engine.selected().unwrap().title, "About Ansa");
             assert!(this.input.focus_handle(cx).is_focused(window));
+            key("escape", window, cx);
+            assert_eq!(
+                view.read(cx).host.borrow().state(),
+                ansa_host::LifecycleState::Hidden,
+                "Escape at the root must hide the launcher even when no global hotkey is registered"
+            );
             println!(
-                "Ansa interaction smoke: 46 synthetic widget/action stages passed, including typed view restore, Escape ordering, stale action refs, Tab/Shift+Tab cycles, glass and theme toggling. No clipboard writes or external app launches."
+                "Ansa interaction smoke: 46 synthetic widget/action stages passed, including typed view restore, Escape ordering, hotkey-independent dismissal, stale action refs, Tab/Shift+Tab cycles, glass and theme toggling. No clipboard writes or external app launches."
             );
             cx.quit();
             return;

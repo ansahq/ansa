@@ -14,7 +14,7 @@ launcher window, and exits after two frame callbacks. The application emits this
 line from the second frame callback:
 
 ```text
-Ansa native startup smoke: window opened and two GPUI frames rendered, exiting with success.
+Ansa native startup smoke: window opened and two GPUI frame callbacks reached, exiting with success.
 ```
 
 The helper requires **both** conditions:
@@ -106,9 +106,15 @@ is a tooling-environment issue, not a native smoke result.
 
 ## Evidence boundary
 
-The hosted Windows/macOS/Linux startup gate has **not** been executed remotely as
-part of the change that introduced this document. The local Windows check
-(`cargo build -p ansa-desktop --locked --offline`, the helper, and its 11 tests)
-passed on 2026-11-18. That local result does not establish macOS or Linux
-behavior, and the configured workflow must not be described as a passed remote
-matrix until the corresponding hosted jobs have actually run.
+Initial hosted [run 44246643923](https://github.com/ansahq/ansa/actions/runs/44246643923)
+passed Windows and macOS startup on 2026-11-18, but failed Linux startup.
+The Linux backtrace showed `native_handle` calling GPUI 0.2.2's unimplemented
+X11 `HasWindowHandle` method while looking for a Windows HWND. The helper is
+now compiled only on Windows; other platforms return `None` without asking
+GPUI for a native handle. This corrects normal startup too, not just the smoke.
+The failure was not suppressed or converted into a passing smoke.
+
+Sol's local exact-pin/offline validation passed 138 unit tests, one doctest
+(one ignored), formatting, Clippy, the desktop build, both native smokes and
+the tooling suites before the platform-guard correction. The corrected
+hosted matrix must pass before claiming Linux startup success.

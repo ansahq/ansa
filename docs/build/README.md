@@ -8,6 +8,7 @@ validation evidence. It is tooling documentation, not a release approval.
 |---|---|
 | [`toolchain.md`](toolchain.md) | Exact compiler pin, update procedure and local toolchain caveat |
 | [`ci.md`](ci.md) | Blocking macOS/Windows/Linux jobs, caching, offline resolution and secret policy |
+| [`native-smoke.md`](native-smoke.md) | Bounded native startup gate, success marker and hosted logs |
 | [`linux-compatibility.md`](linux-compatibility.md) | Temporary libc/xattr compatibility constraint, failure evidence and upgrade procedure |
 | [`dependency-inventory.md`](dependency-inventory.md) | Generated human-readable Cargo.lock inventory |
 | [`dependency-inventory.spdx.json`](dependency-inventory.spdx.json) | Generated SPDX 2.3-style machine inventory |
@@ -115,8 +116,12 @@ inventory.
 
 The workflow in `.github/workflows/ci.yml` is configured to block on formatting,
 Clippy, unit/integration tests, doctests, the generated inventory, and a native
-desktop build on Windows, macOS and Linux. The first hosted PR matrix ran and
-failed Linux dependency compilation; Windows/macOS and the tooling jobs passed.
+desktop build on Windows, macOS and Linux. Following the documented libc
+compatibility fix, post-merge main [run 44085915233](https://github.com/ansahq/ansa/actions/runs/44085915233)
+passed all eight jobs at `7b22edc`. That run did not include native startup smokes.
+The follow-up [native startup gate](native-smoke.md) now runs each built artifact
+with a timeout and requires an in-application success marker plus zero exit;
+its hosted results must be checked separately.
 See [`ci.md`](ci.md), the [follow-up record](../ci-follow-up-2026-11-17.md), and
 the PR's commit-specific checks for newer results. Hosted compile/test success
-does not establish native startup, accessibility or reference-product parity.
+alone does not establish native startup, accessibility or reference-product parity.

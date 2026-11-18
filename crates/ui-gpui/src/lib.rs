@@ -1304,7 +1304,7 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                 window.on_next_frame(|window, _| {
                     window.on_next_frame(|_, cx| {
                         println!(
-                            "Ansa native startup smoke: window opened and two GPUI frames rendered, exiting with success."
+                            "Ansa native startup smoke: window opened and two GPUI frame callbacks reached, exiting with success."
                         );
                         cx.quit();
                     });
@@ -1316,10 +1316,19 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
     error.map_or(Ok(()), Err)
 }
 
+#[cfg(target_os = "windows")]
 fn native_handle(window: &Window) -> Option<isize> {
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
     match HasWindowHandle::window_handle(window).ok()?.as_raw() {
         RawWindowHandle::Win32(handle) => Some(handle.hwnd.get()),
         _ => None,
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn native_handle(_window: &Window) -> Option<isize> {
+    // This is a Windows HWND adapter, not a cross-platform handle probe.
+    // GPUI 0.2.2's X11 HasWindowHandle implementation panics rather than
+    // returning an unsupported-handle error. Never call it on other targets.
+    None
 }

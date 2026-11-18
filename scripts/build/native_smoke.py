@@ -2,7 +2,7 @@
 """Bounded native startup smoke for the built Ansa desktop executable.
 
 This helper launches the real native binary rather than a Rust unit-test
-harness. The executable starts its actual GPUI window, renders two frames, emits
+harness. The executable starts its actual GPUI window, reaches two frame callbacks, emits
 one success marker from inside the frame callback and exits. Both the marker and
 a zero exit status are required, so a build that merely starts and then hangs,
 crashes or quits early cannot pass.
@@ -30,7 +30,7 @@ DEFAULT_TIMEOUT_SECONDS = 120.0
 
 STARTUP_FLAG = "--smoke-test"
 STARTUP_MARKER = (
-    "Ansa native startup smoke: window opened and two GPUI frames rendered, "
+    "Ansa native startup smoke: window opened and two GPUI frame callbacks reached, "
     "exiting with success."
 )
 

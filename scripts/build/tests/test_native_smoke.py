@@ -171,6 +171,11 @@ class NativeSmokeWorkflowContractTests(unittest.TestCase):
         application = self.read("crates/ui-gpui/src/lib.rs")
         self.assertIn(native_smoke.STARTUP_MARKER, application)
 
+    def test_hwnd_lookup_is_windows_only(self) -> None:
+        application = self.read("crates/ui-gpui/src/lib.rs")
+        self.assertIn('#[cfg(target_os = "windows")]\nfn native_handle(window:', application)
+        self.assertIn('#[cfg(not(target_os = "windows"))]\nfn native_handle(_window:', application)
+
 
 if __name__ == "__main__":
     unittest.main()

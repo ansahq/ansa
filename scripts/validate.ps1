@@ -59,6 +59,8 @@ try {
         Invoke-CargoCheck -CargoPrefix $cargoPrefix -CargoArguments (@('build', '-p', 'ansa-desktop') + $resolution)
     }
 
+    Invoke-PythonCheck -Executable $python -PythonArguments @('-m', 'unittest', 'discover', '-s', 'scripts/build/tests', '-v')
+
     if (-not $SkipDependencyInventory) {
         Invoke-PythonCheck -Executable $python -PythonArguments @('-m', 'unittest', 'discover', '-s', 'scripts/dependencies/tests', '-v')
         $inventoryArguments = @('scripts/dependencies/inventory.py', '--check')

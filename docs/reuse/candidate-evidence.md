@@ -21,12 +21,50 @@ the UTC equivalent shown separately. Release dates come from each repository's
 | cosmic-launcher | `29c1bac5e8f9f83b9e2cef03bb0259a04ffd7f2a` | 2026-11-07T00:38:04+01:00 | 2026-11-06T23:38:04Z |
 | Flare | `09e126fc77f7716d912c85ce8f308ce708bc2530` | 2025-12-30T11:04:42-08:00 | 2025-12-30T19:04:42Z |
 
+## Activity re-check (2026-11-18)
+
+The pinned dates above are unchanged. On 18 November the public commit and release
+Atom feeds were read again, without cloning or logging in, to put the pins in a current
+maintenance context. Feeds return at most 20 commit entries, so "≥20 in 90 days" means
+the feed was full and is a lower bound.
+
+| Candidate | Default branch | Latest commit in feed (UTC) | Commits in feed within 90 days | Latest release in feed (UTC) | GitHub archive banner |
+|---|---|---|---|---|---|
+| Gauntlet | `main` | 2025-10-02T16:55:18Z | 0 | v21, 2025-08-16T16:28:39Z | No |
+| Vicinae | `main` | 2026-11-18T03:03:20Z | ≥20 | v0.30.1, 2026-11-15T23:57:15Z | No |
+| pop-launcher | `master` | 2026-11-06T20:00:11Z | 9 | Epoch 1.11.0, 2026-10-20T22:41:16Z | No |
+| anyrun | `master` | 2026-11-08T19:13:14Z | 4 | v26.10.0, 2026-10-20T20:03:53Z | No |
+| cosmic-launcher | `master` | 2026-11-06T23:38:04Z | ≥20 | epoch-1.11.0, 2026-10-20T21:52:31Z | No |
+| Flare | `main` | 2025-12-30T19:04:42Z | 0 | v0.1.0, 2025-07-29T18:33:12Z | No |
+
+A `git ls-remote HEAD` check on 2026-11-18 found five default-branch HEADs still equal
+to their pins. Vicinae had moved from the pinned `23fec1e1…` to `f9554985…`, consistent
+with its feed; the evidence in this record remains the pinned commit, not the newer
+HEAD. Gauntlet and Flare still show no commits or releases since their final
+author-declared maintenance dates, and neither shows a GitHub archive banner; the
+"unmaintained" label therefore remains their authors' statement plus the absence of
+activity, not a GitHub state.
+
+The unauthenticated REST API had been rate-limited on 17 November. One repo lookup
+succeeded on 18 November before the limit was reached again; limited REST results
+are not used for an all-six archival claim. The HTML banner and Atom feeds above
+cover all six.
+Star counts and API-only fields are not used as evidence here.
+
+## Static dependency inventory
+
+[`dependency-scan.md`](dependency-scan.md) records the reproducible manifest/lockfile
+scan of 18 November. It counts 3,466 Cargo lock packages, 704 npm lock entries and 836
+pnpm package entries across the six pins. All 3,466 Cargo entries and all 836 pnpm
+entries remain licence-unknown from their lockfiles; 120 of 704 npm entries have no
+licence field. See that file for the per-candidate table and the explicit limits.
+
 ## Summary
 
 | Candidate | Stack | Licence | Pin | Last commit | Latest release | Bounded local result |
 |---|---|---|---|---|---|---|
 | Gauntlet | Rust + Iced forks + React/Deno | MPL-2.0 (repo-level) | `ca066da5…` | 2025-10-02 | v21, 2025-08-16 | `cargo check` exit 101 after 222 s (host `libclang` missing) |
-| Vicinae | C++/Qt6 + TypeScript/Node extensions | GPL-3.0 | `23fec1e1…` | 2026-11-15 | v0.30.1, 2026-11-15 | Build not attempted: no configured MSVC/Qt6/Vulkan CMake environment |
+| Vicinae | C++/Qt6 + TypeScript/Node extensions | GPL-3.0 | `23fec1e1…` | 2026-11-15 | v0.30.1, 2026-11-15 | CMake configure exit 1 after 3.6 s (Qt6 6.9 not found; MSVC 19.44 detected) |
 | pop-launcher | Rust IPC service + plugins | Mixed MPL-2.0 / GPL-3.0-only | `4111617b…` | 2026-11-06 | epoch-1.11.0, 2026-10-20 | `cargo test` exit 101 after 30 s (`wayland-sys` is Unix-only) |
 | anyrun | Rust + GTK4 layer-shell | GPL-3.0 | `7997bc47…` | 2026-11-08 | v26.10.0, 2026-10-20 | `cargo check` exit 101 after 30 s (`gio-2.0` missing) |
 | cosmic-launcher | Rust + libcosmic/Iced | GPL-3.0 | `29c1bac5…` | 2026-11-07 (local; UTC 11-06) | epoch-1.11.0, 2026-10-20 | `cargo check` exit 101 after 183 s (`accesskit_winit` git dependency fails) |
@@ -34,7 +72,9 @@ the UTC equivalent shown separately. Release dates come from each repository's
 
 None of the candidate test suites ran to completion on this host. The "latest
 release" dates are upstream publication timestamps, not evidence that a release
-artifact was downloaded or validated.
+artifact was downloaded or validated. The static dependency inventory in
+[`dependency-scan.md`](dependency-scan.md) is a file-level count, not a candidate
+test or build result.
 
 ## Gauntlet
 
@@ -42,9 +82,10 @@ Identity: `project-gauntlet/gauntlet` @ `ca066da5c9d56bd53a739c0dda1572fccc5019a
 (2025-10-02, "Update README.md"). Previous commit 2025-08-24; latest release v21
 2025-08-16. The [README at the pin](https://github.com/project-gauntlet/gauntlet/blob/ca066da5c9d56bd53a739c0dda1572fccc5019a8/README.md)
 carries a "no longer being developed" warning. The GitHub repository page did not
-show an archived banner in the HTML fetched by this host, and the unauthenticated
-REST API returned 403, so **this evaluation does not claim GitHub-level archival** —
-only the upstream author's statement and the absence of commits since 2025-10-02.
+show an archived banner in the HTML fetched by this host; the unauthenticated REST API
+was unavailable on 17 November and rate-limited again on 18 November after a single
+lookup, so **this evaluation does not claim GitHub-level archival** — only the upstream
+author's statement and the absence of commits since 2025-10-02.
 
 Architecture: a 12-member Rust workspace ([Cargo.toml](https://github.com/project-gauntlet/gauntlet/blob/ca066da5c9d56bd53a739c0dda1572fccc5019a8/Cargo.toml)),
 1,247 packages in `Cargo.lock`, a custom React reconciler with Deno plugins. The UI
@@ -98,6 +139,15 @@ Windows workflow builds and checks for `vicinae-inference.exe` but does not show
 test invocation. A textual scan found 314 `TEST_CASE(` occurrences. This is the only
 candidate here with a current Windows build pipeline and an actively developed
 Raycast-compatibility layer.
+
+A bounded local configure was attempted on 18 November with CMake's Visual Studio 17
+2022 generator, an external build directory and downloads disabled. CMake identified
+MSVC 19.44.35229.0, then failed at
+`find_package(Qt6 6.9 REQUIRED COMPONENTS Core Qml)` because no Qt6 6.9 package
+configuration is installed. Exit 1 after 3.6 s; no compile or test ran. The project's
+own Windows preset uses Ninja with `cl` on `PATH`; the probe used the Visual Studio
+generator specifically because `cl` was not on `PATH`, and that does not establish the
+preset would fail on a correctly prepared Windows machine.
 
 Licence: [GPL-3.0](https://github.com/vicinaehq/vicinae/blob/23fec1e1da14c422fba01db5c286589b6e946d06/LICENSE).
 macOS builds may additionally bundle the third-party SoulverCore framework

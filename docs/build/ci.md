@@ -55,6 +55,12 @@ another.
 | Unit/integration | `cargo test --workspace --lib --bins --tests --locked --offline` |
 | Doctests | `cargo test --workspace --doc --locked --offline` |
 | Native desktop build | `cargo build -p ansa-desktop --locked --offline` |
+| Startup helper tests | `python -m unittest discover -s scripts/build/tests -v` |
+| Native startup | `python scripts/build/native_smoke.py --timeout 120` (Linux uses Xvfb/software Vulkan) |
+
+The [startup gate](native-smoke.md) requires a genuine in-app marker and zero
+exit, retains logs on failure, and does not establish visual or accessibility
+acceptance. Local `scripts/validate.ps1` also runs the helper's rejection tests.
 
 `windows-latest`-style runner images are moving targets; the pinned compiler is
 not. The Linux job installs the native X11/Wayland/fontconfig/freetype/Vulkan

@@ -17,6 +17,25 @@ current validator intentionally rejects a verified/captured manifest and any obs
 a real capture requires a versioned schema and validator migration; editing these files to look
 observed is invalid.
 
+### Acceptance follow-up — 18 November 2026
+
+Local exact-pin validation again passed the ledger checks and all 41 validator
+tests. ANS-5 remains **In Progress**, not Done: this session exposes no native
+desktop-control/device tools, and no isolated Windows/macOS reference hosts or
+verified builds have been established. No runtime capture was attempted.
+The planning acceptance checks pass; the open work is the ticket's versioned
+behavioral-reference goal and seed-capture/replay test plan, not implementation
+of all 100 product workflows. The existing ten-row design audit is not being
+relabelled as a runtime replay.
+
+To unblock, provision dedicated synthetic profiles on both reference hosts and
+verify their artifact/OS/permission identities under the
+[capture procedure](procedures/seed-capture.md). Before importing any capture,
+version the schema and validator, including a check that
+`observation.evidence_id` itself resolves to runtime evidence tied to that
+identity. Then execute S01–S20 and a separate ten-row runtime replay review;
+retain the historical unknown manifests and design/source audit unchanged.
+
 ## What is frozen
 
 | Property | Value |
@@ -131,7 +150,7 @@ audits are rejected, and all claimed dates are checked against the real calendar
 manifests, rejects any known value in this baseline and rejects any 64-hex string that is not a
 verified artifact hash. A future verified manifest belongs in a new schema version, not this one.
 
-**Observations are gated, but unreachable here.** A row may set `observation.state=observed` only
+**Observations are gated, but unreachable here.** A future verified-schema row may set `observation.state=observed` only
 when every identity field is known, an evidence ID and recording exist, and the manifest records at
 least one runtime observation. The current unknown-only manifests make that gate fail closed. A
 future capture needs a versioned schema/validator migration; this validator does not accept a

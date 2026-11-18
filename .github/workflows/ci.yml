@@ -104,6 +104,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install Python for native smoke tooling
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install exact Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -126,7 +131,9 @@ jobs:
             libxcb-shape0-dev libxcb-xfixes0-dev libxcb-randr0-dev \
             libxcb-xkb-dev libxcb-shm0-dev libxcb-util-dev libxcb-image0-dev \
             libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
-            libfontconfig1-dev libfreetype6-dev libvulkan-dev
+            libfontconfig1-dev libfreetype6-dev libvulkan-dev \
+            libvulkan1 mesa-vulkan-drivers libgl1-mesa-dri \
+            xvfb xauth vulkan-tools
 
       - name: Fetch all locked dependencies
         run: cargo fetch --locked
@@ -145,3 +152,39 @@ jobs:
 
       - name: Build native desktop
         run: cargo build -p ansa-desktop --locked --offline
+
+      - name: Test native smoke helper
+        run: python -m unittest discover -s scripts/build/tests -v
+
+      - name: Native startup smoke (Linux, Xvfb and software Vulkan)
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+          RUST_BACKTRACE: "1"
+        run: |
+          # GPUI selects Wayland whenever WAYLAND_DISPLAY is non-empty; this job
+          # starts only Xvfb, so make the X11 selection explicit.
+          unset WAYLAND_DISPLAY
+          ICD="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit 2>/dev/null || true)"
+          if [ -n "$ICD" ]; then
+            export VK_ICD_FILENAMES="$ICD"
+            export VK_DRIVER_FILES="$ICD"
+          fi
+          xvfb-run -a --server-args="-screen 0 1280x800x24" \
+            python scripts/build/native_smoke.py --timeout 120
+
+      - name: Native startup smoke (Windows/macOS)
+        if: runner.os != 'Linux'
+        env:
+          RUST_BACKTRACE: "1"
+        run: python scripts/build/native_smoke.py --timeout 120
+
+      - name: Upload native smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-smoke-${{ runner.os }}
+          path: target/native-smoke/
+          if-no-files-found: ignore
+          retention-days: 7

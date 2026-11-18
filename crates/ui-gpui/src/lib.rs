@@ -1169,11 +1169,18 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
     let light = std::env::args().any(|arg| arg == "--light");
     let interaction_smoke =
         cfg!(debug_assertions) && std::env::args().any(|arg| arg == "--interaction-smoke-test");
+    let startup_smoke = !interaction_smoke && std::env::args().any(|arg| arg == "--smoke-test");
     let initial_target = if a11y_fixture {
         None
     } else {
         ansa_platform_windows::capture_foreground_target(None)
     };
+    if startup_smoke {
+        // Progress diagnostics go to stderr so a hosted failure shows how far
+        // startup got. The success marker below stays exclusive to the second
+        // frame callback on stdout.
+        eprintln!("Ansa native startup smoke: starting GPUI application.");
+    }
     application.run(move |cx: &mut App| {
         compat::quit_when_last_window_closes(cx).detach();
         install_keybindings(cx);
@@ -1207,6 +1214,9 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             *error_for_app.borrow_mut() = Some("Ansa could not create a GPUI window. Check your GPU driver and native dependencies.".to_string());
             cx.quit(); return;
         };
+        if startup_smoke {
+            eprintln!("Ansa native startup smoke: GPUI window created.");
+        }
         #[cfg(target_os = "windows")]
         if let Err(error) = handle.update(cx, |_, window, _| {
             let hwnd = native_handle(window).ok_or("Launcher HWND is unavailable".to_string())?;
@@ -1299,11 +1309,31 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
         if interaction_smoke {
             let _ = handle.update(cx, |_, window, cx| smoke::start(cx.entity(), window));
         }
-        if !interaction_smoke && std::env::args().any(|arg| arg == "--smoke-test") {
+        if startup_smoke {
             let _ = handle.update(cx, |_, window, _| {
                 window.on_next_frame(|window, _| {
-                    window.on_next_frame(|_, cx| cx.quit());
+                    eprintln!("Ansa native startup smoke: first frame callback reached.");
+                    window.on_next_frame(|_, cx| {
+                        println!(
+                            "Ansa native startup smoke: window opened and two GPUI frame callbacks reached, exiting with success."
+                        );
+                        cx.quit();
+                    });
                 });
+                // GPUI 0.2.2 starts a window's X11 periodic frame loop only
+                // when it processes MapNotify/VisibilityNotify. The map
+                // request is checked synchronously, so those events can be read
+                // into x11rb's private queue while the socket is left empty;
+                // the calloop watcher then never wakes and the callbacks above
+                // are never requested. Activating the window issues
+                // SetInputFocus, whose FocusIn makes the connection readable
+                // again, draining the queued mapping events and starting frame
+                // delivery. This is the same activation a real launcher summon
+                // performs, not a smoke-only shortcut.
+                #[cfg(target_os = "linux")]
+                if gpui::guess_compositor() == "X11" {
+                    window.activate_window();
+                }
             });
         }
     });
@@ -1311,10 +1341,19 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
     error.map_or(Ok(()), Err)
 }
 
+#[cfg(target_os = "windows")]
 fn native_handle(window: &Window) -> Option<isize> {
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
     match HasWindowHandle::window_handle(window).ok()?.as_raw() {
         RawWindowHandle::Win32(handle) => Some(handle.hwnd.get()),
         _ => None,
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn native_handle(_window: &Window) -> Option<isize> {
+    // This is a Windows HWND adapter, not a cross-platform handle probe.
+    // GPUI 0.2.2's X11 HasWindowHandle implementation panics rather than
+    // returning an unsupported-handle error. Never call it on other targets.
+    None
 }

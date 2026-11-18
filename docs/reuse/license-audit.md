@@ -1,7 +1,8 @@
 # Licence and notice audit (repository-level)
 
-Date: 2026-11-17. This is an engineering audit of repository licence files and
-manifests, not legal advice, and no legal clearance has been obtained. It records
+Date: 2026-11-17, static inventory addendum 2026-11-18. This is an engineering audit
+of repository licence files and manifests, not legal advice, and no legal clearance
+has been obtained. It records
 obligations that would apply **if** source were reused. No candidate source was copied
 into Ansa, so none of these obligations is currently triggered by this evaluation.
 
@@ -118,13 +119,57 @@ Consequently:
   line-delimited IPC) are ideas, not copied expression. Any implementation must be
   written from Ansa's requirements, not by transcribing candidate files or schemas.
 
+## Static dependency inventory (2026-11-18)
+
+The reproducible scan in [`dependency-scan.md`](dependency-scan.md) reads manifests and
+lockfiles at the six pins without network access, registry metadata or package
+installation. Its actual counts:
+
+| Candidate | Cargo lock packages | Cargo manifests with / without a licence field | npm lock entries with / without a licence field | pnpm entries | FetchContent declarations |
+|---|---|---|---|---|---|
+| Gauntlet | 1,247 | 0 / 13 | 207 / 115 | — | — |
+| Vicinae | — | — | 377 / 5 | — | 7 |
+| pop-launcher | 360 | 4 / 1 | — | — | — |
+| anyrun | 370 | 0 / 16 | — | — | — |
+| cosmic-launcher | 732 | 0 / 1 | — | — | — |
+| Flare | 757 | 0 / 1 | — | 836 | — |
+| **Total** | **3,466** | **4 / 32** | **584 / 120** | **836** | **7** |
+
+Interpretation:
+
+- The 3,466 Cargo entries match the earlier lockfile count. `Cargo.lock` carries no
+  licence field, so **every one remains licence-unknown from the lockfile**.
+- The 704 npm entries are spread across Gauntlet's root lockfile and four Vicinae
+  TypeScript lockfiles. `package-lock.json` does carry a licence field for many
+  entries, but it was read as static text; none was checked against a registry or
+  SPDX database. 120 entries have no field.
+- The 836 pnpm entries are Flare's root and sidecar lockfiles, counted by a YAML line
+  heuristic. pnpm locks carry no per-package licence field, so all remain unknown.
+- 32 of 36 Cargo manifests with a `[package]` section declare no licence; one more
+  manifest is a virtual workspace manifest. Seven of 51 `package.json` files declare
+  a licence. A manifest declaration is not a per-file audit.
+- Vicinae's seven FetchContent declarations include `layer-shell-qt` with no
+  `GIT_TAG`, so that dependency follows the default branch unless overridden. The
+  pinned Node runtime is `v22.23.1` with five per-platform SHA-256 values; eleven
+  vendor directories are present. Their licences and notices were not resolved.
+- SPDX headers were found in 27 of 32 pop-launcher source files, 6 of 1,710 Vicinae
+  files and 0 of 296 Gauntlet, 0 of 25 anyrun, 0 of 276 Flare and 1 of 9
+  cosmic-launcher files. These are presence counts, not coverage findings.
+
+This closes the **inventory-counting** gap only. It does not resolve package
+licences, transitive notices, Qt/GTK/FetchContent terms, bundled runtimes, store terms
+or derivative-work boundaries. No legal review was obtained.
+
 ## Audit gaps (explicit)
 
-- 3,466 lockfile packages were counted across the candidates (Gauntlet 1,247,
-  pop-launcher 360, anyrun 370, cosmic-launcher 732, Flare 757), but **no dependency
-  licence inventory or SPDX/SBOM scan was run**.
-- Vicinae's CMake `FetchContent` dependencies and bundled binaries were not scanned;
-  no C++ dependency graph was produced.
+- 3,466 Cargo lockfile packages were counted across the candidates (Gauntlet 1,247,
+  pop-launcher 360, anyrun 370, cosmic-launcher 732, Flare 757). The 2026-11-18 static
+  scan reproduced those counts and additionally counted 704 npm lock entries and 836
+  pnpm entries, but **no registry/SPDX lookup or per-package licence resolution was
+  performed**. Every Cargo package and every pnpm entry remains licence-unknown.
+- Vicinae's seven CMake `FetchContent` declarations and eleven vendor directories were
+  named statically, but no C++ dependency graph or transitive licence inventory was
+  produced. The `layer-shell-qt` declaration is not tag-pinned.
 - No per-file audit of Gauntlet's unmarked MPL sources and no check of whether every
   crate is actually MPL-2.0.
 - No trademark review of names/logos; no store-terms review; no export-control review.

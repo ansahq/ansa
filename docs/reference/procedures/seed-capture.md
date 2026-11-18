@@ -156,6 +156,23 @@ rejects a verified manifest or observed row. A capture session must first introd
 schema/validator migration for verified identity and observations; it must not edit these frozen
 artifacts to look observed. The existing validator will reject such edits.
 
+The migration must replace the hard-coded unknown-only identity, catalog,
+ledger and audit gates together; merely allowing `state=observed` is unsafe.
+Its rejection tests must establish that:
+
+- `observation.evidence_id` belongs to the row's `evidence_refs` and resolves
+  directly to a `runtime_observation` catalog entry, not a vendor/design entry
+  or an arbitrary string accompanied by unrelated runtime evidence;
+- the runtime entry identifies the covered scenario, reference manifest,
+  artifact SHA-256, platform, OS build and recording, all matching that row;
+- the manifest explicitly lists that runtime evidence ID, and known identity
+  fields have resolvable evidence IDs (including a correctly formatted hash);
+- confidence includes the observation evidence, and catalog entries receive
+  schema, provenance and invented-value checks too.
+
+These are future capture-import requirements, not implemented verified-schema
+features or evidence that a capture took place.
+
 ## 9. Update the ledger and validate
 
 Only after a capture session, under the new versioned schema/validator:

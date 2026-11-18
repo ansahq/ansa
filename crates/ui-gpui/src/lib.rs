@@ -1302,7 +1302,12 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
         if !interaction_smoke && std::env::args().any(|arg| arg == "--smoke-test") {
             let _ = handle.update(cx, |_, window, _| {
                 window.on_next_frame(|window, _| {
-                    window.on_next_frame(|_, cx| cx.quit());
+                    window.on_next_frame(|_, cx| {
+                        println!(
+                            "Ansa native startup smoke: window opened and two GPUI frames rendered, exiting with success."
+                        );
+                        cx.quit();
+                    });
                 });
             });
         }

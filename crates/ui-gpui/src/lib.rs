@@ -1,23 +1,28 @@
 use ansa_core::{
     Engine,
     action_panel::{ActionEntry, ActionId, ActionPanel, PanelTarget},
+    action_state::{ActionError, ActionRef, ActionRegistry, ResolvedAction},
+    navigation::{EscapeAction, ScrollAnchor},
     query::{QueryRoute, route_query},
 };
 use ansa_domain::{BuiltinCommand, Command, CommandId, CommandKind};
-use ansa_ui_components::{Changed, EditRejected, TextInput, Theme, install_keybindings};
+use ansa_ui_components::{
+    Changed, EditIntent, EditOutcome, EditRejected, TextInput, Theme, install_keybindings,
+};
 #[cfg(feature = "upstream-candidate")]
 use gpui::Role;
 use gpui::{
-    App, Application, Bounds, ClipboardItem, Context, Entity, FocusHandle, Focusable, KeyBinding,
-    ScrollStrategy, SharedString, Subscription, UniformListScrollHandle, Window,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, prelude::*,
-    px, size, uniform_list,
+    App, Application, Bounds, ClipboardItem, Context, Entity, EntityInputHandler, FocusHandle,
+    Focusable, KeyBinding, ScrollStrategy, SharedString, Subscription, UniformListScrollHandle,
+    Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div,
+    prelude::*, px, size, uniform_list,
 };
 
 mod compat;
 mod host_lifecycle;
 #[cfg(feature = "upstream-candidate")]
 mod live_status;
+mod navigation;
 
 actions!(
     ansa,
@@ -45,13 +50,18 @@ struct Launcher {
     input: Entity<TextInput>,
     action_input: Entity<TextInput>,
     panel: Option<ActionPanel>,
+    /// Action references issued when the panel opened, revalidated before use.
+    panel_refs: Vec<ActionRef>,
     actions_focus: FocusHandle,
     engine: Engine,
     scroll: UniformListScrollHandle,
     status: String,
     #[cfg(feature = "upstream-candidate")]
     selection_announcement: Option<String>,
-    detail: Option<String>,
+    detail: Option<navigation::ChildView>,
+    /// Set while programmatically restoring the parent query so the input's
+    /// change subscription does not mutate the engine a second time.
+    restoring: bool,
     host: host_lifecycle::LauncherHost,
     hotkey_notice: Option<String>,
     glass: bool,
@@ -180,13 +190,34 @@ impl Launcher {
         };
         let subscription =
             cx.subscribe_in(&input, window, |this, _, event: &Changed, window, cx| {
+                // A programmatic restore already applied the parent query and
+                // revision exactly once; do not run the root mutation again.
+                if this.restoring {
+                    return;
+                }
+                if this.engine.query() == event.0 {
+                    return;
+                }
                 // Typing in the root field invalidates any previously prepared menu.
                 if this.panel.is_some() {
                     this.close_actions(window, cx);
                 }
                 this.engine.set_query(&event.0);
                 this.scroll.scroll_to_item(0, ScrollStrategy::Top);
-                this.detail = None;
+                let composing = this.input.read(cx).is_composing();
+                let returns_to_parent = this
+                    .engine
+                    .views()
+                    .frames()
+                    .last()
+                    .is_some_and(|frame| frame.parent().query() == event.0);
+                if this.detail.is_some() && !composing && !returns_to_parent {
+                    // Typing a new root query leaves the child view. Discard
+                    // the frame without restoring it: the new query is the
+                    // user's intent and must not be overwritten.
+                    this.engine.discard_view();
+                    this.detail = None;
+                }
                 #[cfg(feature = "upstream-candidate")]
                 {
                     this.selection_announcement = None;
@@ -212,12 +243,14 @@ impl Launcher {
             input,
             action_input,
             panel: None,
+            panel_refs: Vec::new(),
             actions_focus: cx.focus_handle(),
             engine: Engine::new(commands),
             status,
             #[cfg(feature = "upstream-candidate")]
             selection_announcement: None,
             detail: None,
+            restoring: false,
             scroll: UniformListScrollHandle::new(),
             host: host.clone(),
             hotkey_notice: None,
@@ -323,11 +356,10 @@ impl Launcher {
             return;
         }
         if self.actions_focus.is_focused(window) {
-            if self.detail.take().is_none() {
-                self.toggle_actions(window, cx);
+            if self.detail.is_some() {
+                self.pop_detail(window, cx);
             } else {
-                compat::focus(window, &self.input.focus_handle(cx), cx);
-                cx.notify();
+                self.toggle_actions(window, cx);
             }
             return;
         }
@@ -360,13 +392,11 @@ impl Launcher {
                 return;
             }
             CommandKind::Builtin(BuiltinCommand::Settings) => {
-                self.detail = Some("Integration status\n\nApplications: Windows Start Menu shortcuts (.lnk). Packaged apps and switching to running windows are not supported yet.\n\nSummon: Ctrl+Space when registration succeeds. Shortcut editing is not implemented. Dismissal attempts checked, best-effort focus return only if Ansa still owns the foreground. Windows can deny activation.\n\nActions: Ctrl+K, type to filter, arrows to select, Enter to act. Pins and usage signals last only for this process; no settings are saved yet. Tab reaches the footer control.\n\nCalculator: bounded approximate f64 arithmetic; Enter copies. Start with = to explicitly request arithmetic. No units, currencies, or dates yet.\n\nClipboard history, automatic paste, file indexing, extensions, AI and sync are not enabled. No account or network service is required.\n\nAccessibility and multilingual input still require real-device validation.".into());
-                cx.notify();
+                self.open_detail(navigation::ChildView::settings(), window, cx);
                 return;
             }
             CommandKind::Builtin(BuiltinCommand::About) => {
-                self.detail = Some("Ansa\n\nA little less friction. A little more flow.\n\nA free, open-source keyboard launcher built in Rust. An original interface, an offline core, and no account required.\n\nFoundation prototype · 0.1.0\nApache-2.0 · GPUI 0.2.2\n\nThis build starts the feasibility phase; it does not claim Raycast extension compatibility or production readiness.".into());
-                cx.notify();
+                self.open_detail(navigation::ChildView::about(), window, cx);
                 return;
             }
         };
@@ -443,8 +473,126 @@ impl Launcher {
         cx.notify();
     }
 
+    /// Opens a typed child view and captures the parent frame.
+    fn open_detail(
+        &mut self,
+        view: navigation::ChildView,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.detail.is_some() {
+            return;
+        }
+        let anchor = ScrollAnchor::at(self.engine.selected_index().unwrap_or(0));
+        match self.engine.push_view(view.id.clone(), anchor) {
+            Ok(_) => self.detail = Some(view),
+            Err(error) => {
+                self.status = format!("Cannot open view: {error}");
+                cx.notify();
+                return;
+            }
+        }
+        compat::focus(window, &self.input.focus_handle(cx), cx);
+        cx.notify();
+    }
+
+    /// Pops the child view and restores the captured parent exactly once.
+    fn pop_detail(&mut self, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        let Some(restored) = self.engine.pop_view() else {
+            self.detail = None;
+            return false;
+        };
+        self.detail = None;
+        self.restore_query(restored.query(), window, cx);
+        self.scroll
+            .scroll_to_item(restored.scroll().row(), ScrollStrategy::Center);
+        compat::focus(window, &self.input.focus_handle(cx), cx);
+        cx.notify();
+        true
+    }
+
+    /// Replaces the query field text without a second engine mutation.
+    fn restore_query(&mut self, query: &str, window: &mut Window, cx: &mut Context<Self>) {
+        let input = self.input.clone();
+        self.restoring = true;
+        input.update(cx, |input, cx| {
+            let length = input.text().encode_utf16().count();
+            if input.text() != query {
+                input.replace_text_in_range(Some(0..length), query, window, cx);
+            }
+        });
+        self.restoring = false;
+    }
+
+    /// The input that owns Escape and what it expects to happen.
+    fn escape_target(&self, window: &Window, cx: &App) -> (Entity<TextInput>, EditOutcome) {
+        if self.action_input.focus_handle(cx).is_focused(window) {
+            return (
+                self.action_input.clone(),
+                self.action_input
+                    .read(cx)
+                    .action_outcome(EditIntent::Escape),
+            );
+        }
+        if self.input.focus_handle(cx).is_focused(window) {
+            return (
+                self.input.clone(),
+                self.input.read(cx).action_outcome(EditIntent::Escape),
+            );
+        }
+        if self.action_input.read(cx).is_composing() {
+            return (
+                self.action_input.clone(),
+                self.action_input
+                    .read(cx)
+                    .action_outcome(EditIntent::Escape),
+            );
+        }
+        (
+            self.input.clone(),
+            self.input.read(cx).action_outcome(EditIntent::Escape),
+        )
+    }
+
+    /// Applies the required Escape order:
+    /// composition -> action panel -> child view -> root.
+    fn escape(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let (input, outcome) = self.escape_target(window, cx);
+        match outcome {
+            EditOutcome::CancelComposition => {
+                input.update(cx, |input, cx| {
+                    input.cancel_composition(window, cx);
+                });
+                cx.notify();
+                return;
+            }
+            EditOutcome::DeferToComposition => return,
+            EditOutcome::Execute => {}
+        }
+        if self.panel.is_some() {
+            self.close_actions(window, cx);
+            return;
+        }
+        match self.engine.resolve_escape() {
+            // The focused input already owns composition cancellation; an
+            // engine-level composition flag is a host concern only.
+            EscapeAction::CancelComposition | EscapeAction::None => {}
+            EscapeAction::CloseActions => self.close_actions(window, cx),
+            EscapeAction::RestoreView(restored) => {
+                self.detail = None;
+                self.restore_query(restored.query(), window, cx);
+                self.scroll
+                    .scroll_to_item(restored.scroll().row(), ScrollStrategy::Center);
+                compat::focus(window, &self.input.focus_handle(cx), cx);
+                cx.notify();
+            }
+            EscapeAction::HideRoot => self.dismiss(true, window, cx),
+        }
+    }
+
     fn close_actions(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.panel = None;
+        self.panel_refs.clear();
         self.engine.close_actions();
         self.action_input
             .update(cx, |input, cx| input.clear(window, cx));
@@ -515,7 +663,21 @@ impl Launcher {
         };
         self.action_input
             .update(cx, |input, cx| input.clear(window, cx));
-        self.panel = Some(ActionPanel::open(target, entries));
+        let generation = self.engine.view_generation();
+        let mut panel_refs = Vec::with_capacity(entries.len());
+        for entry in &entries {
+            match ActionRegistry::issue_panel(&self.engine, self.engine.views(), entry.id) {
+                Ok(action_ref) => panel_refs.push(action_ref),
+                Err(error) => {
+                    self.status = error.status_message().to_owned();
+                    cx.notify();
+                    return;
+                }
+            }
+        }
+        self.panel = Some(ActionPanel::open_at(target, entries, generation));
+        self.panel_refs = panel_refs;
+        self.engine.open_actions();
         compat::focus(window, &self.action_input.focus_handle(cx), cx);
         cx.notify();
     }
@@ -532,11 +694,6 @@ impl Launcher {
         let Some(panel) = self.panel.as_ref() else {
             return;
         };
-        if !panel.target().is_current(&self.engine) {
-            self.status = "Action target changed — reopen actions".into();
-            self.close_actions(window, cx);
-            return;
-        }
         let Some(action) = clicked.or_else(|| panel.selected().map(|entry| entry.id)) else {
             return;
         };
@@ -547,11 +704,38 @@ impl Launcher {
         {
             return;
         }
-        self.close_actions(window, cx);
-        match action {
-            ActionId::Primary => self.execute_primary(window, cx),
-            ActionId::CopyTarget => self.copy_target(window, cx),
-            ActionId::ToggleFavorite => {
+        let Some(action_ref) = self
+            .panel_refs
+            .iter()
+            .find(|reference| reference.panel_action() == Some(action))
+            .cloned()
+        else {
+            self.status = ActionError::StaleTarget.status_message().to_owned();
+            self.close_actions(window, cx);
+            return;
+        };
+        match ActionRegistry::resolve(&action_ref, &self.engine, self.engine.views()) {
+            Ok(resolved) => {
+                self.close_actions(window, cx);
+                self.run_resolved(resolved, window, cx);
+            }
+            Err(error) => {
+                self.status = error.status_message().to_owned();
+                self.close_actions(window, cx);
+            }
+        }
+    }
+
+    fn run_resolved(
+        &mut self,
+        resolved: ResolvedAction,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        match resolved.panel_action() {
+            Some(ActionId::Primary) => self.execute_primary(window, cx),
+            Some(ActionId::CopyTarget) => self.copy_target(window, cx),
+            Some(ActionId::ToggleFavorite) => {
                 if let Some(command) = self.engine.selected() {
                     let id = command.id.clone();
                     let pinned = !self.engine.signals().is_favorite(&id);
@@ -563,6 +747,10 @@ impl Launcher {
                     }
                     .into();
                 }
+                cx.notify();
+            }
+            None => {
+                self.status = ActionError::UnknownAction.status_message().to_owned();
                 cx.notify();
             }
         }
@@ -621,7 +809,7 @@ impl Render for Launcher {
         let panel_stale = self
             .panel
             .as_ref()
-            .is_some_and(|panel| !panel.target().is_current(&self.engine));
+            .is_some_and(|panel| !panel.is_current(&self.engine));
         let route = route_query(self.engine.query());
         let is_calculator = matches!(route, QueryRoute::Calculator(_));
         let calculation = match &route {
@@ -672,9 +860,8 @@ impl Render for Launcher {
                 theme.border
             })
             .on_click(cx.listener(|this, _, window, cx| {
-                if this.detail.take().is_some() {
-                    compat::focus(window, &this.input.focus_handle(cx), cx);
-                    cx.notify();
+                if this.detail.is_some() {
+                    this.pop_detail(window, cx);
                 } else {
                     this.toggle_actions(window, cx);
                 }
@@ -772,19 +959,7 @@ impl Render for Launcher {
             .on_action(cx.listener(|this, _: &ToggleTheme, _, cx| this.toggle_theme(cx)))
             .on_action(cx.listener(|this, _: &TabNext, window, cx| this.tab_focus(window, cx)))
             .on_action(cx.listener(|this, _: &TabPrevious, window, cx| this.tab_focus(window, cx)))
-            .on_action(cx.listener(|this, _: &Escape, window, cx| {
-                if this.is_composing(cx) {
-                    return;
-                }
-                if this.panel.is_some() {
-                    this.close_actions(window, cx);
-                } else if this.detail.take().is_none() {
-                    this.dismiss(true, window, cx);
-                } else {
-                    compat::focus(window, &this.input.focus_handle(cx), cx);
-                }
-                cx.notify();
-            }))
+            .on_action(cx.listener(|this, _: &Escape, window, cx| this.escape(window, cx)))
             .on_action(cx.listener(|this, _: &Quit, _, cx| {
                 this.shutdown_host();
                 cx.quit();
@@ -833,7 +1008,7 @@ impl Render for Launcher {
                     .flex_1()
                     .min_h_0()
                     .relative()
-                    .when_some(self.detail.clone(), |el, detail| {
+                    .when_some(self.detail.as_ref().map(|view| view.body), |el, detail| {
                         #[cfg(feature = "upstream-candidate")]
                         let heading = detail
                             .lines()
@@ -1109,7 +1284,6 @@ impl Render for Launcher {
                                 )
                                 .children(panel.visible_entries().iter().enumerate().map(|(index, entry)| {
                                     let action = entry.id;
-                                    let target = panel.target().clone();
                                     let selected = panel.selected_index() == Some(index);
                                     let row_id = SharedString::from(format!(
                                         "action:{}:{}:{}",
@@ -1121,9 +1295,7 @@ impl Render for Launcher {
                                         .when(selected, |el| el.bg(theme.surface_raised))
                                         .hover(|el| el.bg(theme.surface_raised))
                                         .on_click(cx.listener(move |this, _, window, cx| {
-                                            if this.panel.as_ref().is_some_and(|panel| panel.target() == &target) {
-                                                this.execute_panel(Some(action), window, cx);
-                                            }
+                                            this.execute_panel(Some(action), window, cx);
                                         }))
                                         .child(entry.title.clone())
                                         .child(div().text_xs().text_color(theme.muted_text).child(entry.shortcut.clone().unwrap_or_default()));

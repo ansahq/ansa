@@ -134,21 +134,18 @@ fn step(view: Entity<Launcher>, stage: u8, window: &mut Window, cx: &mut App) {
                 this.panel.is_some(),
                 "invalidated menu must not silently expose root Enter"
             );
-            assert!(
-                !this
-                    .panel
-                    .as_ref()
-                    .unwrap()
-                    .target()
-                    .is_current(&this.engine)
-            );
+            assert!(!this.panel.as_ref().unwrap().is_current(&this.engine));
             window.dispatch_action(Box::new(Execute), cx);
         }
         17 => {
             let this = view.read(cx);
             assert!(this.panel.is_none());
             assert!(this.detail.is_none());
-            assert!(this.status.contains("target changed"));
+            assert!(
+                this.status.contains("invocation expired"),
+                "stale action refs must report a typed status, saw {:?}",
+                this.status
+            );
             let input = this.input.clone();
             replace(&input, &"😀".repeat(4097), window, cx);
         }
@@ -264,8 +261,229 @@ fn step(view: Entity<Launcher>, stage: u8, window: &mut Window, cx: &mut App) {
                 view.read(cx).light,
                 std::env::args().any(|arg| arg == "--light")
             );
+            // Stage 15 emptied the catalog to invalidate the old panel; restore
+            // the built-ins and start the navigation block from a known query.
+            view.update(cx, |this, cx| {
+                this.engine.replace_catalog(builtin_commands());
+                cx.notify();
+            });
+            let input = view.read(cx).input.clone();
+            replace(&input, "About", window, cx);
+        }
+        30 => {
+            let this = view.read(cx);
+            assert_eq!(this.engine.query(), "About");
+            assert_eq!(this.engine.selected().unwrap().title, "About Ansa");
+            window.dispatch_action(Box::new(Execute), cx);
+        }
+        31 => {
+            let this = view.read(cx);
+            assert!(this.detail.is_some(), "About must open a child view");
+            assert_eq!(this.detail.as_ref().unwrap().id.as_str(), "ansa:about");
+            assert_eq!(this.engine.view_depth(), 1);
+            assert_eq!(this.engine.current_view().as_str(), "ansa:about");
+            let probe = this.engine.query_token();
+            assert!(probe.invocation() > 0);
+            // Marked text owns Escape; the child view must survive.
+            let input = this.input.clone();
+            input.update(cx, |input, cx| {
+                input.replace_and_mark_text_in_range(
+                    Some(0..input.text().encode_utf16().count()),
+                    "か",
+                    Some(1..1),
+                    window,
+                    cx,
+                );
+            });
+            assert!(
+                view.read(cx).input.read(cx).is_composing(),
+                "fixture must have an active composition"
+            );
+            assert!(
+                view.read(cx).detail.is_some(),
+                "marking composition must not pop the child view"
+            );
+            window.dispatch_action(Box::new(Escape), cx);
+        }
+        32 => {
+            let this = view.read(cx);
+            assert!(
+                !this.input.read(cx).is_composing(),
+                "Escape must cancel the composition first"
+            );
+            assert!(
+                this.detail.is_some(),
+                "cancelling composition must not pop the child view"
+            );
+            assert_eq!(this.engine.view_depth(), 1);
+            window.dispatch_action(Box::new(Escape), cx);
+        }
+        33 => {
+            let this = view.read(cx);
+            assert!(this.detail.is_none(), "second Escape pops the child view");
+            assert_eq!(this.engine.view_depth(), 0);
+            assert_eq!(this.engine.current_view().as_str(), "root");
+            assert_eq!(this.engine.query(), "About");
+            assert_eq!(this.input.read(cx).text(), "About");
+            assert_eq!(this.engine.selected().unwrap().title, "About Ansa");
+            assert!(this.input.focus_handle(cx).is_focused(window));
+
+            // A delayed callback from a closed frame must not execute.
+            let probe = ansa_core::navigation::ViewId::new("ansa:probe").expect("static probe id");
+            view.update(cx, |this, cx| {
+                this.engine
+                    .push_view(probe.clone(), ScrollAnchor::at(1))
+                    .unwrap();
+                let delayed = ActionRegistry::issue_panel(
+                    &this.engine,
+                    this.engine.views(),
+                    ActionId::Primary,
+                )
+                .unwrap();
+                let restored = this.engine.pop_view().unwrap();
+                assert_eq!(restored.view(), &probe);
+                assert_eq!(restored.scroll(), ScrollAnchor::at(1));
+                assert!(
+                    this.engine.pop_view().is_none(),
+                    "a frame can only be restored once"
+                );
+                assert_eq!(
+                    ActionRegistry::resolve(&delayed, &this.engine, this.engine.views()),
+                    Err(ActionError::CrossView),
+                    "the delayed callback belongs to another view"
+                );
+                let fresh = ActionRegistry::issue_panel(
+                    &this.engine,
+                    this.engine.views(),
+                    ActionId::Primary,
+                )
+                .unwrap();
+                assert!(ActionRegistry::resolve(&fresh, &this.engine, this.engine.views()).is_ok());
+                cx.notify();
+            });
+            window.dispatch_action(Box::new(Actions), cx);
+        }
+        34 => {
+            let this = view.read(cx);
+            assert!(this.panel.is_some(), "actions must reopen after restore");
+            assert_eq!(
+                this.panel.as_ref().unwrap().view_generation(),
+                Some(this.engine.view_generation())
+            );
+            assert_eq!(
+                this.panel_refs.len(),
+                this.panel.as_ref().unwrap().entries().len()
+            );
+            let stale = this.panel_refs[0].clone();
+            view.update(cx, |this, cx| {
+                this.engine.replace_catalog(builtin_commands());
+                assert!(
+                    ActionRegistry::resolve(&stale, &this.engine, this.engine.views()).is_err(),
+                    "the panel ref captured before the catalog swap is stale"
+                );
+                let fresh = ActionRegistry::issue_panel(
+                    &this.engine,
+                    this.engine.views(),
+                    ActionId::Primary,
+                )
+                .unwrap();
+                assert!(ActionRegistry::resolve(&fresh, &this.engine, this.engine.views()).is_ok());
+                cx.notify();
+            });
+            window.dispatch_action(Box::new(Execute), cx);
+        }
+        35 => {
+            let this = view.read(cx);
+            assert!(
+                this.panel.is_none(),
+                "a stale action ref must close instead of executing"
+            );
+            assert!(
+                this.status.contains("reopen actions"),
+                "stale refs must show a typed status, saw {:?}",
+                this.status
+            );
+            assert!(this.input.focus_handle(cx).is_focused(window));
+            window.dispatch_action(Box::new(Actions), cx);
+        }
+        36 => {
+            let this = view.read(cx);
+            assert!(this.panel.is_some());
+            assert!(this.action_input.focus_handle(cx).is_focused(window));
+            window.dispatch_action(Box::new(Escape), cx);
+        }
+        37 => {
+            let this = view.read(cx);
+            assert!(this.panel.is_none(), "Escape must close the panel");
+            assert!(this.input.focus_handle(cx).is_focused(window));
+            assert!(this.detail.is_none());
+            assert_eq!(this.engine.view_depth(), 0);
+            key("tab", window, cx);
+        }
+        38 => {
+            assert!(
+                view.read(cx).actions_focus.is_focused(window),
+                "Tab must reach the footer control"
+            );
+            key("tab", window, cx);
+        }
+        39 => {
+            assert!(
+                view.read(cx).input.focus_handle(cx).is_focused(window),
+                "Tab must return to the query field"
+            );
+            key("shift-tab", window, cx);
+        }
+        40 => {
+            assert!(
+                view.read(cx).actions_focus.is_focused(window),
+                "Shift+Tab must move backwards"
+            );
+            key("shift-tab", window, cx);
+        }
+        41 => {
+            let this = view.read(cx);
+            assert!(
+                this.input.focus_handle(cx).is_focused(window),
+                "Shift+Tab must return to the query field"
+            );
+            let input = this.input.clone();
+            replace(&input, "About", window, cx);
+        }
+        42 => {
+            let this = view.read(cx);
+            assert_eq!(this.engine.query(), "About");
+            assert_eq!(this.engine.selected().unwrap().title, "About Ansa");
+            window.dispatch_action(Box::new(Actions), cx);
+        }
+        43 => {
+            let this = view.read(cx);
+            assert!(this.panel.is_some());
+            assert!(this.action_input.focus_handle(cx).is_focused(window));
+            key("enter", window, cx);
+        }
+        44 => {
+            let this = view.read(cx);
+            assert!(this.panel.is_none());
+            assert!(
+                this.detail.is_some(),
+                "the panel's primary action must still run"
+            );
+            assert_eq!(this.detail.as_ref().unwrap().id.as_str(), "ansa:about");
+            assert_eq!(this.engine.view_depth(), 1);
+            assert!(this.input.focus_handle(cx).is_focused(window));
+            key("escape", window, cx);
+        }
+        45 => {
+            let this = view.read(cx);
+            assert!(this.detail.is_none());
+            assert_eq!(this.engine.view_depth(), 0);
+            assert_eq!(this.engine.query(), "About");
+            assert_eq!(this.input.read(cx).text(), "About");
+            assert_eq!(this.engine.selected().unwrap().title, "About Ansa");
+            assert!(this.input.focus_handle(cx).is_focused(window));
             println!(
-                "Ansa interaction smoke: 30 synthetic widget/action stages passed, including glass and light/dark theme toggling. No clipboard writes or external app launches."
+                "Ansa interaction smoke: 46 synthetic widget/action stages passed, including typed view restore, Escape ordering, stale action refs, Tab/Shift+Tab cycles, glass and theme toggling. No clipboard writes or external app launches."
             );
             cx.quit();
             return;

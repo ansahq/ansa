@@ -126,23 +126,49 @@ pub struct ActionPanel {
     query: String,
     visible: Vec<ActionEntry>,
     selected: Option<ActionId>,
+    view_generation: Option<u64>,
 }
 
 impl ActionPanel {
     /// Opens a panel for `target` with the supplied entries.
     ///
     /// The first visible entry is selected initially. An empty entry list is
-    /// valid and yields no selection.
+    /// valid and yields no selection. This constructor does not bind the panel
+    /// to a view frame; see [`ActionPanel::open_at`] for the launcher path,
+    /// which does.
     pub fn open(target: PanelTarget, entries: Vec<ActionEntry>) -> Self {
+        Self::open_inner(target, entries, None)
+    }
+
+    /// Opens a panel bound to the view frame `view_generation`.
+    ///
+    /// [`ActionPanel::is_current`] then also requires the engine to still be in
+    /// that frame, so a panel cannot outlive a push/pop that restored the
+    /// parent.
+    pub fn open_at(target: PanelTarget, entries: Vec<ActionEntry>, view_generation: u64) -> Self {
+        Self::open_inner(target, entries, Some(view_generation))
+    }
+
+    fn open_inner(
+        target: PanelTarget,
+        entries: Vec<ActionEntry>,
+        view_generation: Option<u64>,
+    ) -> Self {
         let mut panel = Self {
             target,
             entries,
             query: String::new(),
             visible: Vec::new(),
             selected: None,
+            view_generation,
         };
         panel.refilter();
         panel
+    }
+
+    /// The view generation this panel is bound to, if any.
+    pub fn view_generation(&self) -> Option<u64> {
+        self.view_generation
     }
 
     /// Replaces the filter query, truncating it to
@@ -239,7 +265,16 @@ impl ActionPanel {
     }
 
     /// Whether the target still matches the engine.
+    ///
+    /// A panel opened with [`ActionPanel::open_at`] additionally requires the
+    /// engine's current view generation to match.
     pub fn is_current(&self, engine: &Engine) -> bool {
+        if self
+            .view_generation
+            .is_some_and(|generation| generation != engine.view_generation())
+        {
+            return false;
+        }
         self.target.is_current(engine)
     }
 
@@ -603,6 +638,44 @@ mod tests {
             Some(&selected),
             "unrelated"
         ));
+    }
+
+    #[test]
+    fn view_bound_panel_expires_when_the_frame_generation_moves() {
+        use crate::navigation::{ScrollAnchor, ViewId};
+
+        let mut engine = engine();
+        let generation = engine.view_generation();
+        let target = PanelTarget::Command {
+            id: engine.selected().unwrap().id.clone(),
+            token: engine.query_token(),
+        };
+        let panel = ActionPanel::open_at(target, entries("Pin to favorites"), generation);
+        assert_eq!(panel.view_generation(), Some(generation));
+        assert!(panel.is_current(&engine));
+        assert_eq!(panel.validated_action(&engine), Some(ActionId::Primary));
+
+        engine
+            .push_view(ViewId::new("ansa:probe").unwrap(), ScrollAnchor::TOP)
+            .unwrap();
+        assert!(!panel.is_current(&engine));
+        assert_eq!(panel.validated_action(&engine), None);
+
+        engine.pop_view().unwrap();
+        // The restored parent is a new frame instance with a new generation, so
+        // the old panel stays invalid exactly once.
+        assert!(!panel.is_current(&engine));
+        assert_eq!(panel.validated_action(&engine), None);
+
+        let reopened = ActionPanel::open_at(
+            PanelTarget::Command {
+                id: engine.selected().unwrap().id.clone(),
+                token: engine.query_token(),
+            },
+            entries("Pin to favorites"),
+            engine.view_generation(),
+        );
+        assert!(reopened.is_current(&engine));
     }
 
     #[test]

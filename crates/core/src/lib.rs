@@ -9,12 +9,17 @@
 //! intentionally outside this crate.
 
 pub mod action_panel;
+pub mod action_state;
 pub mod calculator;
+pub mod navigation;
 pub mod query;
 pub mod refresh;
 
 use ansa_domain::{Command, CommandId};
 use ansa_search::{SearchSignals, rank};
+use navigation::{
+    EscapeAction, ParentActions, ParentState, RestoredView, ScrollAnchor, ViewId, ViewStack,
+};
 use std::collections::HashSet;
 use std::sync::OnceLock;
 
@@ -67,7 +72,7 @@ pub struct Engine {
     actions_open: bool,
     composition_active: bool,
     hidden: bool,
-    view_stack: Vec<String>,
+    view_stack: ViewStack,
     invocation: u64,
     revision: u64,
     signals: SearchSignals,
@@ -90,7 +95,7 @@ impl Engine {
             actions_open: false,
             composition_active: false,
             hidden: false,
-            view_stack: Vec::new(),
+            view_stack: ViewStack::new(),
             invocation: 1,
             revision: 1,
             signals: SearchSignals::new(),
@@ -247,47 +252,124 @@ impl Engine {
         self.composition_active
     }
 
-    /// Pushes a child view identity, e.g. an action sub-panel.
-    pub fn push_view(&mut self, view_id: impl Into<String>) {
-        self.view_stack.push(view_id.into());
-    }
-
-    /// Pops the current child view, returning its identity.
-    pub fn pop_view(&mut self) -> Option<String> {
-        self.view_stack.pop()
-    }
-
-    pub fn current_view(&self) -> Option<&str> {
-        self.view_stack.last().map(String::as_str)
-    }
-
-    pub fn view_depth(&self) -> usize {
-        self.view_stack.len()
-    }
-
-    /// Applies the Escape hierarchy:
+    /// Pushes a typed child view, capturing the parent query, selected command,
+    /// logical scroll anchor and action-panel marker.
     ///
-    /// 1. composition/modal guard
-    /// 2. close the action panel
-    /// 3. pop one child view
-    /// 4. hide the root launcher
-    /// 5. no-op
-    pub fn escape(&mut self) -> EscapeOutcome {
+    /// Returns the new frame generation, or [`navigation::ViewError`] when the
+    /// stack depth limit is reached. Pushing does not change the query or run
+    /// any command; it only records where the parent was.
+    pub fn push_view(
+        &mut self,
+        view: ViewId,
+        scroll: ScrollAnchor,
+    ) -> Result<u64, navigation::ViewError> {
+        let parent = ParentState::new(
+            self.query.clone(),
+            self.selected().map(|command| command.id.clone()),
+            scroll,
+            if self.actions_open {
+                ParentActions::Open
+            } else {
+                ParentActions::Closed
+            },
+        );
+        self.view_stack.push(view, parent)
+    }
+
+    /// Pops one child view and re-establishes the captured parent state.
+    ///
+    /// Returns `None` at the root: the root is never popped.
+    ///
+    /// Restoration is deliberate and documented: it re-applies the exact parent
+    /// query text and selection, closes transient actions, bumps the query
+    /// revision and issues a new view generation. Any [`action_state::ActionRef`]
+    /// issued before the push is therefore stale, including references to the
+    /// parent's own command. The parent command is never re-run.
+    pub fn pop_view(&mut self) -> Option<RestoredView> {
+        let restored = self.view_stack.pop()?;
+        self.restore_parent(&restored);
+        Some(restored)
+    }
+
+    /// The current view identity (the root identity when no child is pushed).
+    pub fn current_view(&self) -> ViewId {
+        self.view_stack.current()
+    }
+
+    /// Discards the newest child view without restoring the parent.
+    ///
+    /// Used when the user replaces the query instead of navigating back: the
+    /// captured parent state is obsolete and must not overwrite their input.
+    /// Returns `false` at the root.
+    pub fn discard_view(&mut self) -> bool {
+        let discarded = self.view_stack.discard_top();
+        if discarded {
+            // A discarded frame still invalidates references issued in it.
+            self.bump_revision();
+        }
+        discarded
+    }
+
+    /// Number of pushed child views.
+    pub fn view_depth(&self) -> usize {
+        self.view_stack.depth()
+    }
+
+    /// The current view-stack generation. Action references must match it.
+    pub fn view_generation(&self) -> u64 {
+        self.view_stack.generation()
+    }
+
+    /// The view stack, for issuing and resolving action references.
+    pub fn views(&self) -> &ViewStack {
+        &self.view_stack
+    }
+
+    /// Opens the action panel in the model, when a command is selected.
+    pub fn open_actions(&mut self) {
+        if !self.hidden && self.selected().is_some() {
+            self.actions_open = true;
+        }
+    }
+
+    /// Applies the Escape hierarchy and returns a typed plan:
+    ///
+    /// 1. active IME composition/modal -> cancel it and consume Escape
+    /// 2. open action panel -> close it
+    /// 3. pushed child view -> pop and restore the parent exactly once
+    /// 4. visible root -> hide it
+    /// 5. otherwise -> nothing
+    ///
+    /// The comparison is entirely typed: no user text or string identity is
+    /// consulted.
+    pub fn resolve_escape(&mut self) -> EscapeAction {
         if self.composition_active {
-            return EscapeOutcome::Ignored;
+            return EscapeAction::CancelComposition;
         }
         if self.actions_open {
             self.actions_open = false;
-            return EscapeOutcome::ActionsClosed;
+            return EscapeAction::CloseActions;
         }
-        if self.pop_view().is_some() {
-            return EscapeOutcome::ViewPopped;
+        if let Some(restored) = self.pop_view() {
+            return EscapeAction::RestoreView(restored);
         }
         if !self.hidden {
             self.hidden = true;
-            return EscapeOutcome::Dismiss;
+            return EscapeAction::HideRoot;
         }
-        EscapeOutcome::Ignored
+        EscapeAction::None
+    }
+
+    /// Applies the Escape hierarchy and collapses the typed plan into the
+    /// legacy [`EscapeOutcome`]. A composition is reported as
+    /// [`EscapeOutcome::Ignored`] because the host owns the actual cancellation.
+    pub fn escape(&mut self) -> EscapeOutcome {
+        match self.resolve_escape() {
+            EscapeAction::CancelComposition | EscapeAction::None => EscapeOutcome::Ignored,
+            EscapeAction::CloseActions => EscapeOutcome::ActionsClosed,
+            EscapeAction::RestoreView(_) => EscapeOutcome::ViewPopped,
+            EscapeAction::HideRoot => EscapeOutcome::Dismiss,
+        }
     }
 
     pub fn is_hidden(&self) -> bool {
@@ -382,6 +464,26 @@ impl Engine {
         self.signals.clear();
         self.bump_revision();
         self.invalidate_results();
+    }
+
+    fn restore_parent(&mut self, restored: &RestoredView) {
+        // Re-establish the exact parent text in one mutation. `set_query` is
+        // intentionally not reused because it would also reset the panel and
+        // selection twice; the revision is bumped once here.
+        self.query.clear();
+        self.query.push_str(restored.query());
+        self.actions_open = false;
+        self.bump_revision();
+        self.invalidate_results();
+        let first = self.results().first().map(|command| command.id.clone());
+        let still_present = restored
+            .selected()
+            .is_some_and(|id| self.results().iter().any(|command| &command.id == id));
+        self.selected_id = if still_present {
+            restored.selected().cloned()
+        } else {
+            first
+        };
     }
 
     fn bump_revision(&mut self) {
@@ -539,7 +641,9 @@ mod tests {
     #[test]
     fn escape_follows_hierarchy_and_composition_guard() {
         let mut engine = engine();
-        engine.push_view("actions");
+        engine
+            .push_view(ViewId::new("actions").unwrap(), ScrollAnchor::TOP)
+            .unwrap();
         engine.toggle_actions();
         engine.set_composition_active(true);
 

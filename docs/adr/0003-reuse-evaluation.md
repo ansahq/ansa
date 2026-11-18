@@ -1,10 +1,11 @@
 # ADR 0003: bounded reuse evaluation and foundation decision
 
-Date: 2026-11-11, revised 2026-11-17 · Status: **accepted for the F02
-contribute/fork/greenfield decision**. This revision confirms the provisional
-greenfield choice and supersedes the "broader F02 remains uninvestigated" caveat in
-the 11 November text. Evidence and acceptance gaps are separated below; the global
-implementation-status document is not updated by this record.
+Date: 2026-11-11, revised 2026-11-17 and 2026-11-18 · Status: **accepted as the
+final F02 contribute/fork/greenfield scope decision**. This record confirms the
+provisional greenfield choice, closes it, and supersedes the "broader F02 remains
+uninvestigated" caveat in the 11 November text. Evidence and acceptance gaps are
+separated below; the global implementation-status document is not updated by this
+record. The decision is **greenfield with zero candidate source reuse**.
 
 Inspected at pinned commits on 2026-11-17:
 
@@ -18,7 +19,9 @@ Inspected at pinned commits on 2026-11-17:
 | Flare | `09e126fc77f7716d912c85ce8f308ce708bc2530` | MIT | Historical only |
 
 No application binary was installed or run, no candidate test suite executed
-successfully, and no candidate source, asset, test or schema was copied into Ansa.
+successfully, and no candidate source, asset, test or schema was copied into Ansa. A
+static manifest/lockfile inventory was added on 2026-11-18; it reads only files already
+in the pinned checkouts and resolves no package licences.
 
 ## Context
 
@@ -40,7 +43,7 @@ Method and limits are in [`docs/reuse`](../reuse/README.md).
 | Candidate | Fit | Architecture and build/test evidence | Licence | Dated activity / releases | Extension model | Delta to Ansa | Outcome |
 |---|---|---|---|---|---|---|---|
 | Gauntlet | Rust launcher with React plugins; Windows best-effort | 12-crate Rust workspace; 3-OS build CI, no test job; local check blocked by host `libclang` | MPL-2.0 root, undeclared crates | Last commit 2025-10-02; last release v21, 2025-08-16; declares development stopped | Custom React reconciler + Deno | Own Iced/winit forks, Deno host, accessibility/IME unproven | Do not fork |
-| Vicinae | Closest product scope; maintained | C++/Qt6 CMake; Linux/macOS/Windows builds; Catch2 tests run on Linux/macOS, not shown on Windows | GPL-3.0 | Commits through 2026-11-15; v0.30.1 2026-11-15; weekly/monthly releases | TypeScript/React, Raycast API compat, pinned Node 22 | Different language/UI, GPL-3.0 combined-work obligations, upstream roadmap | Do not adopt as base; contribution only under a changed product/licence decision |
+| Vicinae | Closest product scope; maintained | C++/Qt6 CMake; Linux/macOS/Windows builds; Catch2 tests run on Linux/macOS, not shown on Windows; local configure stops at missing Qt6 6.9 after identifying MSVC 19.44 | GPL-3.0 | Commits through 2026-11-18; v0.30.1 2026-11-15; weekly/monthly releases | TypeScript/React, Raycast API compat, pinned Node 22 | Different language/UI, GPL-3.0 combined-work obligations, upstream roadmap | Do not adopt as base; contribution only under a changed product/licence decision |
 | pop-launcher | Launcher service only, no UI | Rust IPC service; no build/test CI; 8 test attributes; Linux-only deps | Mixed MPL-2.0 / GPL-3.0-only | Commit 2026-11-06; epoch-1.11.0 2026-10-20; ~biweekly epochs | Out-of-process executable plugins, JSON IPC | All UI, cross-platform integration and JS runtime remain | Design reference only |
 | anyrun | Wayland launcher | Rust/GTK4; Ubuntu-only build CI; no tests; local check missing GTK dev libs | GPL-3.0 | Commit 2026-11-08; v26.10.0 2026-10-20; irregular releases | cdylib ABI plugins | Wayland-only, GTK, no Windows/macOS | Reject |
 | cosmic-launcher | COSMIC desktop component | Thin Rust/libcosmic frontend; Ubuntu CI fmt/clippy/test; no in-tree tests; Unix-only | GPL-3.0 | Commit 2026-11-07 (local); epoch-1.11.0 2026-10-20 | pop-launcher plugins | Wayland/COSMIC only; locked failure on this host/toolchain, manifest git deps lack `rev` | Reject as base |
@@ -50,6 +53,8 @@ Method and limits are in [`docs/reuse`](../reuse/README.md).
 
 1. **Build the Ansa foundation greenfield.** Do not fork a candidate, do not adopt one
    as the upstream base, and do not attempt to contribute the foundation into one.
+   This is the final F02 scope decision; it closes the provisional greenfield choice
+   rather than leaving it open for another candidate round.
 2. **Zero reuse of candidate launcher source.** No code, test, asset, manifest schema
    or documentation text from the six evaluated candidates is incorporated. This is
    **not** a claim that the Ansa tree contains no upstream-derived code:
@@ -105,11 +110,36 @@ The prior Gauntlet-only reasoning still holds after adding candidates: no mainta
 project satisfies Ansa's Rust-UI + Windows/macOS/Linux + accessibility + extension-
 platform combination without a larger identity change than greenfield development.
 
+## 2026-11-18 evidence addendum
+
+Three bounded follow-ups were completed without installing prerequisites, executing
+candidate repository scripts or copying source:
+
+1. A static dependency/licence inventory counted 3,466 Cargo lock packages, 704 npm
+   lock entries and 836 pnpm package entries. All Cargo and pnpm entries remain
+   licence-unknown from their lockfiles; 120 npm entries lack a licence field. Vicinae's
+   seven CMake `FetchContent` declarations and eleven vendor directories were named,
+   including an untagged `layer-shell-qt` dependency, but not licence-resolved. See
+   [`dependency-scan.md`](../reuse/dependency-scan.md).
+2. A dated activity re-check on 2026-11-18 found Gauntlet and Flare still inactive,
+   Vicinae active through that day, and pop-launcher, anyrun and cosmic-launcher active
+   within the preceding 90 days. Only Vicinae's default-branch HEAD had moved past its
+   pin. None of the six showed a GitHub archive banner.
+3. A bounded Vicinae CMake configure found MSVC 19.44.35229.0 and then failed at
+   missing Qt6 6.9 after 3.6 s. No compile, link or Catch2 test ran. Flare remains
+   intentionally unbuilt historical evidence.
+
+These addenda close the inventory-counting, dated-activity and "Vicinae was not even
+configured" gaps. They do **not** prove that any candidate builds on its supported
+platforms, that any candidate test suite passes, or that any dependency licence is
+compatible with Ansa. The greenfield, zero-source-reuse decision is unchanged.
+
 ## Explicit confirmation and supersession of the 11 November record
 
 This revision:
 
-- **confirms** the provisional greenfield choice for the foundation;
+- **confirms as final** the provisional greenfield choice for the foundation, with
+  zero reuse of candidate launcher source, and closes the provisional stage;
 - **supersedes** the Gauntlet-only evidence base, the statement that broader F02
   remains uninvestigated, and any reading of "MPL-2.0" that treats pop-launcher as a
   uniformly MPL project;
@@ -161,28 +191,39 @@ of the following becomes true:
 ## Evidence and verification
 
 - Candidate identities, activity, architecture, test/build indicators and deltas:
-  [`docs/reuse/candidate-evidence.md`](../reuse/candidate-evidence.md)
+  [`docs/reuse/candidate-evidence.md`](../reuse/candidate-evidence.md). A dated
+  activity re-check on 2026-11-18 used public commit/release Atom feeds and an HTML
+  archive-banner check; only Vicinae's default-branch HEAD had moved past its pin.
 - Licence findings and obligations: [`docs/reuse/license-audit.md`](../reuse/license-audit.md)
+- Static manifest/lockfile counts and explicit unknowns:
+  [`docs/reuse/dependency-scan.md`](../reuse/dependency-scan.md). The scan reproduced
+  3,466 Cargo lock packages and additionally counted 704 npm lock entries (584 with a
+  licence field, 120 without) and 836 pnpm package entries. All Cargo and pnpm entries
+  remain licence-unknown from their lockfiles; no registry/SPDX lookup was made.
 - Exact commands, host, durations and failures:
   [`docs/reuse/build-verification.md`](../reuse/build-verification.md)
 - Reproduction scripts: [`scripts/reuse/fetch-candidates.ps1`](../../scripts/reuse/fetch-candidates.ps1),
-  [`scripts/reuse/bounded-build.ps1`](../../scripts/reuse/bounded-build.ps1) and
+  [`scripts/reuse/bounded-build.ps1`](../../scripts/reuse/bounded-build.ps1),
+  [`scripts/reuse/scan-dependencies.ps1`](../../scripts/reuse/scan-dependencies.ps1) and
   [`scripts/reuse/tests/run-tests.ps1`](../../scripts/reuse/tests/run-tests.ps1)
 
-Pinned build probes (Windows host, 2026-11-17): Gauntlet `cargo check -p gauntlet
---locked` failed at a missing host `libclang` after 222 s; pop-launcher `cargo test
---workspace --locked` failed on Unix-only `wayland-sys` after 30 s; anyrun `cargo
-check --workspace --locked` failed on missing GTK `gio-2.0` after 30 s;
-cosmic-launcher `cargo check --locked` failed in a locked `accesskit_winit` git
-dependency under Rust 1.95 after 183 s. Vicinae and Flare were not built. No candidate
-tests executed.
+Pinned build probes (Windows host, 2026-11-17; Vicinae addendum 2026-11-18):
+Gauntlet `cargo check -p gauntlet --locked` failed at a missing host `libclang` after
+222 s; pop-launcher `cargo test --workspace --locked` failed on Unix-only `wayland-sys`
+after 30 s; anyrun `cargo check --workspace --locked` failed on missing GTK `gio-2.0`
+after 30 s; cosmic-launcher `cargo check --locked` failed in a locked
+`accesskit_winit` git dependency under Rust 1.95 after 183 s. Vicinae's CMake configure
+identified MSVC 19.44.35229.0 and then failed at missing Qt6 6.9 after 3.6 s; no
+compile or Catch2 test ran. Flare was not built. No candidate tests executed.
 
-The reproduction scripts now refuse dirty, pin-mismatched or wrong-origin checkouts
-before any candidate command, refuse destinations inside this Ansa repository, restore
-`CARGO_TARGET_DIR`, append JSONL result records with per-run log directories, and
-record timeout process-stop status truthfully. The build table above predates those
-guards and came from the session runner; hardening was validated with 22 isolated
-fake-tool tests, and no candidate build was rerun.
+The reproduction scripts refuse dirty, pin-mismatched or wrong-origin checkouts before
+any candidate command, refuse destinations and output paths inside this Ansa
+repository, restore `CARGO_TARGET_DIR`, append JSONL result records with per-run log
+directories, and record timeout process-stop status truthfully. The build table above
+predates those guards and came from the session runner; hardening was validated with
+26 isolated fake-tool tests (22 earlier cases plus four static-scanner cases), and no
+candidate build was rerun. The cached anyrun checkout was not relabelled or modified;
+its static scan used a fresh canonical checkout at the same pin.
 
 ## Acceptance gaps
 
@@ -190,19 +231,21 @@ The decision above is supported by direct inspection of pinned sources, licences
 manifests, CI and activity. It is **not** supported by the following, which remain
 open and must be stated whenever F02 is reported:
 
-- no clean build on Linux or macOS, no WSL; no configured MSVC/Qt6/Vulkan build
-  environment was used (`cl` was not on the probe shell's PATH, which does not
-  disprove an installed MSVC toolchain); no full packaged Windows artifact for any
-  candidate;
+- no clean build on Linux or macOS, no WSL; no complete compile or packaged Windows
+  artifact for any candidate. The Vicinae configure probe found MSVC 19.44 through the
+  Visual Studio generator but stopped at missing Qt6 6.9; it did not use the project's
+  Ninja/`cl` preset and does not establish Windows CI status;
 - zero candidate tests executed; test-quality statements come from repository and CI
   inspection only;
 - no installed runtime, GUI, accessibility, IME, focus, performance or extension-
   corpus validation of any candidate;
-- no dependency-level licence inventory or SBOM for the ~3,466 lockfile packages, no
-  C++ dependency scan, no per-file MPL audit, and no legal review or clearance;
-- GitHub's REST API returned 403 on this host, so archival flags and star counts were
-  not programmatically verified; "unmaintained/archived" claims rely on README
-  statements and commit/release dates;
+- no per-package licence resolution or SBOM for the 3,466 Cargo, 704 npm and 836 pnpm
+  entries; the 2026-11-18 scan is a static count with named unknowns. No C++/Qt
+  dependency graph, per-file MPL audit, or legal review and clearance;
+- GitHub's REST API was rate-limited on this host, so star counts and API-only fields
+  were not used; archival state was checked through the HTML banner and commit/release
+  Atom feeds on 2026-11-18, and "unmaintained/archived" claims still rely on README
+  statements plus commit/release dates;
 - the three-day blueprint budget was compressed into one session, so absence of a
   finding is not proof of absence.
 
@@ -210,3 +253,22 @@ These gaps do not invalidate the contribute/fork/greenfield decision, which turn
 maintenance, licence and architecture deltas that were inspected directly. They do
 mean F02 evidence is not equivalent to a validated candidate build or a legal
 clearance.
+
+## ANS-6 acceptance assessment
+
+For the **scope decision**, the ticket's acceptance criteria are satisfied:
+
+- the ADR records the greenfield choice with criteria, evidence and unresolved
+  unknowns;
+- licence obligations and notice requirements are listed for every candidate;
+- no reuse is proposed, so the "name exact commits, files and dependencies" condition
+  is not triggered, and no source was copied;
+- ADR 0003 is explicitly confirmed as the final scope decision.
+
+The test-plan items are addressed to the extent the host and timebox allow: documented
+build failures for four Rust candidates, a documented Vicinae configure failure at
+Qt6, a documented non-feasibility note for Flare, a reproducible static dependency
+inventory with explicit unknowns, and dated maintainer activity. No candidate test
+suite or full build executed. The remaining gaps above are acceptance limitations, not
+blockers to the scope decision. The handoff record is
+[`docs/reuse/closure.md`](../reuse/closure.md).

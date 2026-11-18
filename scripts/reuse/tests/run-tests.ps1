@@ -15,6 +15,7 @@ $scriptsDir = Split-Path $PSScriptRoot -Parent
 $repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptsDir '..\..'))
 $boundedBuild = Join-Path $scriptsDir 'bounded-build.ps1'
 $fetchCandidates = Join-Path $scriptsDir 'fetch-candidates.ps1'
+$scanDependencies = Join-Path $scriptsDir 'scan-dependencies.ps1'
 $pwsh = (Get-Process -Id $PID).Path
 $git = (Get-Command git -ErrorAction Stop).Source
 $root = Join-Path $env:TEMP ('opencode\reuse-script-tests-' + [guid]::NewGuid().ToString('N'))
@@ -132,11 +133,29 @@ function Invoke-Fetch {
     )
 }
 
+function Invoke-Scan {
+    param(
+        [string]$Destination,
+        [string]$PinFile,
+        [string]$Candidate = 'gauntlet',
+        [string]$OutputPath
+    )
+
+    $arguments = @(
+        '-Destination', $Destination,
+        '-PinFile', $PinFile,
+        '-Candidate', $Candidate
+    )
+    if ($OutputPath) { $arguments += @('-OutputPath', $OutputPath) }
+    Invoke-ChildScript -ScriptPath $script:ScanDependencies -Arguments $arguments
+}
+
 try {
     New-Item -ItemType Directory -Force -Path $root | Out-Null
     $script:Seed = Join-Path $root 'seed'
     $script:BoundedBuild = $boundedBuild
     $script:FetchCandidates = $fetchCandidates
+    $script:ScanDependencies = $scanDependencies
     $script:Pwsh = $pwsh
     $script:Git = $git
     $script:RepositoryRoot = $repositoryRoot
@@ -145,7 +164,44 @@ try {
 
     Invoke-GitReal -Path $script:Seed -Arguments @('init', '--quiet')
     Set-Content -LiteralPath (Join-Path $script:Seed 'README.md') -Value 'seed content'
-    [void](Invoke-GitReal -Path $script:Seed -Arguments @('add', 'README.md'))
+    New-Item -ItemType Directory -Force -Path (Join-Path $script:Seed 'sub') | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $script:Seed 'src') | Out-Null
+    Set-Content -LiteralPath (Join-Path $script:Seed 'Cargo.lock') -Encoding utf8 -Value @'
+version = 4
+
+[[package]]
+name = "fixture-root"
+version = "0.1.0"
+
+[[package]]
+name = "fixture-registry-a"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0000000000000000000000000000000000000000000000000000000000000000"
+'@
+    Set-Content -LiteralPath (Join-Path $script:Seed 'Cargo.toml') -Encoding utf8 -Value @'
+[package]
+name = "fixture-root"
+version = "0.1.0"
+license = "MIT"
+'@
+    Set-Content -LiteralPath (Join-Path $script:Seed 'sub\Cargo.toml') -Encoding utf8 -Value @'
+[package]
+name = "fixture-sub"
+version = "0.1.0"
+'@
+    Set-Content -LiteralPath (Join-Path $script:Seed 'package.json') -Encoding utf8 -Value '{"name":"fixture","license":"ISC"}'
+    Set-Content -LiteralPath (Join-Path $script:Seed 'package-lock.json') -Encoding utf8 -Value '{"name":"fixture","lockfileVersion":3,"packages":{"":{"name":"fixture","license":"ISC"},"node_modules/a":{"version":"1.0.0","license":"MIT"},"node_modules/b":{"version":"1.0.0"}}}'
+    Set-Content -LiteralPath (Join-Path $script:Seed 'CMakeLists.txt') -Encoding utf8 -Value @'
+cmake_minimum_required(VERSION 3.20)
+project(fixture LANGUAGES CXX)
+include(FetchContent)
+FetchContent_Declare(fixture_dep GIT_REPOSITORY https://example.invalid/fixture.git GIT_TAG v1.2.3)
+find_package(Qt6 6.9 REQUIRED COMPONENTS Core)
+'@
+    Set-Content -LiteralPath (Join-Path $script:Seed 'LICENSE') -Encoding utf8 -Value 'Mozilla Public License Version 2.0'
+    Set-Content -LiteralPath (Join-Path $script:Seed 'src\lib.rs') -Encoding utf8 -Value '// SPDX-License-Identifier: MIT'
+    [void](Invoke-GitReal -Path $script:Seed -Arguments @('add', '.'))
     [void](Invoke-GitReal -Path $script:Seed -Arguments @('-c', 'user.name=Reuse Script Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'seed', '--quiet'))
     $script:Pin = ((Invoke-GitReal -Path $script:Seed -Arguments @('rev-parse', 'HEAD')) -join '').Trim()
 
@@ -254,6 +310,7 @@ exit 0
         $result = Invoke-Bounded -Destination $destination -PinFile $pinFile -Candidates @('gauntlet', 'pop-launcher')
         Assert-True ($result.ExitCode -ne 0) 'expected refusal exit code'
         Assert-True (-not (Test-Path -LiteralPath $marker)) 'no candidate may run when a later selected checkout is dirty'
+        Assert-True ($result.Output -match 'pop-launcher') 'refusal must identify the dirty later candidate'
     }
 
     Test-Case 'bounded-build restores a set CARGO_TARGET_DIR and records the probe' {
@@ -555,6 +612,75 @@ exit 0
         $records = Read-Records -Destination $destination
         Assert-True ($records[0].kind -eq 'refusal') 'expected a refusal record'
         Assert-True (($records[0].message -match 'exit 3')) 'refusal must report the native git exit code'
+    }
+
+    Test-Case 'dependency scan reports static counts, unknowns and no-network scope' {
+        $destination = Join-Path $root 'scan-static'
+        New-Checkout -Destination (Join-Path $destination 'gauntlet')
+        $pinFile = Join-Path $root 'pins-ok.json'
+        $outputPath = Join-Path $destination 'dependency-scan.json'
+
+        $result = Invoke-Scan -Destination $destination -PinFile $pinFile -OutputPath $outputPath
+        Assert-True ($result.ExitCode -eq 0) "scan failed: $($result.Output)"
+        Assert-True (Test-Path -LiteralPath $outputPath) 'scan must write its evidence record'
+        $scan = Get-Content -LiteralPath $outputPath -Raw | ConvertFrom-Json
+        $candidate = $scan.candidates[0]
+        Assert-True ($scan.schema -eq 'ansa.reuse.dependency-scan/v1') 'unexpected scan schema'
+        Assert-True ($candidate.commit -eq $script:Pin) 'scan must record the verified commit'
+        Assert-True ($candidate.cargo.lockfiles[0].packageCount -eq 2) 'cargo lock package count is wrong'
+        Assert-True ($candidate.cargo.lockfiles[0].registrySourceCount -eq 1) 'registry source count is wrong'
+        Assert-True ($candidate.cargo.manifests.manifestCount -eq 2) 'manifest count is wrong'
+        Assert-True ($candidate.cargo.manifests.withLicenseDeclaration -eq 1) 'declared manifest licence count is wrong'
+        Assert-True ($candidate.cargo.manifests.withoutLicenseDeclaration -eq 1) 'undeclared manifest count is wrong'
+        Assert-True ($candidate.node.packageJsonWithLicense -eq 1) 'package.json licence count is wrong'
+        Assert-True ($candidate.node.lockfiles[0].packageEntryCount -eq 3) 'npm lock entry count is wrong'
+        Assert-True ($candidate.node.lockfiles[0].entriesWithLicenseField -eq 2) 'npm lock licence-field count is wrong'
+        Assert-True ($scan.totals.npmLockPackages -eq 3) 'npm total must include entries both with and without licence fields'
+        Assert-True ($scan.totals.npmLockPackagesWithoutLicenseMetadata -eq 1) 'npm unknown total must stay separate from package total'
+        Assert-True ($candidate.cmake.fetchContentCount -eq 1) 'CMake FetchContent count is wrong'
+        Assert-True ($candidate.cmake.findPackageRequired -eq 1) 'required find_package count is wrong'
+        Assert-True ($candidate.license.rootLicenseSignatures -contains 'MPL-2.0') 'root licence signature was not detected'
+        Assert-True ($candidate.spdxHeaders.filesWithSpdxHeader -eq 1) 'SPDX header count is wrong'
+        Assert-True ($candidate.unknowns.cargoLockPackagesWithoutLicenseMetadata -eq 2) 'unknown cargo licences must be reported'
+        Assert-True ($candidate.unknowns.npmLockPackagesWithoutLicenseMetadata -eq 1) 'unknown npm licences must be reported'
+        Assert-True ($candidate.unknowns.networkUsed -eq $false) 'scan must record that no network was used'
+        Assert-True ($candidate.unknowns.registryOrStoreMetadataConsulted -eq $false) 'scan must record that no registry metadata was used'
+    }
+
+    Test-Case 'dependency scan refuses a dirty checkout without writing evidence' {
+        $destination = Join-Path $root 'scan-dirty'
+        New-Checkout -Destination (Join-Path $destination 'gauntlet')
+        Set-Content -LiteralPath (Join-Path $destination 'gauntlet\README.md') -Value 'local change'
+        $pinFile = Join-Path $root 'pins-ok.json'
+        $outputPath = Join-Path $destination 'dependency-scan.json'
+
+        $result = Invoke-Scan -Destination $destination -PinFile $pinFile -OutputPath $outputPath
+        Assert-True ($result.ExitCode -ne 0) 'dirty checkout must be refused'
+        Assert-True (-not (Test-Path -LiteralPath $outputPath)) 'refused scan must not write evidence'
+    }
+
+    Test-Case 'dependency scan refuses a wrong pin without writing evidence' {
+        $destination = Join-Path $root 'scan-wrong-pin'
+        New-Checkout -Destination (Join-Path $destination 'gauntlet')
+        $pinFile = Join-Path $root 'pins-wrong.json'
+        $outputPath = Join-Path $destination 'dependency-scan.json'
+
+        $result = Invoke-Scan -Destination $destination -PinFile $pinFile -OutputPath $outputPath
+        Assert-True ($result.ExitCode -ne 0) 'wrong pin must be refused'
+        Assert-True ($result.Output -match 'pin mismatch') 'refusal must name the pin mismatch'
+        Assert-True (-not (Test-Path -LiteralPath $outputPath)) 'refused scan must not write evidence'
+    }
+
+    Test-Case 'dependency scan refuses an output path inside this Ansa repository' {
+        $destination = Join-Path $root 'scan-inside-repo'
+        New-Checkout -Destination (Join-Path $destination 'gauntlet')
+        $pinFile = Join-Path $root 'pins-ok.json'
+        $outputPath = Join-Path $script:RepositoryRoot ('reuse-scan-' + [guid]::NewGuid().ToString('N') + '.json')
+
+        $result = Invoke-Scan -Destination $destination -PinFile $pinFile -OutputPath $outputPath
+        Assert-True ($result.ExitCode -ne 0) 'in-repository output path must be refused'
+        Assert-True ($result.Output -match 'inside this Ansa repository') 'refusal must name the repository boundary'
+        Assert-True (-not (Test-Path -LiteralPath $outputPath)) 'refused output must not be created'
     }
 }
 finally {

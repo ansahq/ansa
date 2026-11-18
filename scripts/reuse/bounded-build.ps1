@@ -50,7 +50,7 @@ $commands = @{
 }
 
 $pins = @(Get-ReuseCandidatePins -Path $PinFile)
-$selected = @($Candidate | Select-Object -Unique)
+$selected = @($Candidate | ForEach-Object { $_ -split ',' } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
 if ($selected.Count -eq 0) { throw 'At least one candidate must be selected.' }
 foreach ($name in $selected) {
     if (-not $commands.ContainsKey($name)) {

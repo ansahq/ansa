@@ -27,8 +27,12 @@ is not a runtime capture or a passing implementation test.
 
 ANS-6 expands [ADR 0003](adr/0003-reuse-evaluation.md) to six pinned candidates
 and confirms a greenfield, zero-source-reuse scope decision. Four bounded build
-probes failed before tests ran; Vicinae was not built and Flare remains historical.
-Candidate build, per-file/dependency audit and runtime gaps are recorded explicitly.
+probes failed before tests ran; Vicinae's follow-up configure failed at missing
+Qt6 6.9 after detecting MSVC, and Flare remains historical. The
+[closure assessment](reuse/closure.md) and [static dependency scan](reuse/dependency-scan.md)
+record the bounded investigation's final decision and unresolved per-package
+licences. No candidate tests passed, no source was adopted, and no legal or
+runtime clearance is claimed.
 
 ANS-7 adds [build and inventory tooling](build/README.md). The lockfile contains
 717 packages, including 708 third-party packages whose review remains open.

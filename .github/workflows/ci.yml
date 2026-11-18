@@ -163,6 +163,9 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: "1"
           RUST_BACKTRACE: "1"
         run: |
+          # GPUI selects Wayland whenever WAYLAND_DISPLAY is non-empty; this job
+          # starts only Xvfb, so make the X11 selection explicit.
+          unset WAYLAND_DISPLAY
           ICD="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit 2>/dev/null || true)"
           if [ -n "$ICD" ]; then
             export VK_ICD_FILENAMES="$ICD"

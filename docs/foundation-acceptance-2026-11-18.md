@@ -79,6 +79,12 @@ had labelled only licence-unknown npm entries as the total, and added assertions
 distinguishing the total from the unknown count. All 26 reuse-tooling tests passed.
 An additional source-preservation test subsequently passed with a new guard
 rejecting scanner output inside candidate checkouts (27 reuse-tooling tests).
+DeepSeek Max's read-only reuse review found no closure blocker. Sol resolved its
+nonblocking evidence-hygiene findings: test-count consistency, historical fetch
+wording, scan-destination wording and a misleading aggregate field name. The
+aggregate now says missing licence **metadata**, not resolved licences; npm
+entries containing unverified text fields are not claimed cleared. The updated
+27-test suite passed again after those corrections.
 
 Five candidate build/configure attempts ended at documented failures and Flare
 was intentionally historical-only. No candidate test suite executed, and there

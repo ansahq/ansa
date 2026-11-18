@@ -29,6 +29,13 @@ successfully without reaching the frame callbacks, crashes, or hangs therefore
 fails the gate. `scripts/build/tests/test_native_smoke.py` also checks that the
 helper constant and the application source stay identical.
 
+The application also writes three progress lines to stderr while the flag is
+active (`starting GPUI application`, `GPUI window created`, `first frame
+callback reached`). They exist so a hosted failure says how far startup got
+instead of producing an empty log. They are diagnostics only: the helper still
+requires the exact success line on stdout and does not treat any stderr text as
+a pass.
+
 This is a startup smoke, not an accessibility or input acceptance test. It does
 not exercise screen readers, physical keyboards, IME composition, focus
 restoration, clipboard behavior, screenshots, or visual correctness. The
@@ -77,9 +84,54 @@ screen. The Linux dependency step installs `xvfb`, `xauth`, `libvulkan1`,
 packages. The smoke step selects the installed `lvp_icd*.json` driver through
 `VK_ICD_FILENAMES` and `VK_DRIVER_FILES` when present, and sets
 `LIBGL_ALWAYS_SOFTWARE=1`; Mesa's normal device selection remains the fallback.
-No GPU is assumed.
+No GPU is assumed. It also clears `WAYLAND_DISPLAY`, because GPUI prefers
+Wayland whenever that variable is non-empty and this job starts only an X11
+server.
 
 Windows and macOS use the hosted runner's native desktop session directly.
+
+## Linux X11 frame scheduling with the pinned GPUI
+
+[Run 44247153074](https://github.com/ansahq/ansa/actions/runs/44247153074)
+included the HWND guard correction, but its Linux job then timed out after
+120 seconds with empty stdout and stderr. Source inspection of the pinned
+`gpui 0.2.2` gives a diagnosis consistent with that silence:
+
+- GPUI's X11 backend starts a window's periodic frame loop only while handling
+  `MapNotify` or `VisibilityNotify`; without that loop it never calls the
+  request-frame callback that drives `Window::on_next_frame`.
+- The `calloop` event source watches the X11 socket, while x11rb keeps its own
+  internal event queue. GPUI synchronizes the map request immediately after
+  asking the server to map the window (`VoidCookie::check`), and while waiting
+  for that reply libxcb reads the freshly generated mapping events off the
+  socket and leaves them in that internal queue.
+- Once the socket is empty the event source does not wake, so the queued
+  `MapNotify` is never dispatched, the refresh loop never starts, and the
+  two-frame marker is never reached. On a desktop, later pointer or keyboard
+  traffic wakes the connection, which is why the same pinned GPUI usually
+  renders. Under `Xvfb` with no input devices and no window manager nothing
+  may do so, leaving the observed completely silent stall.
+
+GPUI fixed this class of defect after the 0.2.2 snapshot by draining buffered
+X11 events after foreground work ([upstream PR #62081](https://github.com/zed-industries/zed/pull/62081),
+merged 20 August 2026; independently checked by Sol on 18 November).
+This repository keeps the exact `=0.2.2`
+pin, so when the X11 backend is selected the smoke path in
+[`crates/ui-gpui/src/lib.rs`](../../crates/ui-gpui/src/lib.rs) asks the window
+to activate itself after registering its callbacks. On X11 that method issues
+`SetInputFocus`, the same platform call a real launcher summon already performs
+through `window.activate_window()`. The resulting `FocusIn` event makes the
+connection readable again, which drains the queued mapping events and starts
+frame delivery. It is a real platform request, not a simulated frame: the
+marker still comes only from the second genuine frame callback, and the helper
+still requires that line on stdout together with exit 0. Windows, macOS and
+the Wayland backend do not take this path. Hosted confirmation of the
+corrected run was still pending when this document was written.
+
+This checks **activated startup** under Xvfb. It does not fix or certify
+unattended/inactive X11 first presentation, nor does it change normal startup's
+window-manager focus policy. The upstream event-queue fix is not backported here.
+Keep that GPUI limitation open for future framework/lifecycle work.
 
 ## Local usage
 
@@ -108,13 +160,25 @@ is a tooling-environment issue, not a native smoke result.
 
 Initial hosted [run 44246643923](https://github.com/ansahq/ansa/actions/runs/44246643923)
 passed Windows and macOS startup on 2026-11-18, but failed Linux startup.
-The Linux backtrace showed `native_handle` calling GPUI 0.2.2's unimplemented
-X11 `HasWindowHandle` method while looking for a Windows HWND. The helper is
-now compiled only on Windows; other platforms return `None` without asking
-GPUI for a native handle. This corrects normal startup too, not just the smoke.
-The failure was not suppressed or converted into a passing smoke.
+The Linux backtrace showed the HWND lookup helper calling GPUI 0.2.2's
+unimplemented X11 `HasWindowHandle` method while looking for a Windows HWND.
+That HWND adapter is now compiled only on Windows; other platforms return
+`None` without asking GPUI for a native handle. The Python smoke helper itself
+is cross-platform and unchanged by that guard. This corrects normal startup
+too, not just the smoke. The failure was not suppressed or converted into a
+passing smoke.
+
+The follow-up [run 44247153074](https://github.com/ansahq/ansa/actions/runs/44247153074)
+confirmed Windows and macOS again. Linux no longer panicked, but it timed out
+with no stdout, no stderr and no marker. The uploaded artifact contained two
+empty logs and a summary showing exit code `None` after 120.103 seconds, so the
+helper behaved correctly. The empty streams were not conclusive on their own;
+the X11 scheduling path described above is the reasoned diagnosis from the
+pinned GPUI source and the matching upstream root cause, and the progress
+diagnostics added with that correction make the next failure attributable.
+This is not yet a hosted Linux pass.
 
 Sol's local exact-pin/offline validation passed 138 unit tests, one doctest
 (one ignored), formatting, Clippy, the desktop build, both native smokes and
-the tooling suites before the platform-guard correction. The corrected
-hosted matrix must pass before claiming Linux startup success.
+the tooling suites before the platform-guard correction. The corrected hosted
+matrix must pass before claiming Linux startup success.

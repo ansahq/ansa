@@ -476,6 +476,12 @@ if ([string]::IsNullOrWhiteSpace($OutputPath)) {
 Assert-PathOutsideRepository -Path $OutputPath -RepositoryRoot $repositoryRoot -Purpose 'output path'
 
 $pins = @(Get-ReuseCandidatePins -Path $PinFile)
+foreach ($pin in $pins) {
+    $checkoutPath = Join-Path $Destination $pin.name
+    if (Test-PathWithin -Path $OutputPath -Parent $checkoutPath) {
+        throw "Refusing output path inside candidate checkout '$($pin.name)'; scanning must not modify source files."
+    }
+}
 $selected = @($Candidate | ForEach-Object { $_ -split ',' } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
 if ($selected.Count -eq 0) { throw 'At least one candidate must be selected.' }
 foreach ($name in $selected) { [void](Get-ReuseCandidatePin -Pins $pins -Name $name) }

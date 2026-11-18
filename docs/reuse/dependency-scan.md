@@ -14,7 +14,7 @@ pwsh -NoProfile -File scripts/reuse/scan-dependencies.ps1 `
 
 The scanner verifies each selected checkout against `scripts/reuse/candidates.json`
 (commit, `remote.origin.url`, cleanliness) before reading it, refuses destinations or
-output paths inside this repository, makes no network request, consults no registry or
+output paths inside this repository or a declared candidate checkout, makes no network request, consults no registry or
 store metadata, installs nothing and executes no candidate script.
 
 The cached checkouts under `%TEMP%\opencode\f02` were used for five candidates. The
@@ -122,3 +122,10 @@ counts are now reproducible, and every unresolved class is named. It does **not*
 the per-package licence, transitive-notice, C++/Qt or legal-review gaps. The zero-reuse
 decision means no per-file audit is required for this evaluation; a future proposal to
 copy or link candidate source would still require one before use.
+
+Sol independently reproduced both scans during final verification and corrected
+the JSON aggregate `npmLockPackages` to count all npm entries, keeping
+`npmLockPackagesWithoutLicenseMetadata` separate (704 versus 120 here).
+The synthetic suite also rejects output paths that would overwrite a candidate
+source file and verifies the file remains unchanged; all 27 reuse-tooling tests
+passed after this safeguard.

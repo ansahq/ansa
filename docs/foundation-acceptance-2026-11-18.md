@@ -77,6 +77,8 @@ inventory contains 3,466 Cargo lock packages, 704 npm entries and 836 pnpm entri
 licence-unknown classes remain explicit. Sol corrected a scanner aggregate that
 had labelled only licence-unknown npm entries as the total, and added assertions
 distinguishing the total from the unknown count. All 26 reuse-tooling tests passed.
+An additional source-preservation test subsequently passed with a new guard
+rejecting scanner output inside candidate checkouts (27 reuse-tooling tests).
 
 Five candidate build/configure attempts ended at documented failures and Flare
 was intentionally historical-only. No candidate test suite executed, and there

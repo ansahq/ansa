@@ -671,6 +671,18 @@ exit 0
         Assert-True (-not (Test-Path -LiteralPath $outputPath)) 'refused scan must not write evidence'
     }
 
+    Test-Case 'dependency scan refuses output that would overwrite candidate source' {
+        $destination = Join-Path $root 'scan-overwrite'
+        $checkout = Join-Path $destination 'gauntlet'
+        New-Checkout -Destination $checkout
+        $sourcePath = Join-Path $checkout 'Cargo.toml'
+        $before = Get-Content -LiteralPath $sourcePath -Raw
+        $result = Invoke-Scan -Destination $destination -PinFile (Join-Path $root 'pins-ok.json') -OutputPath $sourcePath
+        Assert-True ($result.ExitCode -ne 0) 'output inside candidate checkout must be refused'
+        Assert-True ($result.Output -match 'inside candidate checkout') 'refusal must name the source boundary'
+        Assert-True ((Get-Content -LiteralPath $sourcePath -Raw) -ceq $before) 'source file must remain unchanged'
+    }
+
     Test-Case 'dependency scan refuses an output path inside this Ansa repository' {
         $destination = Join-Path $root 'scan-inside-repo'
         New-Checkout -Destination (Join-Path $destination 'gauntlet')

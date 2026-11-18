@@ -121,7 +121,9 @@ compatibility fix, post-merge main [run 44085915233](https://github.com/ansahq/a
 passed all eight jobs at `7b22edc`. That run did not include native startup smokes.
 The follow-up [native startup gate](native-smoke.md) now runs each built artifact
 with a timeout and requires an in-application success marker plus zero exit;
-its hosted results must be checked separately.
+hosted [run 44250538706](https://github.com/ansahq/ansa/actions/runs/44250538706)
+passed all eight jobs including native startup on every host. Linux evidence is
+activated X11 startup under Xvfb/software Vulkan, not inactive X11 or Wayland.
 See [`ci.md`](ci.md), the [follow-up record](../ci-follow-up-2026-11-17.md), and
 the PR's commit-specific checks for newer results. Hosted compile/test success
 alone does not establish native startup, accessibility or reference-product parity.

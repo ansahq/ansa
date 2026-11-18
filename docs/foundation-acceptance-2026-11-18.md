@@ -28,8 +28,8 @@ After the Linux platform-guard correction, this passed:
 - formatting and Clippy (`-D warnings`);
 - 138 Rust unit tests and one doctest; one UI example doctest remains ignored;
 - locked/offline native desktop build;
-- 30 dependency tests, 41 reference tests, 26 reuse-tooling tests and 14 native
-  smoke-helper tests (111 tooling tests total);
+- 30 dependency tests, 41 reference tests, 27 reuse-tooling tests and 14 native
+  smoke-helper tests (112 tooling tests total in the final `c261854` rerun);
 - generated inventory check: 717 packages, 65 not observed for declared filters;
 - native startup and 30-stage synthetic widget/action smokes.
 
@@ -54,6 +54,17 @@ Windows/macOS passed again; Linux no longer panicked but timed out after 120
 seconds with no marker or stderr. The helper killed it and correctly failed
 the job. Linux frame scheduling/display setup remains under investigation;
 neither run is Linux startup acceptance.
+
+After the smoke explicitly activated its real X11 window, hosted
+[run 44250538706](https://github.com/ansahq/ansa/actions/runs/44250538706) passed
+**all eight jobs** on `c2618547be8bc03f9d82cbbb55ac336474c09b92`, including the
+three actual built artifacts' startup checks. Sol downloaded their logs and
+verified exit 0, no timeout and PASS summaries: Linux 3.235 s, macOS 1.197 s,
+Windows 0.781 s. Linux stdout contained the exact second-frame-callback marker
+and stderr contained the three progress diagnostics. This establishes activated
+startup under Xvfb/software Vulkan, not unattended/inactive X11 first-presentation,
+Wayland, visual, physical-input or accessibility acceptance. See the
+[native smoke boundary](build/native-smoke.md); the GPUI pin was not changed.
 
 ## Reference boundary
 

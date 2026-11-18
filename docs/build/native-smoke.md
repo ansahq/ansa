@@ -125,8 +125,8 @@ connection readable again, which drains the queued mapping events and starts
 frame delivery. It is a real platform request, not a simulated frame: the
 marker still comes only from the second genuine frame callback, and the helper
 still requires that line on stdout together with exit 0. Windows, macOS and
-the Wayland backend do not take this path. Hosted confirmation of the
-corrected run was still pending when this document was written.
+the Wayland backend do not take this path. Hosted run 44250538706 subsequently
+passed this activated-startup check, as recorded below.
 
 This checks **activated startup** under Xvfb. It does not fix or certify
 unattended/inactive X11 first presentation, nor does it change normal startup's
@@ -176,9 +176,28 @@ helper behaved correctly. The empty streams were not conclusive on their own;
 the X11 scheduling path described above is the reasoned diagnosis from the
 pinned GPUI source and the matching upstream root cause, and the progress
 diagnostics added with that correction make the next failure attributable.
-This is not yet a hosted Linux pass.
+That historical run is not a Linux pass.
 
 Sol's local exact-pin/offline validation passed 138 unit tests, one doctest
 (one ignored), formatting, Clippy, the desktop build, both native smokes and
-the tooling suites before the platform-guard correction. The corrected hosted
-matrix must pass before claiming Linux startup success.
+the tooling suites before the platform-guard correction, then repeated the full
+validation on `c261854`: 138 Rust tests, one doctest (one ignored), 112 tooling
+tests, format, Clippy, desktop build and both native smokes passed.
+
+### Confirmed three-OS startup run
+
+[Run 44250538706](https://github.com/ansahq/ansa/actions/runs/44250538706) passed
+all eight jobs on `c2618547be8bc03f9d82cbbb55ac336474c09b92`.
+Sol downloaded the three `native-smoke-*` artifacts and checked their actual logs:
+
+| Artifact | Exit | Timeout | Duration | Result |
+|---|---:|---|---:|---|
+| `native-smoke-Windows` | 0 | false | 0.781 s | PASS |
+| `native-smoke-macOS` | 0 | false | 1.197 s | PASS |
+| `native-smoke-Linux` | 0 | false | 3.235 s | PASS |
+
+The Linux log contains all three progress diagnostics and the exact success
+marker from the second frame callback. The check remains blocking; neither
+failure was ignored. This is activated X11 startup evidence on the hosted
+software-rendered display, not an unattended-startup, Wayland, accessibility or
+visual-correctness claim.

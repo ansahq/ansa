@@ -7,7 +7,7 @@ Started 2026-11-11. This file tracks this repository, not reference-product beha
 | Backlog | Slice | Boundary |
 |---|---|---|
 | F01 | Versioned 100-scenario planning ledger, checked schema, per-OS A-behavior coverage and design-evidence audit | Unknown-only reference identities; zero reference runtime captures or implementation-test passes |
-| F03 | Exact toolchain selection, passing three-OS desktop build/test CI, locked dependency/license inventory | macOS/Linux native startup evidence pending; no signed releases or third-party legal clearance |
+| F03 | Exact toolchain selection, passing three-OS desktop build/test/startup CI, locked dependency/license inventory | Activated X11 startup only; inactive X11/Wayland/lifecycle not certified; no signed releases or third-party legal clearance |
 | F04 | Retained GPUI window and checked best-effort Windows focus return | Foreground races handled conservatively; real focus/monitor/lifecycle gate open |
 | F05 | Shared Unicode input, bounded undo/redo, one transaction per IME composition, oversized-edit rejection | Physical IME and assistive-technology testing open; not a Notes editor |
 | F06 | Searchable snapshot-bound actions, stable selection, arrows/Enter/Escape and Tab focus | Synthetic native interaction test passes; full assistive-technology/control acceptance remains open |
@@ -42,6 +42,11 @@ interaction stages. One UI example doctest remains ignored. Post-merge main
 [CI run 44085915233](https://github.com/ansahq/ansa/actions/runs/44085915233)
 passed all eight jobs on commit `7b22edc`, including Windows/macOS/Linux desktop
 builds and tests. That run did not execute native startup smokes on macOS/Linux.
+Follow-up [PR #2 run 44250538706](https://github.com/ansahq/ansa/actions/runs/44250538706)
+passed all eight jobs on `c261854`, including native startup on every host;
+Linux uses explicit activation on Xvfb/software Vulkan. It does not certify
+unattended X11 first presentation or Wayland. See the
+[18 November acceptance record](foundation-acceptance-2026-11-18.md).
 See the [CI follow-up](ci-follow-up-2026-11-17.md) for the compatibility fix and
 actual exact-pin validation, superseding the initial toolchain failure in the
 [integration record](foundation-validation-2026-11-17.md).
@@ -66,7 +71,7 @@ full-shell UIA observations do not validate these last appearance changes.
 3. Resolve the blocking [framework accessibility gate](framework-gate.md): the main pin has no bridge; the newer revision now runs the actual shell with bounded automated UIA coverage. Complete NVDA/Narrator journeys, RTL/mixed-bidi and scaling checks, offscreen-provider behavior and the remaining lifecycle/dependency review before promoting the new pin.
 4. Capture shortcut conflicts and 1,000 hide/show/focus cycles across monitors, sleep and locked sessions. Check the new conservative focus-return path with real apps; no automatic insertion is implemented.
 5. Freeze a 10k-command benchmark corpus and capture release-mode query/frame/open traces. No latency/memory budget is marked met yet.
-6. Close the remaining [reuse evidence/audit gaps](adr/0003-reuse-evaluation.md), third-party license review, macOS/Linux native startup smokes, and reference-build capture. Exact-toolchain and remote three-OS build/test verification passed; repository planning/tooling deliverables do not replace the other acceptance checks.
+6. Complete third-party release licence review, any future [source-reuse audit](adr/0003-reuse-evaluation.md), reference-build capture and unattended X11/Wayland lifecycle validation. The zero-reuse scope decision and exact-toolchain three-OS build/test/activated-startup checks passed; they do not replace those other acceptance checks.
 7. Introduce a storage actor only with transactional migration/recovery fixtures. Do not persist clipboard text or notes in an unencrypted prototype shortcut.
 
 ## Security boundaries

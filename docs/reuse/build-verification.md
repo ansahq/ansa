@@ -177,8 +177,8 @@ pwsh -NoProfile -File scripts/reuse/tests/run-tests.ps1
 
 The suite uses temporary miniature git repositories and a fake cargo executable. It
 does not contact the network, touch the candidate checkouts, or run a candidate build.
-Recorded result on 2026-11-18: **26 passed, 0 failed** (22 earlier safety cases plus
-four static-scanner cases). Cases cover:
+Recorded final local result on 2026-11-18: **27 passed, 0 failed** (22 earlier safety cases plus
+five static-scanner cases). Cases cover:
 
 - wrong pin refusal before cargo, with no invocation marker;
 - tracked modification and untracked file refusal, preserving local content;
@@ -203,7 +203,8 @@ four static-scanner cases). Cases cover:
 - static scan refusal for a dirty checkout and for a wrong pin, with no evidence file
   written;
 - static scan refusal for an output path inside this Ansa repository, before the file
-  is created.
+  is created;
+- refusal of output inside a declared candidate checkout, preserving its source file.
 
 The fetch test uses a local mini repository and its advertised HEAD, with no
 `uploadpack.allowAnySHA1InWant` override. It proves the script's local fetch path, not

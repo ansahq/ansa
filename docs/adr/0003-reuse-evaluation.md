@@ -221,7 +221,7 @@ any candidate command, refuse destinations and output paths inside this Ansa
 repository, restore `CARGO_TARGET_DIR`, append JSONL result records with per-run log
 directories, and record timeout process-stop status truthfully. The build table above
 predates those guards and came from the session runner; hardening was validated with
-26 isolated fake-tool tests (22 earlier cases plus four static-scanner cases), and no
+27 isolated fake-tool tests (22 earlier cases plus five static-scanner cases), and no
 candidate build was rerun. The cached anyrun checkout was not relabelled or modified;
 its static scan used a fresh canonical checkout at the same pin.
 

@@ -637,6 +637,7 @@ exit 0
         Assert-True ($candidate.node.lockfiles[0].entriesWithLicenseField -eq 2) 'npm lock licence-field count is wrong'
         Assert-True ($scan.totals.npmLockPackages -eq 3) 'npm total must include entries both with and without licence fields'
         Assert-True ($scan.totals.npmLockPackagesWithoutLicenseMetadata -eq 1) 'npm unknown total must stay separate from package total'
+        Assert-True ($scan.totals.lockPackagesWithoutLicenseMetadata -eq 3) 'missing metadata must not imply any licence was resolved'
         Assert-True ($candidate.cmake.fetchContentCount -eq 1) 'CMake FetchContent count is wrong'
         Assert-True ($candidate.cmake.findPackageRequired -eq 1) 'required find_package count is wrong'
         Assert-True ($candidate.license.rootLicenseSignatures -contains 'MPL-2.0') 'root licence signature was not detected'

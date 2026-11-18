@@ -23,8 +23,8 @@ new ADR and the licence/provenance work in
 
 The ticket's test plan is disposed of as follows:
 
-- **Clean build or documented build failure:** four cargo probes reached host
-  prerequisites and failed (Gauntlet `libclang`; pop-launcher Unix-only
+- **Clean build or documented build failure:** four cargo probes failed at host
+  prerequisites or dependency/toolchain limits (Gauntlet `libclang`; pop-launcher Unix-only
   `wayland-sys`; anyrun missing GTK `gio-2.0`; cosmic-launcher locked
   `accesskit_winit` error). Vicinae's CMake configure identified MSVC 19.44 and failed
   at missing Qt6 6.9. Flare remains documented non-feasible historical evidence
@@ -42,7 +42,7 @@ The ticket's test plan is disposed of as follows:
 
 ## Evidence executed
 
-- All six cached checkouts matched their pins and were clean when scanned; the cached
+- The five scanned cached checkouts matched their pins and were clean; the cached
   anyrun origin (`https://github.com/Kirottu/anyrun`) was **not** rewritten. Anyrun's
   static scan used a fresh canonical checkout at the same pin in
   `%TEMP%\opencode\f02-scan-anyrun`.
@@ -52,12 +52,12 @@ The ticket's test plan is disposed of as follows:
 - The Vicinae configure probe is recorded in
   [`build-verification.md`](build-verification.md); it used an external build
   directory and disabled downloads and Node module installation.
-- `pwsh -NoProfile -File scripts/reuse/tests/run-tests.ps1` passed **26 tests, 0
+- `pwsh -NoProfile -File scripts/reuse/tests/run-tests.ps1` passed **27 tests, 0
   failures**. The suite covers pin/origin/dirty refusal, repository-boundary guards,
-  timeout handling, environment restoration, append-only records, and four static-scan
+  timeout handling, environment restoration, append-only records, and five static-scan
   cases (counts/unknowns/no-network, dirty refusal, wrong-pin refusal, in-repository
-  output refusal).
-- Sol reports an independent run of the updated 26-case suite and the full exact-pin
+  output refusal and candidate-source overwrite refusal).
+- Sol reports an independent run of the updated 27-case suite and the full exact-pin
   offline validation passing. That independent run is not duplicated or reinterpreted
   here.
 
@@ -91,10 +91,11 @@ Owned files changed in this slice:
 - `docs/reuse/closure.md` (new)
 - `scripts/reuse/scan-dependencies.ps1` (new)
 - `scripts/reuse/bounded-build.ps1` (comma-separated candidate normalisation)
-- `scripts/reuse/tests/run-tests.ps1` (four scanner cases and a real multi-candidate
+- `scripts/reuse/tests/run-tests.ps1` (five scanner cases and a real multi-candidate
   preflight assertion)
 
-No candidate source was copied into this repository. No commits or pushes were made.
+No candidate source was copied into this repository. The implementation subagent
+made no commits or pushes; Sol committed the handed-off work for publication in PR #2.
 CI workflow files, the shared implementation-status document and the reference ledger
 were not changed by this slice. The work is ready for review and publication by the
 owning session.

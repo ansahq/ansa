@@ -46,8 +46,9 @@ author-declared maintenance dates, and neither shows a GitHub archive banner; th
 activity, not a GitHub state.
 
 The unauthenticated REST API had been rate-limited on 17 November. One repo lookup
-succeeded on 18 November before the limit was reached again, returning `archived:
-false` for Vicinae and Gauntlet; the HTML banner and Atom feeds above cover all six.
+succeeded on 18 November before the limit was reached again; limited REST results
+are not used for an all-six archival claim. The HTML banner and Atom feeds above
+cover all six.
 Star counts and API-only fields are not used as evidence here.
 
 ## Static dependency inventory

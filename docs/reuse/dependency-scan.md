@@ -13,8 +13,9 @@ pwsh -NoProfile -File scripts/reuse/scan-dependencies.ps1 `
 ```
 
 The scanner verifies each selected checkout against `scripts/reuse/candidates.json`
-(commit, `remote.origin.url`, cleanliness) before reading it, refuses destinations or
-output paths inside this repository or a declared candidate checkout, makes no network request, consults no registry or
+(commit, `remote.origin.url`, cleanliness) before reading it, refuses destinations
+inside this repository and output paths inside this repository or a declared candidate
+checkout under the destination, makes no network request, consults no registry or
 store metadata, installs nothing and executes no candidate script.
 
 The cached checkouts under `%TEMP%\opencode\f02` were used for five candidates. The

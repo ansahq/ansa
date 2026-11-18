@@ -6,6 +6,7 @@
 #    evidence. Dirty, mismatched or wrong-origin checkouts are refused.
 #  - The destination and output path must resolve outside this Ansa repository,
 #    including through junction/symlink ancestors.
+#  - Output must also be outside declared candidate checkouts under Destination.
 #  - This script reads only files already present in the checkouts. It performs no
 #    network request, consults no registry metadata, installs nothing and executes
 #    no candidate script.
@@ -529,7 +530,7 @@ $document = [ordered]@{
         npmLockPackagesWithoutLicenseMetadata   = [int]((@($candidates | ForEach-Object { $_.unknowns.npmLockPackagesWithoutLicenseMetadata }) | Measure-Object -Sum).Sum)
         pnpmLockPackageEntries                  = [int]((@($candidates | ForEach-Object { $_.unknowns.pnpmLockPackageEntriesWithoutLicenseMetadata }) | Measure-Object -Sum).Sum)
         cmakeFetchContentDeclarations           = [int]((@($candidates | ForEach-Object { $_.unknowns.cmakeFetchContentWithoutLicenseResolution }) | Measure-Object -Sum).Sum)
-        lockPackagesWithoutResolvedLicense      = [int]((@($candidates | ForEach-Object { $_.unknowns.cargoLockPackagesWithoutLicenseMetadata + $_.unknowns.npmLockPackagesWithoutLicenseMetadata + $_.unknowns.pnpmLockPackageEntriesWithoutLicenseMetadata }) | Measure-Object -Sum).Sum)
+        lockPackagesWithoutLicenseMetadata      = [int]((@($candidates | ForEach-Object { $_.unknowns.cargoLockPackagesWithoutLicenseMetadata + $_.unknowns.npmLockPackagesWithoutLicenseMetadata + $_.unknowns.pnpmLockPackageEntriesWithoutLicenseMetadata }) | Measure-Object -Sum).Sum)
     }
     candidates      = @($candidates)
     limitations     = @(

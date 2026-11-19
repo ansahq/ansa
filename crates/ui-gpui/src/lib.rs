@@ -126,7 +126,13 @@ fn catalog() -> Result<Vec<Command>, String> {
 }
 
 impl Launcher {
-    fn new(window: &mut Window, cx: &mut Context<Self>, a11y_fixture: bool, light: bool) -> Self {
+    fn new(
+        window: &mut Window,
+        cx: &mut Context<Self>,
+        a11y_fixture: bool,
+        glass: bool,
+        light: bool,
+    ) -> Self {
         let input = cx.new(TextInput::new);
         let action_input = cx.new(|cx| {
             let mut input = TextInput::new(cx);
@@ -194,8 +200,13 @@ impl Launcher {
             hotkey: None,
             hotkey_notice: None,
             visible: true,
-            // Never draw a translucent tint until the blur layer is attached.
-            glass: false,
+            // On Windows the native blur layer must attach first. macOS gets
+            // its blur from the window's NSVisualEffectView.
+            glass: if cfg!(target_os = "windows") {
+                false
+            } else {
+                glass
+            },
             light,
             #[cfg(target_os = "windows")]
             backdrop: None,
@@ -215,13 +226,7 @@ impl Launcher {
         if self.is_composing(cx) || self.appearance_notice.is_some() {
             return;
         }
-        #[cfg(target_os = "windows")]
         self.set_glass(!self.glass, window);
-        #[cfg(not(target_os = "windows"))]
-        {
-            let _ = window;
-            self.glass = !self.glass;
-        }
         cx.notify();
     }
 
@@ -244,6 +249,20 @@ impl Launcher {
             Ok(()) => self.glass = enabled,
             Err(error) => self.glass_unavailable(error),
         }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn set_glass(&mut self, enabled: bool, window: &Window) {
+        #[cfg(target_os = "macos")]
+        window.set_background_appearance(if enabled {
+            WindowBackgroundAppearance::Blurred
+        } else {
+            WindowBackgroundAppearance::Transparent
+        });
+        #[cfg(not(target_os = "macos"))]
+        let _ = window;
+        self.glass = enabled;
+        self.appearance_notice = None;
     }
 
     #[cfg(target_os = "windows")]
@@ -616,6 +635,16 @@ impl Launcher {
             compat::focus(window, &self.actions_focus, cx);
         }
         cx.notify();
+    }
+}
+
+fn initial_window_background(glass: bool) -> WindowBackgroundAppearance {
+    if cfg!(target_os = "windows") {
+        WindowBackgroundAppearance::Opaque
+    } else if cfg!(target_os = "macos") && glass {
+        WindowBackgroundAppearance::Blurred
+    } else {
+        WindowBackgroundAppearance::Transparent
     }
 }
 
@@ -1248,15 +1277,12 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             kind: WindowKind::PopUp,
             is_resizable: false,
             is_minimizable: false,
-            // On Windows this disables GPUI's accent, not swap-chain alpha.
-            window_background: if cfg!(target_os = "windows") {
-                WindowBackgroundAppearance::Opaque
-            } else {
-                WindowBackgroundAppearance::Transparent
-            },
+            // Windows needs its custom composition layer; macOS uses GPUI's
+            // native vibrancy. Both disable GPUI's legacy accent.
+            window_background: initial_window_background(glass),
             app_id: Some("dev.ansa.launcher".into()),
             ..Default::default()
-        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, light))) else {
+        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, glass, light))) else {
             *error_for_app.borrow_mut() = Some("Ansa could not create a GPUI window. Check your GPU driver and native dependencies.".to_string());
             cx.quit(); return;
         };

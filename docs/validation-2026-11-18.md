@@ -1,5 +1,7 @@
 # ANS-75: live frosted glass
 
+## Windows
+
 The Windows launcher uses a host-backdrop brush and a Direct2D Gaussian blur on a
 Windows Composition target below GPUI's swap chain. The 80% theme tint is painted
 over the blur. Only the native compositor samples what's behind the window; no
@@ -40,3 +42,11 @@ run the same smoke without `--require-frost` with
 3. Toggle to opaque with `Ctrl+Shift+G` and back, then repeat in the light theme.
    Check the rounded silhouette, search focus, and that the window does not move
    or resize. Windows may suppress transparency under some system or power policies.
+
+## macOS
+
+GPUI's `WindowBackgroundAppearance::Blurred` installs a native `NSVisualEffectView`
+behind the scene, under the same 80% themed tint. `Ctrl+Shift+G` switches the
+window between `Blurred` and `Transparent` at runtime; `--opaque` starts with the
+opaque tint. This path was not built on the Windows development host; macOS CI and
+a manual visual check remain required.

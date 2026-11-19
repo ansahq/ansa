@@ -52,8 +52,9 @@ the material fills the window with no invisible shadow gutter. On Windows, a nat
 region clips every child at the corners, and the compositor owns any available external shadow.
 Per-pixel DirectComposition alpha is enabled without GPUI's native gradient backdrop. Text stays opaque.
 On Windows 11, Glass uses a native compositor layer to blur the live scene behind the launcher.
-GPUI paints an 80% opaque themed tint over that blur. Desktop colors can show through, but text,
-menus and selected rows stay opaque. The launcher does not read wallpaper files or capture the screen.
+On macOS, Glass uses the window's native vibrancy view. GPUI paints an 80% opaque themed tint over
+the blur on both platforms. Desktop colors can show through, but text, menus and selected rows stay
+opaque. The launcher does not read wallpaper files or capture the screen.
 
 - **Glass: On/Off** or **Ctrl+Shift+G** toggles translucency without resizing the window.
 - **Theme: Dark/Light** or **Ctrl+Shift+T** switches the entire palette, including both inputs,

@@ -23,34 +23,11 @@ struct Rect {
 }
 
 #[repr(C)]
-struct BlurBehind {
-    flags: u32,
-    enable: i32,
-    region: *mut c_void,
-    transition: i32,
-}
-
-#[repr(C)]
 struct Margins {
     left: i32,
     right: i32,
     top: i32,
     bottom: i32,
-}
-
-#[repr(C)]
-struct AccentPolicy {
-    state: u32,
-    flags: u32,
-    color: u32,
-    animation: u32,
-}
-
-#[repr(C)]
-struct CompositionAttribute {
-    attribute: u32,
-    data: *mut c_void,
-    size: usize,
 }
 
 const LAUNCHER_SUBCLASS: usize = 0x414e5341;
@@ -122,6 +99,7 @@ extern "system" {
 
 #[link(name = "gdi32")]
 extern "system" {
+    #[cfg(test)]
     fn CreateRectRgn(left: i32, top: i32, right: i32, bottom: i32) -> *mut c_void;
     fn CreateRoundRectRgn(
         left: i32,
@@ -136,8 +114,19 @@ extern "system" {
 
 #[link(name = "dwmapi")]
 extern "system" {
-    fn DwmEnableBlurBehindWindow(hwnd: *mut c_void, blur: *const BlurBehind) -> i32;
     fn DwmExtendFrameIntoClientArea(hwnd: *mut c_void, margins: *const Margins) -> i32;
+    fn DwmSetWindowAttribute(
+        hwnd: *mut c_void,
+        attribute: u32,
+        value: *const c_void,
+        size: u32,
+    ) -> i32;
+    fn DwmGetWindowAttribute(
+        hwnd: *mut c_void,
+        attribute: u32,
+        value: *mut c_void,
+        size: u32,
+    ) -> i32;
 }
 
 fn owned_window(hwnd: isize) -> Result<*mut c_void, String> {
@@ -153,95 +142,56 @@ fn owned_window(hwnd: isize) -> Result<*mut c_void, String> {
     Ok(window)
 }
 
-/// Enable per-pixel DirectComposition alpha without a native accent backdrop.
-/// GPUI's Transparent appearance installs ACCENT_ENABLE_TRANSPARENTGRADIENT,
-/// which can put a black rectangle behind the otherwise translucent scene.
-pub fn enable_launcher_alpha(hwnd: isize) -> Result<(), String> {
+/// Validate that the launcher has GPUI's premultiplied-alpha swap chain.
+pub(super) fn composition_window(hwnd: isize) -> Result<*mut c_void, String> {
     let window = owned_window(hwnd)?;
-    // SAFETY: all calls operate on this UI thread's validated window. The
-    // optional composition export is resolved before conversion to a function.
-    unsafe {
-        if GetWindowLongW(window, -20) as u32 & 0x00200000 == 0 {
-            return Err(
-                "Glass needs GPUI DirectComposition; it is disabled in this process".into(),
-            );
-        }
-        let module_name: Vec<u16> = "user32.dll\0".encode_utf16().collect();
-        let module = GetModuleHandleW(module_name.as_ptr());
-        if module.is_null() {
-            return Err("Cannot locate the Windows composition module".into());
-        }
-        let address = GetProcAddress(module, b"SetWindowCompositionAttribute\0".as_ptr());
-        if address.is_null() {
-            return Err("Windows composition attributes are unavailable".into());
-        }
-        let set_attribute: unsafe extern "system" fn(
-            *mut c_void,
-            *mut CompositionAttribute,
-        ) -> i32 = std::mem::transmute(address);
-        let mut accent = AccentPolicy {
-            state: 0,
-            flags: 0,
-            color: 0,
-            animation: 0,
-        };
-        let mut attribute = CompositionAttribute {
-            attribute: 19,
-            data: (&mut accent as *mut AccentPolicy).cast(),
-            size: std::mem::size_of::<AccentPolicy>(),
-        };
-        if set_attribute(window, &mut attribute) == 0 {
-            return Err("Windows could not remove the opaque accent backdrop".into());
-        }
-        // An off-client blur region enables client alpha, not acrylic blur or a
-        // backdrop outside the window. The DWM call does not take ownership.
-        let region = CreateRectRgn(0, 0, -1, -1);
-        if region.is_null() {
-            return Err("Cannot allocate the compositor region".into());
-        }
-        let result = DwmEnableBlurBehindWindow(
-            window,
-            &BlurBehind {
-                flags: 3,
-                enable: 1,
-                region,
-                transition: 0,
-            },
-        );
-        if DeleteObject(region) == 0 {
-            return Err("Cannot release the compositor region".into());
-        }
-        if result < 0 {
-            return Err(format!(
-                "Windows could not enable client alpha: {result:#x}"
-            ));
-        }
-        // The compositor, not a padded GPUI surface, owns any available shadow.
-        let result = DwmExtendFrameIntoClientArea(
-            window,
-            &Margins {
-                left: 1,
-                right: 1,
-                top: 1,
-                bottom: 1,
-            },
-        );
-        if result < 0 {
-            return Err(format!(
-                "Windows could not configure the native shadow: {result:#x}"
-            ));
-        }
+    // SAFETY: validated own-thread HWND. GPUI only sets this style when it
+    // creates the window with its DirectComposition renderer enabled.
+    if unsafe { GetWindowLongW(window, -20) } as u32 & 0x00200000 == 0 {
+        return Err("Glass needs GPUI DirectComposition; it is disabled in this process".into());
     }
-    Ok(())
+    Ok(window)
 }
 
-/// Clip every child and the native backdrop to the same rounded window shape.
-/// Radius is in physical pixels; callers reapply after a size or DPI change.
+/// Ask DWM to round the window so the system backdrop and the app surface share
+/// the same corner shape. Falls back to a native region on older Windows.
 pub fn round_launcher_window(hwnd: isize, radius: i32) -> Result<(), String> {
     let window = owned_window(hwnd)?;
     if radius <= 0 || radius > 256 {
         return Err("Invalid launcher corner radius".into());
     }
+
+    const DWMWA_WINDOW_CORNER_PREFERENCE: u32 = 33;
+    const DWMWCP_ROUND: i32 = 2;
+    let preference = DWMWCP_ROUND;
+    // SAFETY: validated own-thread window and a stack-sized attribute value.
+    let result = unsafe {
+        DwmSetWindowAttribute(
+            window,
+            DWMWA_WINDOW_CORNER_PREFERENCE,
+            (&preference as *const i32).cast(),
+            std::mem::size_of::<i32>() as u32,
+        )
+    };
+    let mut applied = 0i32;
+    // SAFETY: validated own-thread window and a stack-sized output value.
+    let read_back = unsafe {
+        DwmGetWindowAttribute(
+            window,
+            DWMWA_WINDOW_CORNER_PREFERENCE,
+            (&mut applied as *mut i32).cast(),
+            std::mem::size_of::<i32>() as u32,
+        )
+    };
+    if result >= 0 && read_back >= 0 && applied == DWMWCP_ROUND {
+        // DWM owns the outer shape; ask it to recompute the non-client frame.
+        // SAFETY: validated own-thread window; position and size are unchanged.
+        unsafe {
+            SetWindowPos(window, std::ptr::null_mut(), 0, 0, 0, 0, 0x0037);
+        }
+        return Ok(());
+    }
+
     // SAFETY: validated own-thread window and checked dimensions; Windows owns
     // the region only after a successful SetWindowRgn call.
     unsafe {
@@ -289,6 +239,16 @@ pub fn make_launcher_frameless(hwnd: isize) -> Result<(), String> {
         if SetWindowPos(window, std::ptr::null_mut(), 0, 0, 0, 0, 0x37) == 0 {
             return Err("Windows could not refresh the launcher frame".into());
         }
+        // Leave any available shadow to DWM; it never adds a GPUI hitbox gutter.
+        let _ = DwmExtendFrameIntoClientArea(
+            window,
+            &Margins {
+                left: 1,
+                right: 1,
+                top: 1,
+                bottom: 1,
+            },
+        );
     }
     Ok(())
 }
@@ -296,8 +256,6 @@ pub fn make_launcher_frameless(hwnd: isize) -> Result<(), String> {
 #[link(name = "kernel32")]
 extern "system" {
     fn GetCurrentThreadId() -> u32;
-    fn GetModuleHandleW(name: *const u16) -> *mut c_void;
-    fn GetProcAddress(module: *mut c_void, name: *const u8) -> *mut c_void;
 }
 
 /// Shows or hides the launcher's own window.
@@ -450,42 +408,60 @@ mod tests {
             assert_ne!(GetClientRect(window.0, &mut client), 0);
             assert_eq!(bounds.right - bounds.left, client.right);
             assert_eq!(bounds.bottom - bounds.top, client.bottom);
-            let region = CreateRectRgn(0, 0, 0, 0);
-            assert!(!region.is_null());
-            let kind = GetWindowRgn(window.0, region);
-            let samples = [
-                (0, 0),
-                (199, 0),
-                (0, 119),
-                (199, 119),
-                (100, 0),
-                (0, 60),
-                (199, 60),
-                (100, 119),
-            ]
-            .map(|(x, y)| PtInRegion(region, x, y) != 0);
-            assert_ne!(DeleteObject(region), 0);
-            assert_eq!(kind, 3);
-            assert_eq!(
-                samples,
-                [false, false, false, false, true, true, true, true]
+            let mut preference = 0i32;
+            let dwm = DwmGetWindowAttribute(
+                window.0,
+                33,
+                (&mut preference as *mut i32).cast(),
+                std::mem::size_of::<i32>() as u32,
             );
+            if dwm >= 0 {
+                // Windows 11: DWM owns the rounded outer shape.
+                assert_eq!(preference, 2);
+                let region = CreateRectRgn(0, 0, 0, 0);
+                assert!(!region.is_null());
+                let kind = GetWindowRgn(window.0, region);
+                assert_ne!(DeleteObject(region), 0);
+                assert_eq!(kind, 0);
+            } else {
+                // Older Windows: the native rounded region is the fallback.
+                let region = CreateRectRgn(0, 0, 0, 0);
+                assert!(!region.is_null());
+                let kind = GetWindowRgn(window.0, region);
+                let samples = [
+                    (0, 0),
+                    (199, 0),
+                    (0, 119),
+                    (199, 119),
+                    (100, 0),
+                    (0, 60),
+                    (199, 60),
+                    (100, 119),
+                ]
+                .map(|(x, y)| PtInRegion(region, x, y) != 0);
+                assert_ne!(DeleteObject(region), 0);
+                assert_eq!(kind, 3);
+                assert_eq!(
+                    samples,
+                    [false, false, false, false, true, true, true, true]
+                );
+            }
         }
         assert!(round_launcher_window(window.0 as isize, 0).is_err());
         assert!(round_launcher_window(window.0 as isize, 257).is_err());
     }
 
     #[test]
-    fn alpha_reports_disabled_composition_and_rejects_wrong_thread() {
+    fn glass_reports_disabled_composition_and_rejects_wrong_thread() {
         let window = TestWindow::new();
-        let error = enable_launcher_alpha(window.0 as isize);
+        let error = composition_window(window.0 as isize);
         assert!(error.is_err_and(|error| error.contains("DirectComposition")));
         let handle = window.0 as isize;
         let outcome = std::thread::spawn(move || {
             (
                 make_launcher_frameless(handle).is_err(),
                 round_launcher_window(handle, 12).is_err(),
-                enable_launcher_alpha(handle).is_err(),
+                composition_window(handle).is_err(),
             )
         })
         .join();
@@ -496,8 +472,8 @@ mod tests {
     fn rejects_null_window_handle() {
         assert!(make_launcher_frameless(0).is_err());
         assert!(make_launcher_frameless(1).is_err());
-        assert!(enable_launcher_alpha(0).is_err());
-        assert!(enable_launcher_alpha(1).is_err());
+        assert!(composition_window(0).is_err());
+        assert!(composition_window(1).is_err());
         assert!(round_launcher_window(0, 12).is_err());
         assert!(round_launcher_window(1, 12).is_err());
         assert!(set_launcher_visible(0, true).is_err());

@@ -58,13 +58,10 @@ See [`validation-2026-11-12.md`](validation-2026-11-12.md) for the latest comman
 ## Required next acceptance work
 
 Latest appearance follow-up: monochrome light/dark palettes and translucency default on.
-The native correction removed the invisible shadow gutter, disabled the accent
-backdrop, added full-window rounded clipping and fixed old GPUI's unwanted non-client insets.
-Default and candidate native geometry observations now pass; the final default validation passes
-138 tests, one doctest, Clippy and startup/30-stage interaction smokes. Visible desktop pixel
-transparency and shadow quality remain unverified, explicitly separate from those geometry checks.
-See the final section of the [12 November validation](validation-2026-11-12.md); saved earlier
-full-shell UIA observations do not validate these last appearance changes.
+The native correction removed the invisible shadow gutter and fixed old GPUI's unwanted non-client
+insets. On Windows 11, a separate compositor layer now blurs the live backdrop beneath GPUI's themed
+tint. The older geometry observations in the [12 November validation](validation-2026-11-12.md)
+do not verify the current blur. See the [ANS-75 validation notes](validation-2026-11-18.md).
 
 1. Run the desktop on the Windows test machine; inspect GPU startup, keyboard routing, selection, action panel and error states.
 2. Validate CJK composition confirmation/cancellation, emoji grapheme editing, Hindi, RTL, AltGr/dead keys and caret placement at 100/150/200% scaling.

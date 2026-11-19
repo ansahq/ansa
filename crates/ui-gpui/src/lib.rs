@@ -56,6 +56,8 @@ struct Launcher {
     visible: bool,
     glass: bool,
     light: bool,
+    #[cfg(target_os = "windows")]
+    backdrop: Option<ansa_platform_windows::LauncherBackdrop>,
     appearance_notice: Option<String>,
     #[cfg(target_os = "windows")]
     native_shape: Option<(i32, i32, i32)>,
@@ -124,13 +126,7 @@ fn catalog() -> Result<Vec<Command>, String> {
 }
 
 impl Launcher {
-    fn new(
-        window: &mut Window,
-        cx: &mut Context<Self>,
-        a11y_fixture: bool,
-        glass: bool,
-        light: bool,
-    ) -> Self {
+    fn new(window: &mut Window, cx: &mut Context<Self>, a11y_fixture: bool, light: bool) -> Self {
         let input = cx.new(TextInput::new);
         let action_input = cx.new(|cx| {
             let mut input = TextInput::new(cx);
@@ -198,8 +194,11 @@ impl Launcher {
             hotkey: None,
             hotkey_notice: None,
             visible: true,
-            glass,
+            // Never draw a translucent tint until the blur layer is attached.
+            glass: false,
             light,
+            #[cfg(target_os = "windows")]
+            backdrop: None,
             appearance_notice: None,
             #[cfg(target_os = "windows")]
             native_shape: None,
@@ -212,12 +211,47 @@ impl Launcher {
         }
     }
 
-    fn toggle_glass(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
+    fn toggle_glass(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.is_composing(cx) || self.appearance_notice.is_some() {
             return;
         }
-        self.glass = !self.glass;
+        #[cfg(target_os = "windows")]
+        self.set_glass(!self.glass, window);
+        #[cfg(not(target_os = "windows"))]
+        {
+            let _ = window;
+            self.glass = !self.glass;
+        }
         cx.notify();
+    }
+
+    #[cfg(target_os = "windows")]
+    fn set_glass(&mut self, enabled: bool, window: &Window) {
+        let result = if let Some(backdrop) = &self.backdrop {
+            backdrop.set_visible(enabled)
+        } else if enabled {
+            let (width, height, radius) = launcher_shape(window);
+            self.native_handle
+                .ok_or_else(|| "Launcher HWND is unavailable".into())
+                .and_then(|hwnd| {
+                    ansa_platform_windows::LauncherBackdrop::new(hwnd, width, height, radius)
+                })
+                .map(|backdrop| self.backdrop = Some(backdrop))
+        } else {
+            Ok(())
+        };
+        match result {
+            Ok(()) => self.glass = enabled,
+            Err(error) => self.glass_unavailable(error),
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    fn glass_unavailable(&mut self, error: String) {
+        self.glass = false;
+        self.backdrop = None;
+        eprintln!("Launcher frosted glass unavailable: {error}");
+        self.appearance_notice = Some(error);
     }
 
     fn theme(&self) -> Theme {
@@ -585,24 +619,32 @@ impl Launcher {
     }
 }
 
+#[cfg(target_os = "windows")]
+fn launcher_shape(window: &Window) -> (i32, i32, i32) {
+    let viewport = window.viewport_size();
+    let scale = window.scale_factor();
+    (
+        (f32::from(viewport.width) * scale).round() as i32,
+        (f32::from(viewport.height) * scale).round() as i32,
+        (12.0 * scale).round().clamp(1.0, 256.0) as i32,
+    )
+}
+
 impl Render for Launcher {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         #[cfg(target_os = "windows")]
         if let Some(hwnd) = self.native_handle {
-            let viewport = window.viewport_size();
-            let scale = window.scale_factor();
-            let radius = (12.0 * scale).round().clamp(1.0, 256.0) as i32;
-            let shape = (
-                (f32::from(viewport.width) * scale).round() as i32,
-                (f32::from(viewport.height) * scale).round() as i32,
-                radius,
-            );
+            let shape @ (width, height, radius) = launcher_shape(window);
             if self.native_shape != Some(shape) {
                 self.native_shape = Some(shape);
                 if let Err(error) = ansa_platform_windows::round_launcher_window(hwnd, radius) {
                     eprintln!("Launcher corner clipping: {error}");
-                    self.appearance_notice = Some(error);
-                    self.glass = false;
+                    self.glass_unavailable(error);
+                }
+                if let Some(backdrop) = &self.backdrop
+                    && let Err(error) = backdrop.resize(width, height, radius)
+                {
+                    self.glass_unavailable(error);
                 }
             }
         }
@@ -735,9 +777,8 @@ impl Render for Launcher {
             .size_full()
             .flex()
             .flex_col()
-            // No layout gutter: native clipping and the compositor own the
-            // corners/shadow, so invisible padding cannot intercept clicks.
-            .bg(if self.glass { theme.glass_background() } else { theme.background })
+            // No layout gutter: the native compositor owns the external shadow.
+            .bg(theme.window_background(self.glass))
             .rounded(px(12.))
             .overflow_hidden()
             .border_1()
@@ -1207,10 +1248,15 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             kind: WindowKind::PopUp,
             is_resizable: false,
             is_minimizable: false,
-            window_background: WindowBackgroundAppearance::Transparent,
+            // On Windows this disables GPUI's accent, not swap-chain alpha.
+            window_background: if cfg!(target_os = "windows") {
+                WindowBackgroundAppearance::Opaque
+            } else {
+                WindowBackgroundAppearance::Transparent
+            },
             app_id: Some("dev.ansa.launcher".into()),
             ..Default::default()
-        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, glass, light))) else {
+        }, |window, cx| cx.new(|cx| Launcher::new(window, cx, a11y_fixture, light))) else {
             *error_for_app.borrow_mut() = Some("Ansa could not create a GPUI window. Check your GPU driver and native dependencies.".to_string());
             cx.quit(); return;
         };
@@ -1227,23 +1273,17 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             return;
         }
         #[cfg(target_os = "windows")]
-        if let Err(error) = handle.update(cx, |this, window, cx| {
-            let hwnd = native_handle(window).ok_or("Launcher HWND is unavailable".to_string())?;
-            match ansa_platform_windows::enable_launcher_alpha(hwnd) {
-                Ok(()) => Ok(()),
-                Err(error) => {
-                    eprintln!("Launcher transparency unavailable: {error}");
-                    this.appearance_notice = Some(error);
-                    this.glass = false;
-                    cx.notify();
-                    Ok::<(), String>(())
-                }
+        let _ = handle.update(cx, |this, window, cx| {
+            if this.appearance_notice.is_none() {
+                this.set_glass(glass, window);
             }
-        }).map_err(|error| error.to_string()).and_then(|result| result) {
-            *error_for_app.borrow_mut() = Some(error);
-            cx.quit();
-            return;
-        }
+            cx.notify();
+        });
+        #[cfg(not(target_os = "windows"))]
+        let _ = handle.update(cx, |this, _, cx| {
+            this.glass = glass;
+            cx.notify();
+        });
         if a11y_fixture {
             // Built-ins only, no discovery, account state, clipboard writes or
             // external actions. The probe starts this process and talks to it.

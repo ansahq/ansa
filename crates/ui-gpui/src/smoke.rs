@@ -17,10 +17,23 @@ fn key(source: &'static str, window: &mut Window, cx: &mut App) {
 }
 
 pub(super) fn start(view: Entity<Launcher>, window: &mut Window) {
-    window.on_next_frame(move |window, cx| step(view, 0, window, cx));
+    window.on_next_frame(move |window, cx| step(view, 0, None, window, cx));
 }
 
-fn step(view: Entity<Launcher>, stage: u8, window: &mut Window, cx: &mut App) {
+fn step(
+    view: Entity<Launcher>,
+    stage: u8,
+    mut appearance_bounds: Option<Bounds<gpui::Pixels>>,
+    window: &mut Window,
+    cx: &mut App,
+) {
+    if (26..=29).contains(&stage) {
+        assert_eq!(
+            Some(window.bounds()),
+            appearance_bounds,
+            "appearance toggles must not move or resize the launcher"
+        );
+    }
     match stage {
         0 => key("ctrl-k", window, cx),
         1 => {
@@ -234,20 +247,38 @@ fn step(view: Entity<Launcher>, stage: u8, window: &mut Window, cx: &mut App) {
             let this = view.read(cx);
             assert_eq!(this.engine.query(), "undo-check");
             assert!(!this.input.read(cx).is_composing());
+            appearance_bounds = Some(window.bounds());
             key("ctrl-shift-g", window, cx);
         }
         26 => {
             let expected = std::env::args().any(|arg| arg == "--opaque");
-            assert_eq!(view.read(cx).glass, expected);
+            let this = view.read(cx);
+            assert_eq!(this.glass, expected && this.appearance_notice.is_none());
             assert_eq!(view.read(cx).engine.query(), "undo-check");
             assert!(view.read(cx).input.focus_handle(cx).is_focused(window));
             key("ctrl-shift-g", window, cx);
         }
         27 => {
+            let this = view.read(cx);
             assert_eq!(
-                view.read(cx).glass,
-                !std::env::args().any(|arg| arg == "--opaque")
+                this.glass,
+                !std::env::args().any(|arg| arg == "--opaque") && this.appearance_notice.is_none()
             );
+            #[cfg(target_os = "windows")]
+            if let Some(reason) = &this.appearance_notice {
+                assert!(this.backdrop.is_none());
+                assert!(
+                    !std::env::args().any(|arg| arg == "--require-frost"),
+                    "Native frosted backdrop unavailable: {reason}"
+                );
+                println!("Ansa appearance smoke: opaque fallback ({reason})");
+            } else {
+                assert!(
+                    this.backdrop.is_some(),
+                    "both toggles must retain the native backdrop"
+                );
+                println!("Ansa appearance smoke: native backdrop attached and toggled");
+            }
             key("ctrl-shift-t", window, cx);
         }
         28 => {
@@ -272,5 +303,5 @@ fn step(view: Entity<Launcher>, stage: u8, window: &mut Window, cx: &mut App) {
         }
         _ => unreachable!(),
     }
-    window.on_next_frame(move |window, cx| step(view, stage + 1, window, cx));
+    window.on_next_frame(move |window, cx| step(view, stage + 1, appearance_bounds, window, cx));
 }

@@ -51,8 +51,9 @@ It uses a rounded, monochrome surface with a soft shadow on all sides. Glass is 
 the material fills the window with no invisible shadow gutter. On Windows, a native rounded
 region clips every child at the corners, and the compositor owns any available external shadow.
 Per-pixel DirectComposition alpha is enabled without GPUI's native gradient backdrop. Text stays opaque.
-The glass tint is 78% opaque (22% see-through); secondary text is contrast-tuned for both themes,
-while menus and selected rows stay solid for reliable interaction.
+On Windows 11, Glass uses a native compositor layer to blur the live scene behind the launcher.
+GPUI paints an 80% opaque themed tint over that blur. Desktop colors can show through, but text,
+menus and selected rows stay opaque. The launcher does not read wallpaper files or capture the screen.
 
 - **Glass: On/Off** or **Ctrl+Shift+G** toggles translucency without resizing the window.
 - **Theme: Dark/Light** or **Ctrl+Shift+T** switches the entire palette, including both inputs,
@@ -65,10 +66,9 @@ For example:
 cargo run --locked -p ansa-desktop -- --light
 ```
 
-These choices last for this process only; they are not persistent settings. Compositor support
-is required for transparency. The surface is tinted for readability; it does not apply native blur.
-If DirectComposition is disabled or the native setup fails, the app reports **Glass: Unavailable**
-and uses an opaque surface rather than claiming glass is enabled.
+These choices last for this process only; they are not persistent settings. If Windows transparency
+effects are off at setup, DirectComposition is disabled, or the native layer cannot be created,
+the app reports **Glass: Unavailable** and stays opaque rather than showing clear glass.
 Escape dismisses the launcher and Ctrl+Q exits, without needing native window controls.
 
 ## Boundaries

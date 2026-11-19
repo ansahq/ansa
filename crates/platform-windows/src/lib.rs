@@ -25,6 +25,8 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 #![cfg_attr(not(windows), forbid(unsafe_code))]
 
+#[cfg(windows)]
+mod backdrop;
 mod focus;
 #[cfg(windows)]
 mod hotkey;
@@ -37,6 +39,8 @@ mod visibility;
 #[cfg(windows)]
 mod win32;
 
+#[cfg(windows)]
+pub use backdrop::LauncherBackdrop;
 pub use focus::{
     capture_foreground_target, dismiss_launcher, launcher_is_foreground, FocusRestoreOutcome,
     FocusTarget,
@@ -45,9 +49,7 @@ pub use focus::{
 pub use hotkey::HotkeyRegistration;
 pub use types::{AppEntry, CapabilityStatus, HostCapabilities, Platform};
 #[cfg(windows)]
-pub use visibility::{
-    enable_launcher_alpha, make_launcher_frameless, round_launcher_window, set_launcher_visible,
-};
+pub use visibility::{make_launcher_frameless, round_launcher_window, set_launcher_visible};
 
 /// Non-Windows placeholder for the Windows-only hotkey worker.
 ///

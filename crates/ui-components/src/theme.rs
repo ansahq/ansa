@@ -1,6 +1,8 @@
 //! Neutral light and dark palettes shared by the launcher and its inputs.
 
-use gpui::{Hsla, rgb, rgba};
+use gpui::{Background, Hsla, rgb, rgba, solid_background};
+
+const GLASS_BACKGROUND_ALPHA: f32 = 0.80;
 
 /// Colors used by Ansa widgets.
 ///
@@ -31,10 +33,21 @@ pub struct Theme {
 }
 
 impl Theme {
-    /// Only the background is translucent; text, menus and selected rows
-    /// retain their own opaque palette colors.
-    pub fn glass_background(&self) -> Hsla {
-        self.background.opacity(0.78)
+    /// The translucent base tint. Text, menus and selected rows retain their
+    /// own opaque palette colors. The 20% see-through tint is the readability
+    /// floor for secondary text at 4.5:1 over black and white desktop extremes.
+    pub fn glass_tint(&self) -> Hsla {
+        self.background.opacity(GLASS_BACKGROUND_ALPHA)
+    }
+
+    /// The launcher surface: a themed translucent tint over the native frosted
+    /// backdrop when glass is on, or the opaque palette background when it is off.
+    pub fn window_background(&self, glass: bool) -> Background {
+        if glass {
+            solid_background(self.glass_tint())
+        } else {
+            solid_background(self.background)
+        }
     }
 
     /// The default Ansa dark theme.
@@ -44,10 +57,10 @@ impl Theme {
             surface: rgb(0x232323).into(),
             surface_raised: rgb(0x383838).into(),
             text: rgb(0xf5f5f5).into(),
-            muted_text: rgb(0xbcbcbc).into(),
+            muted_text: rgb(0xd6d6d6).into(),
             accent: rgb(0xf0f0f0).into(),
             accent_strong: rgb(0xffffff).into(),
-            selection: rgba(0xffffff30).into(),
+            selection: rgba(0x00000040).into(),
             border: rgb(0x484848).into(),
             danger: rgb(0xf5f5f5).into(),
         }
@@ -59,7 +72,7 @@ impl Theme {
             surface: rgb(0xffffff).into(),
             surface_raised: rgb(0xdcdcdc).into(),
             text: rgb(0x181818).into(),
-            muted_text: rgb(0x4c4c4c).into(),
+            muted_text: rgb(0x404040).into(),
             accent: rgb(0x202020).into(),
             accent_strong: rgb(0x000000).into(),
             selection: rgba(0x00000025).into(),
@@ -96,8 +109,9 @@ mod tests {
     #[test]
     fn glass_keeps_text_and_caret_contrast_over_extreme_backdrops() {
         for theme in [Theme::dark(), Theme::light()] {
-            let glass = theme.glass_background();
-            assert!((glass.a - 0.78).abs() < 0.0001);
+            let glass = theme.glass_tint();
+            assert!((glass.a - GLASS_BACKGROUND_ALPHA).abs() < 0.0001);
+            assert!(glass.a > 0.0 && glass.a < 1.0);
             for backdrop in [0.0, 1.0] {
                 // Neutral sRGB source-over compositing, before luminance conversion.
                 let background = glass.l * glass.a + backdrop * (1.0 - glass.a);

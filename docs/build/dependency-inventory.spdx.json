@@ -22283,6 +22283,21 @@
       "relatedSpdxElement": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf"
     },
     {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-windows-0.61.3-7d0b45e1de"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-windows-core-0.61.2-dee1e89a91"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-windows-numerics-0.2.0-ed29c22051"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-domain-0.1.0-ba91bfbffd"
@@ -32016,6 +32031,6 @@
       "comment": "Review statuses are explicit per package. All third-party packages are unreviewed unless review-status.toml records evidence."
     }
   ],
-  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-c0c6e1bd925291244b07f2388d22321ba5d0c3fee8a7925b4b2318262bc4397c-2c739d316c4f73086d53bf928fd140fbf048c28323da3a203be9d4c17d125586",
-  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): c0c6e1bd925291244b07f2388d22321ba5d0c3fee8a7925b4b2318262bc4397c. SPDX content digest: 2c739d316c4f73086d53bf928fd140fbf048c28323da3a203be9d4c17d125586."
+  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-c886c86d040be4d8677a6c0c7f9217739c187edff7034fe0b74984e7e6eaabca-673e52570973b1f165e6862b0ceaa5021fa76b1e099499ada1c0af6f597660d7",
+  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): c886c86d040be4d8677a6c0c7f9217739c187edff7034fe0b74984e7e6eaabca. SPDX content digest: 673e52570973b1f165e6862b0ceaa5021fa76b1e099499ada1c0af6f597660d7."
 }

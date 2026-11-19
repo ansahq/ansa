@@ -6,7 +6,7 @@ This file is generated from `Cargo.lock`, `cargo metadata --locked --offline`
 and `scripts/dependencies/review-status.toml`. It is a build/tooling artifact,
 not a legal review or a claim that every locked package is used on every OS.
 
-- Cargo.lock SHA-256 (LF-normalized): `c0c6e1bd925291244b07f2388d22321ba5d0c3fee8a7925b4b2318262bc4397c`
+- Cargo.lock SHA-256 (LF-normalized): `c886c86d040be4d8677a6c0c7f9217739c187edff7034fe0b74984e7e6eaabca`
 - Lock identity normalizes CRLF pairs to LF only; lone CR, UTF-8 and all
   other bytes are preserved. Registry artifact checksums below are raw.
 - Lockfile format: v3

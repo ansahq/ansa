@@ -2,7 +2,7 @@
 
 An open-source, local-first keyboard launcher. Rust core, Rust GPUI interface, no account and no webview.
 
-**Status: foundation prototype, not a Raycast-compatible release.** The design and research in [`outputs/`](outputs/) remain the long-term plan. This implementation starts the feasibility gate rather than claiming feature parity.
+**Status: Phase 1 daily-launcher alpha slice, not a Raycast-compatible release.** The design and research in [`outputs/`](outputs/) remain the long-term plan. The 2026-11-19 slice adds a command/action registry, packaged app discovery, a bounded provider coordinator, persistent SQLite settings, structured quicklinks, an expanded calculator, licensed emoji search, onboarding state and an alpha harness. It does not close the human dogfooding, accessibility or release gates. See [`docs/alpha/`](docs/alpha/) for the alpha scope and known limitations.
 
 ## Development
 
@@ -19,9 +19,18 @@ cargo run --locked -p ansa-desktop
 cargo run --locked -p ansa-cli -- search terminal
 ```
 
-Run `cargo test --workspace --locked` to include the UI text-model tests, or `cargo run --locked -p ansa-desktop -- --smoke-test` for an automatically closing native startup check. The local validation record is in [`docs/validation-2026-11-11.md`](docs/validation-2026-11-11.md).
+Run `cargo test --workspace --locked` to include the UI text-model tests, or `cargo run --locked -p ansa-desktop -- --smoke-test` for an automatically closing native startup check. The local validation record is in [`docs/validation-2026-11-20.md`](docs/validation-2026-11-20.md).
 
-For the debug-only synthetic widget/action test, run `cargo run --locked -p ansa-desktop -- --interaction-smoke-test`. It uses a built-in fixture, runs 30 stages and exits without writing the clipboard or launching another app. It includes synthetic keybindings, input rejection, IME transaction boundaries and appearance toggling, but is not a physical keyboard, real-IME, screen-reader or focus-restoration test.
+The alpha CLI exposes the Phase 1 surfaces without the desktop UI:
+
+```sh
+cargo run --offline -p ansa-cli -- doctor
+cargo run --offline -p ansa-cli -- calc "10 km to mi"
+cargo run --offline -p ansa-cli -- emoji rocket
+cargo run --offline -p ansa-cli -- alpha-smoke --cycles 1000
+```
+
+For the debug-only synthetic widget/action test, run `cargo run --locked -p ansa-desktop -- --interaction-smoke-test`. It uses a built-in fixture, runs 40 stages and exits without writing the clipboard or launching another app. It includes synthetic keybindings, input rejection, IME transaction boundaries, appearance toggling, setup navigation and emoji copy-mode parsing, but is not a physical keyboard, real-IME, screen-reader or focus-restoration test.
 
 On Windows, `pwsh -File scripts/validate.ps1 -NativeSmoke -Offline` runs all local checks against already-downloaded dependencies. Omit `-Offline` when dependencies need fetching.
 
@@ -29,20 +38,26 @@ The default workspace builds the renderer-independent core and CLI. Build the na
 
 ## Initial slice
 
-- Deterministic command/app search with stable identities and exact/prefix/fuzzy tiers.
+- Deterministic command/app search with stable identities and exact/prefix/token/fuzzy tiers, a golden relevance corpus and held-out metrics.
 - Virtualized GPUI results, original dark styling and an independently searchable action panel.
-- Session-only pins/usage signals; snapshot-bound actions reject changed targets.
-- Shared text input with native composition plumbing and Unicode grapheme navigation.
-- Composition-safe undo/redo, bounded transient edit history, and atomic rejection of queries exceeding 4,096 Unicode scalar values.
-- Bounded, offline arithmetic parser; no shell evaluation.
-- Windows Start Menu shortcut discovery and native opening, without interpolating shell commands.
+- Session-only pins/usage/recency signals; snapshot-bound actions reject changed targets.
+- Typed command/action registry with opaque action references, kind capabilities, explicit confirmation and no automatic retry of uncertain effects.
+- Windows classic and packaged application discovery, a bounded Shell Link parser, argument/working-directory-aware identity, broken-entry reporting and launch-or-switch outcomes.
+- Bounded provider coordinator with revisions, deadlines, quotas, cancellation, partial/empty/failed states and stable selection.
+- Persistent SQLite settings, user records, secret references, a rebuildable cache, transactional migrations and verified backup/restore.
+- Structured quicklinks with RFC 3986 encoding, scheme/path/opener policy, preview/commit protection and versioned import/export.
+- Bounded offline arithmetic, percentages, exponentiation and length/mass/time/temperature units; no shell evaluation.
+- Licensed Unicode 16.0 emoji/symbol search with grapheme integrity, accessible variants and bounded recents/favorites.
+- First-run onboarding state with recoverable shortcut conflicts, permission explanations and JSON persistence.
 - Windows Ctrl+Space summon, with shortcut registration errors shown explicitly.
 - Checked, best-effort Windows focus return on dismissal; no input injection or automatic paste.
 - No query telemetry, cloud calls, extension execution, or clipboard-history capture.
 
+The desktop now consumes the `DailyDriver` composition root for persisted quicklinks, a basic `Start Setup` onboarding surface and an explicit `emoji <query>` copy mode. Quicklink authoring, full emoji browsing/variant selection and complete onboarding screens remain follow-up work, and the two-week human dogfooding gate is open; see [`docs/alpha/known-limitations.md`](docs/alpha/known-limitations.md).
+
 Use ↑/↓ and Page Up/Down to navigate, Enter to act, Ctrl+K for actions, and Escape to close the current layer. Type in the action panel to filter; Tab/Shift+Tab reach the footer control and leave the panel without trapping focus. Pins are marked ★ and last only until exit. Ctrl+Q exits. Root Escape hides only when a global shortcut was successfully registered; otherwise it stays recoverable. Calculator Enter copies the result; it does not inject text into another app.
 
-Arithmetic uses finite IEEE-754 `f64`, not exact decimal finance arithmetic. The supported grammar is numbers, unary signs, `+ - * /`, and parentheses, bounded to 256 characters and 32 nesting levels. A leading `=` explicitly requests calculation. Invalid arithmetic displays an error and cannot fall through to app execution; names such as `7-Zip` remain search queries.
+Arithmetic uses finite IEEE-754 `f64`, not exact decimal finance arithmetic. The supported grammar is numbers, unary signs, `+ - * /`, postfix `%`, right-associative `^`, parentheses, and a bounded unit catalogue for length, mass, time and temperature, bounded to 256 characters and 32 nesting levels. A leading `=` explicitly requests calculation and is required for units and constants. Invalid arithmetic displays a typed error and cannot fall through to app execution; names such as `7-Zip` remain search queries. Results use a documented 12-significant-digit display policy and preserve units. Currencies, dates, time zones and natural language are explicitly unsupported.
 
 ### Appearance
 
@@ -80,7 +95,7 @@ and [build/inventory tooling](docs/build/). See the
 [ANS-5/6/7 validation record](docs/foundation-validation-2026-11-17.md) for actual
 checks and outstanding capture, audit, and cross-platform acceptance gaps.
 
-Windows is the first integration target. macOS/Linux native adapters, packaged Windows app discovery, launch/switch semantics, configurable shortcuts, persistent settings, clipboard history, indexing and extension compatibility are **not implemented**. Focus return is conservative: exited/changed targets and unrelated foreground windows are left alone; Windows may deny activation, and same-process/thread HWND recycling cannot be completely detected. The renderer and core remain separable. Screen-reader support, IME behavior on real devices, DPI handling and performance targets have not passed their release gates. See the blocking [framework accessibility gate](docs/framework-gate.md) before expanding the feature surface.
+Windows is the first integration target. macOS/Linux native adapters, signed installation, clipboard history UI, file indexing, extension execution and cross-device sync are **not implemented**. Packaged application discovery and classic launch-or-switch exist on Windows; packaged switching remains unsupported, icon extraction exists but desktop icon rendering is not wired, and `CatalogWatcher` is exercised by examples rather than the desktop. Reveal/copy-identity shell APIs exist. Focus return is conservative: exited/changed targets and unrelated foreground windows are left alone; Windows may deny activation, and same-process/thread HWND recycling cannot be completely detected. The desktop still keeps ranking signals in memory. Quicklink authoring, full emoji variant browsing and complete onboarding screens remain follow-up work. The renderer and core remain separable. Screen-reader support, IME behavior on real devices, DPI handling, real foreground switching and performance targets have not passed their release gates. See the blocking [framework accessibility gate](docs/framework-gate.md) before expanding the feature surface.
 
 See [`docs/implementation-status.md`](docs/implementation-status.md) for verification and remaining work, and [`docs/adr/0001-foundation.md`](docs/adr/0001-foundation.md) for the provisional architecture decision.
 
@@ -88,7 +103,7 @@ An independent [newer GPUI accessibility experiment](experiments/gpui-accessibil
 
 ## Layout
 
-`apps/desktop` · `apps/cli` · `crates/{domain,search,core,platform-api,platform-windows,ui-components,ui-gpui}`
+`apps/desktop` · `apps/cli` · `crates/{domain,search,core,registry,coordinator,storage,quicklinks,emoji,onboarding,alpha,platform-api,platform-windows,ui-components,ui-gpui}`
 
 ## License
 

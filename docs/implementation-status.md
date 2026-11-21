@@ -1,6 +1,6 @@
 # Implementation status
 
-Started 2026-11-11. This file tracks this repository, not reference-product behavior. The supplied research remains a design baseline; no reference app was executed here.
+Started 2026-11-11. Updated 2026-11-19 with the Phase 1 daily-launcher implementation. This file tracks this repository, not reference-product behavior. The supplied research remains a design baseline; no reference app was executed here.
 
 ## Scope
 
@@ -11,12 +11,24 @@ Started 2026-11-11. This file tracks this repository, not reference-product beha
 | F04 | Retained GPUI window and checked best-effort Windows focus return | Foreground races handled conservatively; real focus/monitor/lifecycle gate open |
 | F05 | Shared Unicode input, bounded undo/redo, one transaction per IME composition, oversized-edit rejection | Physical IME and assistive-technology testing open; not a Notes editor |
 | F06 | Searchable snapshot-bound actions, stable selection, arrows/Enter/Escape and Tab focus | Synthetic native interaction test passes; full assistive-technology/control acceptance remains open |
-| F07 | Event-driven Windows Ctrl+Space registration | No rebinding/shortcut recorder; other OS adapters not implemented |
-| L01/L03/L04 | Typed catalog, deterministic ranking, session pins/usage, action revision guards, coalesced catalog refresh | No persistent preferences or general asynchronous provider/deadline runtime yet |
-| L02 | Windows Start Menu `.lnk` discovery/native launch | No packaged apps, icon extraction, live watcher, dedupe by target or switch-to-existing |
-| L07 | Bounded arithmetic, explicit `=` routing and user-visible error states | Approximate f64 only; no units, dates, currencies, or arbitrary natural language |
+| F07 | Event-driven Windows Ctrl+Space registration, chord recorder, probe/reconfigure/reapply lifecycle with old-binding release | Desktop still registers the default chord and does not expose a rebinding UI; no physical summon test; other OS adapters not implemented |
+| F08 | UIA/semantic metadata for some candidate-mode controls and accessibility labels in the new desktop surfaces | Real screen-reader acceptance has not run; F08 cannot close without NVDA/Narrator evidence |
+| L01 | Typed command/action registry with prepare/authorize/execute/reconcile, opaque refs, kind capabilities, pending-operation blocking, bounded tombstones | No platform `Host` implementation and no desktop execution path yet; in-process trust and TOCTOU remain |
+| L02 | Bounded Shell Link parser, classic and packaged discovery, target/argument/working-directory identity, dedupe, broken entries, launch-or-switch, polling watcher API/example, safe ICO icon extraction, shell-API reveal/copy identity | Packaged AUMID switching is explicitly Unsupported; desktop doesn't render icons or run the watcher; real Explorer reveal and real switch/foreground remain manual; watcher desktop wiring is L11 |
+| L03 | Deterministic provider coordinator with revisions, deadlines, quotas, bounded queues, terminal states and selection stability | No real async/IPC/remote transport; caller-driven logical clock |
+| L04 | Tiered ranking, capped favorite/usage/recency, private mode, reset, golden tuning/held-out corpus and metrics | Held-out top-1 is 0.897; transposition/diacritic gaps are documented, not hidden |
+| L05 | SQLite single-writer actor, WAL/FULL, transactional migrations and snapshots, revisioned settings, records, secret refs, separate cache, verified backup/restore, real SQLITE_FULL test, identity-keyed single-instance lock, recovery reports | Generic records/cache are unencrypted; physical power-loss/ENOSPC and rollback-failure branch remain uninduced; lock is advisory and per-user |
+| L06 | Structured quicklinks with RFC 3986 encoding, scheme/path/opener policy, preview/commit fingerprint, versioned import/export, desktop catalog consumption and `--data-dir` persistence | Desktop authoring/preview/import/export form and real browser/file-manager probes remain L06a; external import requires Ansa closed (single-instance lock) |
+| L07 | Bounded arithmetic, percentages, exponentiation, length/mass/time/temperature units, typed errors, versioned corpus | `f64` approximate; currencies, dates, time zones and natural language are explicitly unsupported |
+| L08 | 139-entry licensed Unicode 16.0 emoji/symbol dataset with pinned checksum, grapheme integrity, accessible variants, search, bounded recents/favorites, activation model, desktop `emoji <query>` copy mode | No real insertion host, persisted collections or full variant-picker UI; screen-reader audit not run |
+| L09 | First-run onboarding model with recoverable shortcut conflicts, launch verification, permission explanations, JSON persistence and reset; keyboard-only `Start Setup` desktop surface | Full Welcome/Shortcut/TryLaunch/Integrations/Done screens, real hotkey rebinding probe and real launch verification remain L09a |
+| L10 | `ansa-alpha` composition root, CLI surfaces, desktop `DailyDriver` consumption and deterministic 1,000-cycle harness | Two-week human dogfooding, clean-machine install/uninstall, physical keyboard/screen-reader and crash/restart drill remain open |
+| L11 | Desktop consumes `DailyDriver` for catalog/onboarding/quicklinks; `emoji <query>` copy mode; keyboard-only setup; smoke isolation | Bounded first slice: no quicklink authoring, no full emoji variant picker, no full onboarding screens; F08/manual acceptance open |
+| P03 | Windows DPAPI vault with sealed payloads, secret aliases, locked/unlocked session gate, rotation, redacted errors and no plaintext fallback | DPAPI is user-bound, not passphrase-protected; no cross-user/machine backup; rotation isn't transactional; generic records/cache encryption integration remains |
+| P04 | Clipboard capture model/Windows text + file-list adapter with exclusion markers, sensitive filtering, quotas/pins, DPAPI-sealed history, cross-process store lock, legacy migration | No live clipboard listener/UI; image capture unsupported; heuristics are not proof; session-only pause/private policy |
+| P05 | Target-aware insertion transaction with copy-only default, identity/generation/permission/IME/secure-input checks, clipboard ownership, no restore-over-newer-copy | No Windows automatic insertion host; `Inserted` evidence path is fake-host tested only; real-app insertion matrix absent |
 
-These are partial implementations, **not closed backlog tickets**. No claim of screen-reader accessibility, cross-platform native support, security sandboxing or Raycast compatibility is made.
+These are implemented slices within the reviewed boundaries, not a claim that Phase 1 or the release gates are closed. L08, L09 and L10 still require host/UI/human evidence.
 
 ### Foundation evidence/tooling follow-up (17 November)
 
@@ -53,7 +65,19 @@ actual exact-pin validation, superseding the initial toolchain failure in the
 
 ## Test record
 
-See [`validation-2026-11-12.md`](validation-2026-11-12.md) for the latest commands/results: the default workspace again passed 133 unit tests, one doctest, Clippy, startup smoke and its 26-stage native synthetic interaction smoke. The immutable newer-GPUI candidate now runs the actual launcher shell, passes that same 26-stage smoke, candidate Clippy and 38 shared-widget tests. Real owned-process Windows UIA probes pass Unicode text-range/selection/geometry checks, atomic oversized-edit rejection, independent action search, pin/unpin with stable row identity, details/Back and calculator errors. The small 10k fixture additionally passes offscreen end/start realization, polite live-region events and an eight-stage navigation smoke. The main dependency pin remains unchanged. CI configuration is not evidence of a completed remote CI run; physical-input, screen-reader and lifecycle release gates remain open.
+The 2026-11-20 follow-up record is in [`validation-2026-11-20.md`](validation-2026-11-20.md) with the Phase 2 additions. On Windows with Rust 1.99.1:
+
+- `cargo fmt --all -- --check` — clean.
+- `cargo test --workspace --offline --no-fail-fast` — **695 distinct passed, 0 failed, 2 ignored**; 563 unit + 128 integration + 4 doctests. Cargo reports 697 pass events because two tests relaunch themselves in child processes. Ignored: the `text_input` doctest and the manual real-clipboard probe.
+- `cargo test --locked --offline --workspace` — passes against the updated lockfile.
+- `cargo clippy --workspace --all-targets --offline -- -D warnings` — clean; the only note is the pre-existing `proc-macro-error2` future-incompatibility warning from a dependency.
+- Desktop: startup smoke exits 0; **40-stage** interaction smoke passes, including keyboard-only setup traversal and bounded emoji navigation; `--smoke-test` does not touch the real profile.
+- CLI checks: `doctor` reports 156 applications (108 classic, 48 packaged, 3 genuinely broken); `calc "10 km to mi"` prints `6.21371192237 mi`; `calc "0.1+0.2"` prints `0.3`; `emoji rocket` returns licensed dataset metadata; `alpha-smoke --cycles 1000` passes 15,003 assertions with 3,000 stale batches rejected; `storage --demo` verifies a backup; `onboard --demo` completes a fake-probe journey with explicit warnings; `quicklink ... --data-dir` persists to the desktop's SQLite record.
+- Real catalog example: 156 total, 108 classic, 48 packaged, 3 broken, 29 entries with arguments, 6 argument-distinct groups, watcher not wired.
+- Platform icon example: valid 32×32 ICO, 4,286 bytes from notepad.exe. Watch example: 6 bounded polls. Vault: DPAPI round-trip, tamper/wrong-context/lock tests. Clipboard: DPAPI-sealed history, exclusion markers, cross-process lock and legacy migration tests.
+- Independent Max-variant reviews are recorded in [`reviews/`](reviews/). The final scoped verdicts have no open BLOCKER/HIGH/MEDIUM on the accepted slices; residual risks and manual checks are documented in those reports and below.
+
+CI configuration is not evidence of a completed remote CI run. Physical-input, screen-reader, lifecycle, accessibility and cross-platform gates remain open.
 
 ## Required next acceptance work
 
@@ -63,18 +87,24 @@ insets. On Windows 11, a separate compositor layer now blurs the live backdrop b
 tint. The older geometry observations in the [12 November validation](validation-2026-11-12.md)
 do not verify the current blur. See the [ANS-75 validation notes](validation-2026-11-18.md).
 
-1. Run the desktop on the Windows test machine; inspect GPU startup, keyboard routing, selection, action panel and error states.
-2. Validate CJK composition confirmation/cancellation, emoji grapheme editing, Hindi, RTL, AltGr/dead keys and caret placement at 100/150/200% scaling.
-3. Resolve the blocking [framework accessibility gate](framework-gate.md): the main pin has no bridge; the newer revision now runs the actual shell with bounded automated UIA coverage. Complete NVDA/Narrator journeys, RTL/mixed-bidi and scaling checks, offscreen-provider behavior and the remaining lifecycle/dependency review before promoting the new pin.
-4. Capture shortcut conflicts and 1,000 hide/show/focus cycles across monitors, sleep and locked sessions. Check the new conservative focus-return path with real apps; no automatic insertion is implemented.
-5. Freeze a 10k-command benchmark corpus and capture release-mode query/frame/open traces. No latency/memory budget is marked met yet.
-6. Complete third-party release licence review, any future [source-reuse audit](adr/0003-reuse-evaluation.md), reference-build capture and unattended X11/Wayland lifecycle validation. The zero-reuse scope decision and exact-toolchain three-OS build/test/activated-startup checks passed; they do not replace those other acceptance checks.
-7. Introduce a storage actor only with transactional migration/recovery fixtures. Do not persist clipboard text or notes in an unencrypted prototype shortcut.
+1. Complete L06a: GPUI quicklink authoring/preview/import/export and real browser/file-manager availability probes. External `--data-dir` import intentionally requires Ansa to be closed because the desktop holds the single-instance storage lock.
+2. Complete L08a: real clipboard/insertion host for emoji (P05), persisted recents/favorites, full variant-picker UI and a screen-reader name audit.
+3. Complete L09a: full Welcome/Shortcut/TryLaunch/Integrations/Done screens, hotkey rebinding using the F07 manager/recorder, and real launch verification.
+4. Close F08 with NVDA/Narrator and keyboard-only journeys; add UIA semantics for setup focus movement beyond the current candidate-mode labels.
+5. Wire icon rendering and `CatalogWatcher` into the desktop; verify real switch/foreground behavior; keep packaged switching explicitly unsupported.
+6. Persist or deliberately reset ranking signals; define the private-mode contract in the desktop.
+7. Add generic-record/cache encryption integration on top of P03, induce physical ENOSPC/power-loss around SQLite commitments, and test the rollback-failure branch.
+8. Run the L10 two-week daily-driver dogfood with regression triage, a clean-profile install/upgrade/uninstall by a new tester, a crash/restart drill and a published known-limitations list.
+9. Complete the reuse/dependency/license review and the extension/ecosystem track. No extension runtime exists.
 
 ## Security boundaries
 
-- Native ShellExecute opens an explicitly selected local shortcut, not a constructed `cmd.exe` or PowerShell expression.
-- HTTP/HTTPS opening is allowlisted. Future quicklinks require structured argument encoding and validation.
-- No extensions, scripts, background capture, remote AI, or automatic insertion exist in this slice.
-- Copy result/target writes the current clipboard only on explicit action. It does not capture history or claim paste success.
+- Native application launch passes one validated `.lnk`/`.exe` path or a validated `shell:AppsFolder\<AUMID>` to the shell; it never builds a `cmd.exe` or PowerShell expression from metadata.
+- Packaged enumeration uses a compile-time constant `Get-StartApps` command, an absolute PowerShell path, strict size/time limits, strict JSON and a strict AUMID allowlist.
+- Quicklinks never invoke a shell. They resolve inert target data under an HTTP(S)/local-path policy; local paths are opt-in, executable/unknown extensions are denied by default for `DefaultApp`, and the caller must confirm replace imports.
+- Storage keeps only credential references; generic user records and cache values remain unencrypted and must not contain secrets. Logs and error messages do not include stored payloads.
+- P03 secrets and P04 clipboard payloads are sealed with Windows DPAPI (user-bound, not passphrase-bound). Vault/clipboard files contain hex ciphertext plus non-sensitive metadata; no plaintext fallback exists, non-Windows is explicitly unsupported, and `lock()` is a session gate rather than cryptographic re-authentication. Same-user processes can decrypt DPAPI data.
+- P05 defaults to copy-only. Automatic insertion has no Windows host in this slice; it must not report `Inserted` without destination evidence, and it never restores an older clipboard value over a newer user copy.
+- The emoji dataset is embedded, offline and pinned by version and checksum. The checksum is an integrity pin, not a cryptographic signature.
+- `ansa doctor` probes capability only; it does not register a global hotkey. No account, network service, automatic paste, clipboard history or extension execution is enabled in this slice.
 - No user query text is logged by the desktop. CLI stdout deliberately contains the results the user requested.

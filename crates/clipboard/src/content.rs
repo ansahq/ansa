@@ -144,6 +144,7 @@ pub(crate) fn wipe_bytes(bytes: &mut [u8]) {
     }
 }
 
+#[cfg(windows)]
 pub(crate) fn wipe_utf16(units: &mut [u16]) {
     // SAFETY: `units` is a valid, exclusively borrowed initialized buffer.
     // Volatile writes prevent the compiler from eliding the overwrite.

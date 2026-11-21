@@ -13,9 +13,34 @@ pub(crate) fn normalized(path: &Path) -> PathBuf {
     let absolute = std::path::absolute(path)
         .map(|path| lexical_normalize(&path))
         .unwrap_or_else(|_| lexical_normalize(path));
-    std::fs::canonicalize(&absolute)
+    if let Ok(canonical) = std::fs::canonicalize(&absolute) {
+        return lexical_normalize(&canonical);
+    }
+
+    // The path may not exist yet (for example a backup destination). Resolve
+    // the nearest existing ancestor and append the missing suffix. This keeps
+    // short/long path aliases and junctions consistent for missing children.
+    let mut ancestor = absolute.as_path();
+    let mut missing: Vec<PathBuf> = Vec::new();
+    loop {
+        if ancestor.exists() {
+            break;
+        }
+        if let Some(name) = ancestor.file_name() {
+            missing.push(PathBuf::from(name));
+        }
+        match ancestor.parent() {
+            Some(parent) if parent != ancestor => ancestor = parent,
+            _ => break,
+        }
+    }
+    let mut resolved = std::fs::canonicalize(ancestor)
         .map(|path| lexical_normalize(&path))
-        .unwrap_or(absolute)
+        .unwrap_or_else(|_| ancestor.to_path_buf());
+    for name in missing.iter().rev() {
+        resolved.push(name);
+    }
+    lexical_normalize(&resolved)
 }
 
 /// Compare two paths after normalization, case-insensitively on Windows.
@@ -71,4 +96,28 @@ fn lexical_normalize(path: &Path) -> PathBuf {
         }
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn missing_children_resolve_through_an_existing_ancestor() {
+        let sequence = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let root =
+            std::env::temp_dir().join(format!("ansa-paths-{}-{sequence}", std::process::id()));
+        let snapshots = root.join("snapshots");
+        std::fs::create_dir_all(&snapshots).expect("create fixture");
+        let child = snapshots.join("missing-backup.sqlite");
+
+        assert!(is_within(&child, &snapshots));
+        assert!(!is_within(&root.join("other").join("x.sqlite"), &snapshots));
+        assert!(equivalent(&child, &child));
+
+        std::fs::remove_dir_all(root).expect("cleanup fixture");
+    }
 }

@@ -3,8 +3,13 @@
 //! The contract is deliberately small and dependency-free:
 //!
 //! * [`AppEntry`] describes a launchable application discovered on the host.
+//! * [`IconCacheEntry`] describes a bounded ICO produced by
+//!   [`extract_icon_to_ico`].
 //! * [`CapabilityStatus`] reports honestly whether a host feature works.
-//! * [`HostCapabilities`] is a fresh capability probe, not a cached promise.
+//! * [`HostCapabilities`] is a boundary capability probe. Catalog availability
+//!   is fresh; the Windows packaged-app probe caches its result for a short
+//!   30-second interval so repeated UI probes do not spawn PowerShell each
+//!   time. The returned value is still a snapshot, not a permanent promise.
 //!
 //! The caller maps [`AppEntry`] into its own domain command type (for example
 //! `ansa_domain::Command`) at the boundary. This crate intentionally does not
@@ -20,13 +25,15 @@
 #![deny(missing_debug_implementations)]
 
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 /// A launchable application entry returned by discovery.
 ///
-/// `id` is stable for the same host path across runs. The Windows adapter
-/// derives it from a case-folded, separator-normalized path and returns
-/// `app:<hex>`, which is compatible with a namespaced `CommandId`. Callers
-/// should otherwise treat it as an opaque identifier.
+/// `id` is stable across runs. The Windows adapter derives it from a resolved
+/// shortcut target when one exists, otherwise from a case-folded,
+/// separator-normalized path, and returns `app:<hex>`, which is compatible with
+/// a namespaced `CommandId`. Callers should otherwise treat it as an opaque
+/// identifier.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AppEntry {
     /// Opaque, stable identity for the discovered entry.
@@ -35,15 +42,156 @@ pub struct AppEntry {
     pub title: String,
     /// Native path that can be passed to [`open_application`].
     pub path: String,
+    /// Resolved local target when the entry is a shortcut (or the executable
+    /// itself for direct `.exe` entries). `None` for packaged applications and
+    /// shortcuts that only store a shell ID list.
+    pub target: Option<String>,
+    /// Shortcut command-line arguments as a single opaque string. Shortcuts to
+    /// the same target with different arguments are distinct commands.
+    pub arguments: Option<String>,
+    /// Working directory requested by the shortcut, when present.
+    pub working_directory: Option<String>,
+    /// Icon source path/string and optional index, for example
+    /// `C:\App\app.exe,0`. Feed this to [`extract_icon_to_ico`] on Windows.
+    pub icon_source: Option<String>,
+    /// Whether this entry is a packaged/MSIX application launched by AUMID.
+    pub packaged: bool,
+    /// Why the entry is known to be broken, if it is. Broken entries remain
+    /// visible so the user can refresh instead of silently losing them.
+    pub broken: Option<String>,
 }
 
 impl AppEntry {
-    /// Creates an application entry.
+    /// Creates an application entry with no resolved target or icon metadata.
     pub fn new(id: impl Into<String>, title: impl Into<String>, path: impl Into<String>) -> Self {
         Self {
             id: id.into(),
             title: title.into(),
             path: path.into(),
+            target: None,
+            arguments: None,
+            working_directory: None,
+            icon_source: None,
+            packaged: false,
+            broken: None,
+        }
+    }
+
+    /// Returns `true` when discovery knows this entry cannot be launched.
+    pub fn is_broken(&self) -> bool {
+        self.broken.is_some()
+    }
+
+    /// Returns a deterministic, multi-line structured identity.
+    ///
+    /// The format is stable for CLI output, diagnostics and clipboard copy.
+    /// Empty optional fields are rendered explicitly.
+    pub fn identity_summary(&self) -> String {
+        let mut output = String::with_capacity(512);
+        output.push_str("id: ");
+        output.push_str(&self.id);
+        output.push('\n');
+        output.push_str("title: ");
+        output.push_str(&self.title);
+        output.push('\n');
+        output.push_str("path: ");
+        output.push_str(&self.path);
+        output.push('\n');
+        output.push_str("target: ");
+        output.push_str(self.target.as_deref().unwrap_or(""));
+        output.push('\n');
+        output.push_str("arguments: ");
+        output.push_str(self.arguments.as_deref().unwrap_or(""));
+        output.push('\n');
+        output.push_str("working_directory: ");
+        output.push_str(self.working_directory.as_deref().unwrap_or(""));
+        output.push('\n');
+        output.push_str("icon_source: ");
+        output.push_str(self.icon_source.as_deref().unwrap_or(""));
+        output.push('\n');
+        output.push_str("packaged: ");
+        output.push_str(if self.packaged { "true" } else { "false" });
+        output.push('\n');
+        output.push_str("broken: ");
+        output.push_str(self.broken.as_deref().unwrap_or(""));
+        output.push('\n');
+        output
+    }
+}
+
+/// A written icon cache entry returned by [`extract_icon_to_ico`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IconCacheEntry {
+    /// Absolute path of the written `.ico` file.
+    pub path: String,
+    /// Canonical source description, for example `C:\App\app.exe,0`.
+    pub source: String,
+    /// Width in pixels.
+    pub width: u32,
+    /// Height in pixels.
+    pub height: u32,
+    /// Size of the written ICO file in bytes.
+    pub bytes: u64,
+}
+
+/// What happened when the caller asked to launch or switch to an application.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LaunchOutcome {
+    /// A new process/instance was handed to the shell.
+    Launched,
+    /// An existing top-level window was observed as the foreground window.
+    Switched {
+        /// Native window handle that was verified as foreground.
+        window: isize,
+    },
+    /// Windows denied the activation request or the launch was rejected.
+    Denied {
+        /// Human-readable reason suitable for diagnostics or a status line.
+        reason: String,
+    },
+    /// The shell reported a non-target launch failure. This is distinct from
+    /// `NoTarget`, which is reserved for missing or moved targets.
+    Failed {
+        /// Human-readable reason suitable for diagnostics or a status line.
+        reason: String,
+    },
+    /// Activation was requested but could not be verified. This is not success.
+    Unverified {
+        /// Human-readable reason suitable for diagnostics or a status line.
+        reason: String,
+    },
+    /// There was no valid target to launch or switch to.
+    NoTarget {
+        /// Human-readable reason, including a refresh hint where applicable.
+        reason: String,
+    },
+}
+
+impl LaunchOutcome {
+    /// Returns `true` only for [`Self::Launched`].
+    pub fn is_launched(&self) -> bool {
+        matches!(self, Self::Launched)
+    }
+
+    /// Returns `true` only for a verified [`Self::Switched`] outcome.
+    pub fn is_switched(&self) -> bool {
+        matches!(self, Self::Switched { .. })
+    }
+
+    /// Returns `true` only when the caller has a positive, observed result.
+    pub fn is_success(&self) -> bool {
+        matches!(self, Self::Launched | Self::Switched { .. })
+    }
+
+    /// Returns a stable label for UI and logs.
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Launched => "launched",
+            Self::Switched { .. } => "switched",
+            Self::Denied { .. } => "denied",
+            Self::Failed { .. } => "failed",
+            Self::Unverified { .. } => "unverified",
+            Self::NoTarget { .. } => "no-target",
         }
     }
 }
@@ -189,6 +337,16 @@ pub fn open_application(path: &str) -> Result<(), String> {
     imp::open_application(path)
 }
 
+/// Launches an application or switches to an existing verified window.
+///
+/// On Windows a resolved executable is matched against top-level windows by
+/// process image path. A switch is reported only when the target window is
+/// observed as foreground. Missing, moved or unreadable targets return
+/// [`LaunchOutcome::NoTarget`] with a refresh hint instead of a silent no-op.
+pub fn launch_or_switch(path: &str) -> LaunchOutcome {
+    imp::launch_or_switch(path)
+}
+
 /// Opens an `http` or `https` URL using the host's registered handler.
 ///
 /// Any other scheme is rejected before the host is called.
@@ -198,16 +356,61 @@ pub fn open_url(url: &str) -> Result<(), String> {
 
 /// Probes the host's current capabilities.
 ///
-/// The result is intentionally not cached: permission and availability can
-/// change at runtime.
+/// Permission and availability can change at runtime, so callers must not treat
+/// the result as permanent. The Windows catalog probe is fresh on each call,
+/// while packaged enumeration is cached by the adapter for up to 30 seconds to
+/// avoid a PowerShell round trip on every UI probe.
 pub fn host_capabilities() -> HostCapabilities {
     imp::host_capabilities()
 }
 
+/// Extracts one bounded icon image into a deterministic ICO cache file.
+///
+/// `icon_source` is the metadata string produced by discovery (for example
+/// `C:\App\app.exe,0`) or an absolute executable path. The Windows adapter
+/// validates the source, refuses reparse points, caps the image at 256x256 and
+/// the file at 512 KiB, and cleans up temporary files on failure. The file name
+/// is derived only from a normalized source key, so repeated calls are
+/// deterministic.
+///
+/// An extraction failure is returned as an explicit error; callers should show
+/// a generic icon instead of claiming a real one.
+pub fn extract_icon_to_ico(icon_source: &str, cache_dir: &Path) -> Result<IconCacheEntry, String> {
+    imp::extract_icon_to_ico(icon_source, cache_dir)
+}
+
+/// Reveals an existing absolute path in the registered file manager.
+///
+/// The Windows adapter uses `SHParseDisplayName` and
+/// `SHOpenFolderAndSelectItems`; it never builds an `explorer.exe` command line
+/// from metadata. Relative paths, missing paths, NUL-containing paths and
+/// reparse points are rejected before the shell is called.
+pub fn reveal_in_file_manager(path: &str) -> Result<(), String> {
+    imp::reveal_in_file_manager(path)
+}
+
+/// Returns a deterministic, multi-line structured identity for an entry.
+///
+/// This is a pure formatter available on every platform. It is the safe
+/// fallback when reveal-in-file-manager is unavailable.
+pub fn copy_identity(entry: &AppEntry) -> String {
+    entry.identity_summary()
+}
+
+/// Returns the standard Start Menu roots used by discovery and watching.
+///
+/// On non-Windows platforms this returns an explicit unsupported error.
+pub fn catalog_watch_roots() -> Result<Vec<PathBuf>, String> {
+    imp::catalog_watch_roots()
+}
+
 #[cfg(windows)]
 mod imp {
-    use super::{AppEntry, CapabilityStatus, HostCapabilities, Platform};
+    use super::{
+        AppEntry, CapabilityStatus, HostCapabilities, IconCacheEntry, LaunchOutcome, Platform,
+    };
     use ansa_platform_windows as host;
+    use std::path::{Path, PathBuf};
 
     pub(super) fn discover_applications() -> Result<Vec<AppEntry>, String> {
         host::discover_applications().map(|entries| {
@@ -217,6 +420,12 @@ mod imp {
                     id: entry.id,
                     title: entry.title,
                     path: entry.path,
+                    target: entry.target,
+                    arguments: entry.arguments,
+                    working_directory: entry.working_directory,
+                    icon_source: entry.icon_source,
+                    packaged: entry.packaged,
+                    broken: entry.broken,
                 })
                 .collect()
         })
@@ -226,8 +435,44 @@ mod imp {
         host::open_application(path)
     }
 
+    pub(super) fn launch_or_switch(path: &str) -> LaunchOutcome {
+        map_launch_outcome(host::launch_or_switch(path))
+    }
+
+    fn map_launch_outcome(outcome: host::LaunchOutcome) -> LaunchOutcome {
+        match outcome {
+            host::LaunchOutcome::Launched => LaunchOutcome::Launched,
+            host::LaunchOutcome::Switched { window } => LaunchOutcome::Switched { window },
+            host::LaunchOutcome::Denied { reason } => LaunchOutcome::Denied { reason },
+            host::LaunchOutcome::Failed { reason } => LaunchOutcome::Failed { reason },
+            host::LaunchOutcome::Unverified { reason } => LaunchOutcome::Unverified { reason },
+            host::LaunchOutcome::NoTarget { reason } => LaunchOutcome::NoTarget { reason },
+        }
+    }
+
     pub(super) fn open_url(url: &str) -> Result<(), String> {
         host::open_url(url)
+    }
+
+    pub(super) fn extract_icon_to_ico(
+        icon_source: &str,
+        cache_dir: &Path,
+    ) -> Result<IconCacheEntry, String> {
+        host::extract_icon_to_ico(icon_source, cache_dir).map(|entry| IconCacheEntry {
+            path: entry.cache_path.to_string_lossy().into_owned(),
+            source: entry.source,
+            width: entry.width,
+            height: entry.height,
+            bytes: entry.bytes,
+        })
+    }
+
+    pub(super) fn reveal_in_file_manager(path: &str) -> Result<(), String> {
+        host::reveal_in_file_manager(path)
+    }
+
+    pub(super) fn catalog_watch_roots() -> Result<Vec<PathBuf>, String> {
+        host::default_watch_roots()
     }
 
     pub(super) fn host_capabilities() -> HostCapabilities {
@@ -276,7 +521,10 @@ mod imp {
 
 #[cfg(not(windows))]
 mod imp {
-    use super::{AppEntry, CapabilityStatus, HostCapabilities, Platform};
+    use super::{
+        AppEntry, CapabilityStatus, HostCapabilities, IconCacheEntry, LaunchOutcome, Platform,
+    };
+    use std::path::{Path, PathBuf};
 
     fn unsupported(operation: &str) -> String {
         format!(
@@ -293,8 +541,29 @@ mod imp {
         Err(unsupported("opening an application"))
     }
 
+    pub(super) fn launch_or_switch(_path: &str) -> LaunchOutcome {
+        LaunchOutcome::NoTarget {
+            reason: unsupported("launching or switching applications"),
+        }
+    }
+
     pub(super) fn open_url(_url: &str) -> Result<(), String> {
         Err(unsupported("opening a URL"))
+    }
+
+    pub(super) fn extract_icon_to_ico(
+        _icon_source: &str,
+        _cache_dir: &Path,
+    ) -> Result<IconCacheEntry, String> {
+        Err(unsupported("icon extraction"))
+    }
+
+    pub(super) fn reveal_in_file_manager(_path: &str) -> Result<(), String> {
+        Err(unsupported("revealing a path in the file manager"))
+    }
+
+    pub(super) fn catalog_watch_roots() -> Result<Vec<PathBuf>, String> {
+        Err(unsupported("watching the application catalog"))
     }
 
     pub(super) fn host_capabilities() -> HostCapabilities {
@@ -321,11 +590,73 @@ mod tests {
     use super::*;
 
     #[test]
-    fn app_entry_keeps_identity_fields() {
+    fn app_entry_keeps_identity_and_metadata_fields() {
         let entry = AppEntry::new("app-1", "Example", r"C:\Example.lnk");
         assert_eq!(entry.id, "app-1");
         assert_eq!(entry.title, "Example");
         assert_eq!(entry.path, r"C:\Example.lnk");
+        assert_eq!(entry.target, None);
+        assert_eq!(entry.arguments, None);
+        assert_eq!(entry.working_directory, None);
+        assert_eq!(entry.icon_source, None);
+        assert!(!entry.packaged);
+        assert!(!entry.is_broken());
+    }
+
+    #[test]
+    fn copy_identity_is_deterministic_and_complete() {
+        let mut entry = AppEntry::new("app-1", "Example", r"C:\Example.lnk");
+        entry.target = Some(r"C:\Example.exe".to_owned());
+        entry.arguments = Some("--flag".to_owned());
+        entry.working_directory = Some(r"C:\".to_owned());
+        entry.icon_source = Some(r"C:\Example.exe,0".to_owned());
+        entry.broken = Some("moved; refresh".to_owned());
+
+        let identity = copy_identity(&entry);
+        assert_eq!(identity, entry.identity_summary());
+        assert!(identity.starts_with("id: app-1\ntitle: Example\npath: C:\\Example.lnk\n"));
+        assert!(identity.contains("target: C:\\Example.exe\n"));
+        assert!(identity.contains("arguments: --flag\n"));
+        assert!(identity.contains("working_directory: C:\\\n"));
+        assert!(identity.contains("icon_source: C:\\Example.exe,0\n"));
+        assert!(identity.contains("packaged: false\n"));
+        assert!(identity.contains("broken: moved; refresh\n"));
+
+        let bare = AppEntry::new("app-2", "Bare", r"C:\Bare.exe");
+        let identity = copy_identity(&bare);
+        assert!(identity.contains("target: \n"));
+        assert!(identity.contains("broken: \n"));
+    }
+
+    #[test]
+    fn launch_outcome_success_is_conservative() {
+        assert!(LaunchOutcome::Launched.is_success());
+        assert!(LaunchOutcome::Switched { window: 3 }.is_success());
+        assert!(!LaunchOutcome::Denied {
+            reason: "denied".to_owned()
+        }
+        .is_success());
+        assert!(!LaunchOutcome::Unverified {
+            reason: "not observed".to_owned()
+        }
+        .is_success());
+        assert!(!LaunchOutcome::NoTarget {
+            reason: "missing".to_owned()
+        }
+        .is_success());
+        assert!(!LaunchOutcome::Failed {
+            reason: "shell failure".to_owned()
+        }
+        .is_success());
+        assert_eq!(
+            LaunchOutcome::Failed {
+                reason: "shell failure".to_owned()
+            }
+            .label(),
+            "failed"
+        );
+        assert_eq!(LaunchOutcome::Launched.label(), "launched");
+        assert_eq!(LaunchOutcome::Switched { window: 3 }.label(), "switched");
     }
 
     #[test]
@@ -377,6 +708,13 @@ mod tests {
         assert!(discover_applications().is_err());
         assert!(open_application("anything").is_err());
         assert!(open_url("https://example.com").is_err());
+        assert!(extract_icon_to_ico("anything", std::path::Path::new("cache")).is_err());
+        assert!(reveal_in_file_manager("anything").is_err());
+        assert!(catalog_watch_roots().is_err());
+        assert!(matches!(
+            launch_or_switch("anything"),
+            LaunchOutcome::NoTarget { .. }
+        ));
         assert_eq!(
             host_capabilities().application_catalog,
             CapabilityStatus::Unsupported
@@ -385,12 +723,47 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    fn icon_extraction_returns_a_real_non_empty_ico_or_reports_an_error() {
+        let root = std::env::var_os("SystemRoot")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| std::path::PathBuf::from(r"C:\Windows"));
+        let notepad = root.join("System32").join("notepad.exe");
+        if !notepad.is_file() {
+            eprintln!("skipping platform-api icon test: notepad.exe is absent");
+            return;
+        }
+        let cache =
+            std::env::temp_dir().join(format!("ansa-platform-api-icon-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&cache);
+        let source = format!("{},0", notepad.display());
+        let entry = match extract_icon_to_ico(&source, &cache) {
+            Ok(entry) => entry,
+            Err(error) => {
+                eprintln!("skipping platform-api icon test: {error}");
+                return;
+            }
+        };
+        let bytes = std::fs::read(&entry.path).expect("read ICO cache file");
+        assert!(!bytes.is_empty());
+        assert_eq!(entry.bytes, bytes.len() as u64);
+        assert_eq!(&bytes[..4], &[0, 0, 1, 0]);
+        assert_eq!(entry.width.min(256), entry.width);
+        assert_eq!(entry.height.min(256), entry.height);
+        let _ = std::fs::remove_dir_all(&cache);
+    }
+
+    #[cfg(windows)]
+    #[test]
     fn capabilities_do_not_claim_unimplemented_features() {
         let capabilities = host_capabilities();
         assert_eq!(capabilities.platform, Platform::Windows);
-        assert_eq!(
-            capabilities.packaged_applications,
-            CapabilityStatus::Unsupported
+        assert!(
+            matches!(
+                capabilities.packaged_applications,
+                CapabilityStatus::Available | CapabilityStatus::Degraded { .. }
+            ),
+            "packaged enumeration must be probed honestly: {:?}",
+            capabilities.packaged_applications
         );
         assert_eq!(capabilities.global_hotkey, CapabilityStatus::Available);
         assert_eq!(

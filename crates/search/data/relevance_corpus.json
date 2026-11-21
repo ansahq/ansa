@@ -1,0 +1,147 @@
+{
+  "corpus_version": "2026-11-19.3",
+  "notes": "Golden relevance corpus for the deterministic Ansa ranker. Queries were authored from the documented tier policy before running the ranker. The tuning split may inform presentation decisions; the validation split contains harder held-out cases and is not used to change ranking behavior or to fit ranker code. Metrics are top-1 accuracy (primary expected id first), recall@10 (expected ids found in the first ten results) and MRR (reciprocal rank of the first expected id).",
+  "commands": [
+    {"id": "app:terminal", "title": "Terminal", "alias": "shell", "keywords": ["console"]},
+    {"id": "app:windows-terminal", "title": "Windows Terminal", "keywords": ["console"]},
+    {"id": "app:settings", "title": "Settings", "alias": "preferences"},
+    {"id": "app:system-settings", "title": "System Settings", "keywords": ["control panel"]},
+    {"id": "app:visual-studio-code", "title": "Visual Studio Code", "alias": "code", "keywords": ["editor"]},
+    {"id": "app:code-insights", "title": "Code Insights"},
+    {"id": "app:finder", "title": "Finder", "alias": "files"},
+    {"id": "app:file-explorer", "title": "File Explorer"},
+    {"id": "app:calendar", "title": "Calendar"},
+    {"id": "app:calculator", "title": "Calculator", "alias": "calc"},
+    {"id": "app:notes", "title": "Notes", "keywords": ["scratchpad"]},
+    {"id": "app:music", "title": "Music"},
+    {"id": "app:mail", "title": "Mail"},
+    {"id": "app:maps", "title": "Maps"},
+    {"id": "app:messages", "title": "Messages", "keywords": ["sms"]},
+    {"id": "app:photos", "title": "Photos"},
+    {"id": "app:preview", "title": "Preview", "keywords": ["pdf"]},
+    {"id": "app:safari", "title": "Safari", "keywords": ["browser"]},
+    {"id": "app:slack", "title": "Slack", "keywords": ["team", "chat"]},
+    {"id": "app:spotify", "title": "Spotify"},
+    {"id": "app:steam", "title": "Steam"},
+    {"id": "app:textedit", "title": "TextEdit", "keywords": ["editor"]},
+    {"id": "app:time-machine", "title": "Time Machine", "keywords": ["backup"]},
+    {"id": "app:cafe", "title": "Café"},
+    {"id": "app:tokyo", "title": "東京 駅"},
+    {"id": "app:rocket", "title": "🚀 Launch"},
+    {"id": "app:uber", "title": "Über"},
+    {"id": "app:zebra", "title": "Zebra"},
+    {"id": "app:zoom", "title": "Zoom", "keywords": ["meeting"]},
+    {"id": "app:vlc", "title": "VLC", "keywords": ["video", "player"]},
+    {"id": "app:system-monitor", "title": "System Monitor", "keywords": ["cpu"]}
+  ],
+  "splits": {
+    "tuning": {
+      "notes": "Tuning split: used to check category definitions and presentation language. Signals intentionally make a favorite and a heavily used command available for browse ordering.",
+      "signals": {
+        "favorites": ["app:terminal", "app:notes"],
+        "usage": {"app:terminal": 100, "app:settings": 5, "app:slack": 3}
+      },
+      "categories": {
+        "exact": [
+          {"query": "terminal", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "Exact title beats the token match in Windows Terminal."},
+          {"query": "shell", "expected_top10": ["app:terminal"], "notes": "Exact alias."},
+          {"query": "preferences", "expected_top10": ["app:settings"], "notes": "Exact alias; System Settings no longer duplicates this alias."},
+          {"query": "calc", "expected_top10": ["app:calculator"], "notes": "Exact alias."}
+        ],
+        "prefix": [
+          {"query": "term", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "Title prefix beats a title-token match."},
+          {"query": "ca", "expected_top10": ["app:cafe", "app:calculator", "app:calendar"], "notes": "All title prefixes; normalized title tie-break orders café before calc*."},
+          {"query": "vis", "expected_top10": ["app:visual-studio-code"], "notes": "Single title prefix."},
+          {"query": "sys", "expected_top10": ["app:system-monitor", "app:system-settings"], "notes": "Both title prefixes; stable title tie-break puts monitor first."}
+        ],
+        "token": [
+          {"query": "windows console", "expected_top10": ["app:windows-terminal"], "notes": "Title token plus keyword token, deliberately not a title prefix."},
+          {"query": "studio code", "expected_top10": ["app:visual-studio-code"], "notes": "Two title tokens."},
+          {"query": "explorer file", "expected_top10": ["app:file-explorer"], "notes": "Both title tokens in reverse order, so the match is a token match not a prefix."},
+          {"query": "video player", "expected_top10": ["app:vlc"], "notes": "Keyword tokens."}
+        ],
+        "fuzzy": [
+          {"query": "trmnl", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "Subsequence; earlier start in the exact title wins."},
+          {"query": "vscd", "expected_top10": ["app:visual-studio-code"], "notes": "Subsequence across title tokens."},
+          {"query": "zbr", "expected_top10": ["app:zebra"], "notes": "Compact subsequence."},
+          {"query": "clndr", "expected_top10": ["app:calendar"], "notes": "Subsequence with gaps."}
+        ],
+        "typo": [
+          {"query": "termnal", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "One deleted character; handled as a fuzzy subsequence, not a new tier."},
+          {"query": "setings", "expected_top10": ["app:settings", "app:system-settings"], "notes": "One deleted character; tighter span keeps Settings first."},
+          {"query": "calndar", "expected_top10": ["app:calendar"], "notes": "Two deleted characters still form a subsequence."}
+        ],
+        "unicode": [
+          {"query": "CAFÉ", "expected_top10": ["app:cafe"], "notes": "Case folding only; accents are preserved and matched exactly."},
+          {"query": "東京", "expected_top10": ["app:tokyo"], "notes": "CJK title prefix."},
+          {"query": "🚀", "expected_top10": ["app:rocket"], "notes": "Emoji is a Unicode scalar-value prefix."}
+        ],
+        "browse": [
+          {"query": "", "expected_top10": ["app:terminal", "app:notes", "app:settings", "app:slack", "app:cafe", "app:calculator", "app:calendar", "app:code-insights", "app:file-explorer", "app:finder"], "notes": "Empty query: favorites, then capped usage, then normalized title and stable id."}
+        ]
+      }
+    },
+    "validation": {
+      "notes": "Validation split: held-out harder cases added without changing ranker behavior to fit them. Ambiguous prefixes, separator noise, substitutions/transpositions, unaccented diacritics and near-ties are included. Queries are disjoint from the tuning split. Observed failures are marked known_failure and reported as limitations, not tuned away.",
+      "signals": {
+        "favorites": ["app:mail"],
+        "usage": {"app:zoom": 2, "app:calendar": 1}
+      },
+      "categories": {
+        "exact": [
+          {"query": "settings", "expected_top10": ["app:settings", "app:system-settings"], "notes": "Exact title beats the token match in System Settings."},
+          {"query": "code", "expected_top10": ["app:visual-studio-code", "app:code-insights"], "notes": "Exact alias beats a title prefix."},
+          {"query": "mail", "expected_top10": ["app:mail"], "notes": "Exact title only."},
+          {"query": "東京 駅", "expected_top10": ["app:tokyo"], "notes": "Exact CJK title including the internal space; distinct from the tuning unicode query."},
+          {"query": "system--settings", "expected_top10": ["app:system-settings"], "notes": "Repeated separator noise normalizes to an exact title."},
+          {"query": "time_machine", "expected_top10": ["app:time-machine"], "notes": "Underscore separator noise normalizes to an exact title."},
+          {"query": "file/explorer/", "expected_top10": ["app:file-explorer"], "notes": "Slash and trailing separator noise normalize to an exact title."}
+        ],
+        "prefix": [
+          {"query": "wind", "expected_top10": ["app:windows-terminal"], "notes": "Single title prefix."},
+          {"query": "zo", "expected_top10": ["app:zoom"], "notes": "Single title prefix."},
+          {"query": "time", "expected_top10": ["app:time-machine"], "notes": "Title prefix with a separator in the title."},
+          {"query": "text", "expected_top10": ["app:textedit"], "notes": "Camel-case title prefix."},
+          {"query": "ma", "expected_top10": ["app:mail", "app:maps"], "notes": "Ambiguous prefix resolved by normalized title."},
+          {"query": "s", "expected_top10": ["app:safari", "app:settings", "app:slack", "app:spotify", "app:steam", "app:system-monitor", "app:system-settings"], "notes": "Seven title prefixes; stable title ordering."},
+          {"query": "cal", "expected_top10": ["app:calendar", "app:calculator"], "notes": "Near-tie: the validation split's capped usage signal for Calendar breaks the otherwise title-based tie."}
+        ],
+        "token": [
+          {"query": "monitor system", "expected_top10": ["app:system-monitor"], "notes": "Both title tokens in reverse order, so the match is a token match not a prefix."},
+          {"query": "team chat", "expected_top10": ["app:slack"], "notes": "Two keyword tokens."},
+          {"query": "backup", "expected_top10": ["app:time-machine"], "notes": "Single keyword token."},
+          {"query": "meeting", "expected_top10": ["app:zoom"], "notes": "Single keyword token."},
+          {"query": "editor", "expected_top10": ["app:textedit", "app:visual-studio-code"], "notes": "Near-tie between two keyword tokens; normalized title wins."},
+          {"query": "console", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "Near-tie between two keyword tokens; normalized title wins."}
+        ],
+        "fuzzy": [
+          {"query": "sttngs", "expected_top10": ["app:settings", "app:system-settings"], "notes": "Subsequence; Settings has the tighter span."},
+          {"query": "wdws", "expected_top10": ["app:windows-terminal"], "notes": "Subsequence across the full title."},
+          {"query": "sptfy", "expected_top10": ["app:spotify"], "notes": "Compact subsequence."},
+          {"query": "prvw", "expected_top10": ["app:preview"], "notes": "Subsequence with gaps."},
+          {"query": "tmnl", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "Near-tie; earlier start in Terminal wins."},
+          {"query": "cde", "expected_top10": ["app:code-insights", "app:visual-studio-code"], "notes": "Near-tie; earlier start in Code Insights wins."}
+        ],
+        "typo": [
+          {"query": "explrer", "expected_top10": ["app:file-explorer"], "notes": "One deleted character in Explorer."},
+          {"query": "trml", "expected_top10": ["app:terminal", "app:windows-terminal"], "notes": "Two deleted characters; earlier start wins."},
+          {"query": "windw", "expected_top10": ["app:windows-terminal"], "notes": "One deleted character in Windows."},
+          {"query": "safri", "expected_top10": ["app:safari"], "notes": "One deleted character; still a fuzzy subsequence."},
+          {"query": "spotfy", "expected_top10": ["app:spotify"], "notes": "One deleted character; still a fuzzy subsequence."},
+          {"query": "calender", "expected_top10": ["app:calendar"], "known_failure": true, "notes": "Common substitution typo (e for a). Current fuzzy subsequence policy does not match this; held-out failure retained."},
+          {"query": "termianl", "expected_top10": ["app:terminal", "app:windows-terminal"], "known_failure": true, "notes": "Adjacent transposition. Current subsequence policy does not match this; held-out failure retained."}
+        ],
+        "unicode": [
+          {"query": "über", "expected_top10": ["app:uber"], "notes": "Umlaut case folding."},
+          {"query": "駅", "expected_top10": ["app:tokyo"], "notes": "CJK token match."},
+          {"query": "cafe", "expected_top10": ["app:cafe"], "known_failure": true, "notes": "Unaccented query for an accented title; current normalization does not fold accents."},
+          {"query": "uber", "expected_top10": ["app:uber"], "known_failure": true, "notes": "Unaccented query for an umlaut title; current normalization does not fold accents."},
+          {"query": "東京駅", "expected_top10": ["app:tokyo"], "notes": "Whitespace omitted; matches as a fuzzy subsequence rather than an exact title."}
+        ],
+        "browse": [
+          {"query": "", "expected_top10": ["app:mail", "app:zoom", "app:calendar", "app:cafe", "app:calculator", "app:code-insights", "app:file-explorer", "app:finder", "app:maps", "app:messages"], "notes": "Validation split has a different favorite and usage profile from tuning."}
+        ]
+      }
+    }
+  }
+}

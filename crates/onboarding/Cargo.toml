@@ -1,0 +1,19 @@
+[package]
+name = "ansa-onboarding"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "First-run onboarding state machine for Ansa"
+
+[lib]
+name = "ansa_onboarding"
+path = "src/lib.rs"
+
+[dependencies]
+ansa-domain = { path = "../domain" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+tempfile = "3"

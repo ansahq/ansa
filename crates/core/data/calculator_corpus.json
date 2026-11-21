@@ -1,0 +1,594 @@
+{
+  "version": "1.2.0",
+  "generated": "2026-11-19",
+  "policy": {
+    "grammar": "expression := term (('+'|'-') term)*; term := unary (('*'|'/') unary)*; unary := ('+'|'-') unary | power; power := postfix ('^' unary)?; postfix := primary '%'*",
+    "percent": "postfix unary /100; never binary modulo; unitless numbers only",
+    "exponent": "right-associative; |exponent| <= 1024; non-finite results rejected",
+    "constants": [
+      "pi",
+      "e"
+    ],
+    "units": {
+      "length": [
+        "m",
+        "km",
+        "cm",
+        "mm",
+        "in",
+        "ft",
+        "yd",
+        "mi"
+      ],
+      "mass": [
+        "kg",
+        "g",
+        "mg",
+        "lb",
+        "oz"
+      ],
+      "time": [
+        "s",
+        "min",
+        "h",
+        "day"
+      ],
+      "temperature": [
+        "C",
+        "F",
+        "K"
+      ]
+    },
+    "unsupported": [
+      "currencies",
+      "dates and time zones",
+      "natural-language arithmetic",
+      "unit products and powers"
+    ],
+    "formatting": "zero -> 0; [1e-9,1e15) -> plain decimal, <=12 significant digits (ties away from zero), trailing zeros removed; a rounded value reaching 1e15 uses scientific; outside -> shortest scientific; non-finite -> f64 spelling"
+  },
+  "valid": [
+    {
+      "expression": "1 + 2 * 3",
+      "formatted": "7"
+    },
+    {
+      "expression": "(1 + 2) * 3",
+      "formatted": "9"
+    },
+    {
+      "expression": "10 / 4",
+      "formatted": "2.5"
+    },
+    {
+      "expression": "2 * (3 + (4 - 1)) / 3",
+      "formatted": "4"
+    },
+    {
+      "expression": "-3 + 5",
+      "formatted": "2"
+    },
+    {
+      "expression": "--2",
+      "formatted": "2"
+    },
+    {
+      "expression": "-(2 + 3)",
+      "formatted": "-5"
+    },
+    {
+      "expression": ".5 + 1.5",
+      "formatted": "2"
+    },
+    {
+      "expression": "5. * 2",
+      "formatted": "10"
+    },
+    {
+      "expression": "0.1 + 0.2",
+      "formatted": "0.3"
+    },
+    {
+      "expression": "1 / 3",
+      "formatted": "0.333333333333"
+    },
+    {
+      "expression": "2 / 3",
+      "formatted": "0.666666666667"
+    },
+    {
+      "expression": "50%",
+      "formatted": "0.5"
+    },
+    {
+      "expression": "200 * 10%",
+      "formatted": "20"
+    },
+    {
+      "expression": "50%%",
+      "formatted": "0.005"
+    },
+    {
+      "expression": "-50%",
+      "formatted": "-0.5"
+    },
+    {
+      "expression": "2^3",
+      "formatted": "8"
+    },
+    {
+      "expression": "2^3^2",
+      "formatted": "512"
+    },
+    {
+      "expression": "-2^2",
+      "formatted": "-4"
+    },
+    {
+      "expression": "2^-1",
+      "formatted": "0.5"
+    },
+    {
+      "expression": "2^0.5",
+      "formatted": "1.41421356237"
+    },
+    {
+      "expression": "9^0.5",
+      "formatted": "3"
+    },
+    {
+      "expression": "10^3",
+      "formatted": "1000"
+    },
+    {
+      "expression": "pi",
+      "formatted": "3.14159265359"
+    },
+    {
+      "expression": "2 * pi",
+      "formatted": "6.28318530718"
+    },
+    {
+      "expression": "e",
+      "formatted": "2.71828182846"
+    },
+    {
+      "expression": "1000000 * 1000000",
+      "formatted": "1000000000000"
+    },
+    {
+      "expression": "200 + 10%",
+      "formatted": "200.1"
+    },
+    {
+      "expression": "200 - 10%",
+      "formatted": "199.9"
+    },
+    {
+      "expression": "1e15",
+      "formatted": "1e15"
+    },
+    {
+      "expression": "1.5e-3",
+      "formatted": "0.0015"
+    },
+    {
+      "expression": "+2E4",
+      "formatted": "20000"
+    },
+    {
+      "expression": "-2.5e2",
+      "formatted": "-250"
+    },
+    {
+      "expression": "1e-10",
+      "formatted": "1e-10"
+    },
+    {
+      "expression": "1e14",
+      "formatted": "100000000000000"
+    }
+  ],
+  "unit_valid": [
+    {
+      "expression": "10 km to mi",
+      "formatted": "6.21371192237",
+      "unit": "mi"
+    },
+    {
+      "expression": "5 kg + 200 g",
+      "formatted": "5.2",
+      "unit": "kg"
+    },
+    {
+      "expression": "20 C to F",
+      "formatted": "68",
+      "unit": "F"
+    },
+    {
+      "expression": "1 mi to km",
+      "formatted": "1.609344",
+      "unit": "km"
+    },
+    {
+      "expression": "1 kg to lb",
+      "formatted": "2.20462262185",
+      "unit": "lb"
+    },
+    {
+      "expression": "1 lb to oz",
+      "formatted": "16",
+      "unit": "oz"
+    },
+    {
+      "expression": "1 day to h",
+      "formatted": "24",
+      "unit": "h"
+    },
+    {
+      "expression": "100 cm to m",
+      "formatted": "1",
+      "unit": "m"
+    },
+    {
+      "expression": "32 F to C",
+      "formatted": "0",
+      "unit": "C"
+    },
+    {
+      "expression": "0 C to K",
+      "formatted": "273.15",
+      "unit": "K"
+    },
+    {
+      "expression": "100 C to F",
+      "formatted": "212",
+      "unit": "F"
+    },
+    {
+      "expression": "-40 C to F",
+      "formatted": "-40",
+      "unit": "F"
+    },
+    {
+      "expression": "1 h to min",
+      "formatted": "60",
+      "unit": "min"
+    },
+    {
+      "expression": "1000 mg to g",
+      "formatted": "1",
+      "unit": "g"
+    },
+    {
+      "expression": "3 ft + 6 in to cm",
+      "formatted": "106.68",
+      "unit": "cm"
+    },
+    {
+      "expression": "2 mi to yd",
+      "formatted": "3520",
+      "unit": "yd"
+    },
+    {
+      "expression": "1 yd to ft",
+      "formatted": "3",
+      "unit": "ft"
+    },
+    {
+      "expression": "5 kg * 2",
+      "formatted": "10",
+      "unit": "kg"
+    },
+    {
+      "expression": "10 km / 2",
+      "formatted": "5",
+      "unit": "km"
+    },
+    {
+      "expression": "200 g + 1 kg",
+      "formatted": "1200",
+      "unit": "g"
+    },
+    {
+      "expression": "1 min + 30 s",
+      "formatted": "1.5",
+      "unit": "min"
+    }
+  ],
+  "invalid": [
+    {
+      "expression": "",
+      "code": "empty"
+    },
+    {
+      "expression": "   ",
+      "code": "empty"
+    },
+    {
+      "expression": "2 +",
+      "code": "unexpected_end"
+    },
+    {
+      "expression": "2 ** 3",
+      "code": "expected_operand"
+    },
+    {
+      "expression": "(1 + 2",
+      "code": "unmatched_open_parenthesis"
+    },
+    {
+      "expression": "1 + 2)",
+      "code": "unmatched_close_parenthesis"
+    },
+    {
+      "expression": "1.2.3",
+      "code": "unexpected_character"
+    },
+    {
+      "expression": "1 / 0",
+      "code": "division_by_zero"
+    },
+    {
+      "expression": "1 / (2 - 2)",
+      "code": "division_by_zero"
+    },
+    {
+      "expression": "1 / -0.0",
+      "code": "division_by_zero"
+    },
+    {
+      "expression": "0^-1",
+      "code": "division_by_zero"
+    },
+    {
+      "expression": "２ + 2",
+      "code": "unexpected_character"
+    },
+    {
+      "expression": "1 + 漢",
+      "code": "unexpected_character"
+    },
+    {
+      "expression": "2^2000",
+      "code": "exponent_out_of_range"
+    },
+    {
+      "expression": "10^400",
+      "code": "non_finite_result"
+    },
+    {
+      "expression": "(-2)^0.5",
+      "code": "non_finite_result"
+    },
+    {
+      "expression": "foo",
+      "code": "unknown_unit"
+    },
+    {
+      "expression": "1 2",
+      "code": "unexpected_character"
+    },
+    {
+      "expression": "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+      "code": "too_long"
+    },
+    {
+      "expression": "((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))",
+      "code": "too_deep"
+    },
+    {
+      "expression": "10 km to kg",
+      "code": "unit_mismatch"
+    },
+    {
+      "expression": "5 kg + 2 m",
+      "code": "unit_mismatch"
+    },
+    {
+      "expression": "10 furlong to m",
+      "code": "unknown_unit"
+    },
+    {
+      "expression": "5 kg + 2",
+      "code": "unit_mismatch"
+    },
+    {
+      "expression": "20 C + 5 C",
+      "code": "unsupported"
+    },
+    {
+      "expression": "10 km * 2 km",
+      "code": "unsupported"
+    },
+    {
+      "expression": "2 kg ^ 2",
+      "code": "unsupported"
+    },
+    {
+      "expression": "5 kg%",
+      "code": "unsupported"
+    },
+    {
+      "expression": "10 km to",
+      "code": "unexpected_end"
+    },
+    {
+      "expression": "10 to mi",
+      "code": "unit_mismatch"
+    },
+    {
+      "expression": "today",
+      "code": "unsupported"
+    },
+    {
+      "expression": "2024-01-01",
+      "code": "unsupported"
+    },
+    {
+      "expression": "12:30",
+      "code": "unsupported"
+    },
+    {
+      "expression": "5 usd to eur",
+      "code": "unsupported"
+    },
+    {
+      "expression": "$5",
+      "code": "unsupported"
+    },
+    {
+      "expression": "five plus three",
+      "code": "unsupported"
+    },
+    {
+      "expression": "5 m/s",
+      "code": "unsupported"
+    },
+    {
+      "expression": "5 m * s",
+      "code": "unsupported"
+    },
+    {
+      "expression": "s",
+      "code": "unsupported"
+    },
+    {
+      "expression": "1e309",
+      "code": "scientific_exponent_out_of_range"
+    },
+    {
+      "expression": "1e-309",
+      "code": "scientific_exponent_out_of_range"
+    },
+    {
+      "expression": "1e",
+      "code": "unexpected_end"
+    },
+    {
+      "expression": "1efoo",
+      "code": "unexpected_character"
+    }
+  ],
+  "formatting": [
+    {
+      "value": 0,
+      "formatted": "0"
+    },
+    {
+      "value": "-0",
+      "formatted": "0"
+    },
+    {
+      "value": 1,
+      "formatted": "1"
+    },
+    {
+      "value": -42.5,
+      "formatted": "-42.5"
+    },
+    {
+      "value": 0.30000000000000004,
+      "formatted": "0.3"
+    },
+    {
+      "value": 1.4142135623730951,
+      "formatted": "1.41421356237"
+    },
+    {
+      "value": 1e-9,
+      "formatted": "0.000000001"
+    },
+    {
+      "value": 1000000000000000,
+      "formatted": "1e15"
+    },
+    {
+      "value": 1e-10,
+      "formatted": "1e-10"
+    },
+    {
+      "value": -1e-10,
+      "formatted": "-1e-10"
+    },
+    {
+      "value": 1000000000000,
+      "formatted": "1000000000000"
+    },
+    {
+      "value": 123.456,
+      "formatted": "123.456"
+    },
+    {
+      "value": 100000000000,
+      "formatted": "100000000000"
+    },
+    {
+      "value": 123456789012.5,
+      "formatted": "123456789013"
+    },
+    {
+      "value": 100000000000000,
+      "formatted": "100000000000000"
+    },
+    {
+      "value": 123456789012345,
+      "formatted": "123456789012000"
+    },
+    {
+      "value": 123456789012500,
+      "formatted": "123456789013000"
+    },
+    {
+      "value": -123456789012345,
+      "formatted": "-123456789012000"
+    },
+    {
+      "value": 999999999999999,
+      "formatted": "1e15"
+    },
+    {
+      "value": 999999999999999.9,
+      "formatted": "1e15"
+    },
+    {
+      "value": -999999999999999.9,
+      "formatted": "-1e15"
+    }
+  ],
+  "round_trip": [
+    {
+      "value": 0
+    },
+    {
+      "value": 0.3
+    },
+    {
+      "value": 1000000000000000
+    },
+    {
+      "value": -1000000000000000
+    },
+    {
+      "value": 1e-10
+    },
+    {
+      "value": -1e-10
+    },
+    {
+      "value": 42.5
+    },
+    {
+      "value": 123456789012345
+    },
+    {
+      "value": 999999999999999.9
+    },
+    {
+      "value": 0.0015
+    },
+    {
+      "value": 20000
+    }
+  ]
+}

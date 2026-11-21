@@ -1,0 +1,2123 @@
+{
+  "version": "emoji-1.0.0",
+  "unicode_version": "16.0",
+  "source": "Curated subset of Unicode 16.0 emoji data and CLDR 46 annotations (Unicode character names and CLDR-style keywords).",
+  "license": "Unicode License v3",
+  "license_url": "https://www.unicode.org/license.txt",
+  "checksum": "e80345152b0e31eb",
+  "entries": [
+    {
+      "id": "grinning-face",
+      "name": "Grinning Face",
+      "keywords": [
+        "grin",
+        "face",
+        "smile",
+        "smiley",
+        "happy"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😀",
+      "variants": []
+    },
+    {
+      "id": "grinning-face-big-eyes",
+      "name": "Grinning Face with Big Eyes",
+      "keywords": [
+        "grin",
+        "smile",
+        "happy",
+        "big eyes"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😃",
+      "variants": []
+    },
+    {
+      "id": "grinning-squinting-face",
+      "name": "Grinning Squinting Face",
+      "keywords": [
+        "grin",
+        "squint",
+        "laugh",
+        "happy",
+        "xd"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😆",
+      "variants": []
+    },
+    {
+      "id": "grinning-face-sweat",
+      "name": "Grinning Face with Sweat",
+      "keywords": [
+        "grin",
+        "sweat",
+        "nervous",
+        "relieved"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😅",
+      "variants": []
+    },
+    {
+      "id": "rolling-on-floor-laughing",
+      "name": "Rolling on the Floor Laughing",
+      "keywords": [
+        "rofl",
+        "laugh",
+        "lol",
+        "rolling"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🤣",
+      "variants": []
+    },
+    {
+      "id": "face-tears-of-joy",
+      "name": "Face with Tears of Joy",
+      "keywords": [
+        "joy",
+        "tears",
+        "laugh",
+        "lol",
+        "cry"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😂",
+      "variants": []
+    },
+    {
+      "id": "slightly-smiling-face",
+      "name": "Slightly Smiling Face",
+      "keywords": [
+        "smile",
+        "slight",
+        "happy"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🙂",
+      "variants": []
+    },
+    {
+      "id": "upside-down-face",
+      "name": "Upside-Down Face",
+      "keywords": [
+        "upside down",
+        "silly",
+        "irony"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🙃",
+      "variants": []
+    },
+    {
+      "id": "winking-face",
+      "name": "Winking Face",
+      "keywords": [
+        "wink",
+        "flirt",
+        "face"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😉",
+      "variants": []
+    },
+    {
+      "id": "smiling-face-heart-eyes",
+      "name": "Smiling Face with Heart-Eyes",
+      "keywords": [
+        "heart eyes",
+        "love",
+        "smile",
+        "crush"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😍",
+      "variants": []
+    },
+    {
+      "id": "star-struck",
+      "name": "Star-Struck",
+      "keywords": [
+        "star struck",
+        "excited",
+        "amazed"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🤩",
+      "variants": []
+    },
+    {
+      "id": "thinking-face",
+      "name": "Thinking Face",
+      "keywords": [
+        "think",
+        "hmm",
+        "wonder",
+        "question"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🤔",
+      "variants": []
+    },
+    {
+      "id": "neutral-face",
+      "name": "Neutral Face",
+      "keywords": [
+        "neutral",
+        "blank",
+        "meh"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😐",
+      "variants": []
+    },
+    {
+      "id": "pensive-face",
+      "name": "Pensive Face",
+      "keywords": [
+        "pensive",
+        "sad",
+        "sorry"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😔",
+      "variants": []
+    },
+    {
+      "id": "sleeping-face",
+      "name": "Sleeping Face",
+      "keywords": [
+        "sleep",
+        "zzz",
+        "tired"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😴",
+      "variants": []
+    },
+    {
+      "id": "face-medical-mask",
+      "name": "Face with Medical Mask",
+      "keywords": [
+        "mask",
+        "medical",
+        "sick"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😷",
+      "variants": []
+    },
+    {
+      "id": "nerd-face",
+      "name": "Nerd Face",
+      "keywords": [
+        "nerd",
+        "glasses",
+        "geek",
+        "smart"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🤓",
+      "variants": []
+    },
+    {
+      "id": "smiling-face-sunglasses",
+      "name": "Smiling Face with Sunglasses",
+      "keywords": [
+        "sunglasses",
+        "cool",
+        "smile"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😎",
+      "variants": []
+    },
+    {
+      "id": "crying-face",
+      "name": "Crying Face",
+      "keywords": [
+        "cry",
+        "sad",
+        "tear"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "😢",
+      "variants": []
+    },
+    {
+      "id": "partying-face",
+      "name": "Partying Face",
+      "keywords": [
+        "party",
+        "celebrate",
+        "birthday"
+      ],
+      "group": "Smileys & Emotion",
+      "base": "🥳",
+      "variants": []
+    },
+    {
+      "id": "waving-hand",
+      "name": "Waving Hand",
+      "keywords": [
+        "wave",
+        "hello",
+        "bye",
+        "hand"
+      ],
+      "group": "People & Body",
+      "base": "👋",
+      "variants": [
+        {
+          "name": "Waving Hand: light skin tone",
+          "grapheme": "👋🏻"
+        },
+        {
+          "name": "Waving Hand: medium-light skin tone",
+          "grapheme": "👋🏼"
+        },
+        {
+          "name": "Waving Hand: medium skin tone",
+          "grapheme": "👋🏽"
+        },
+        {
+          "name": "Waving Hand: medium-dark skin tone",
+          "grapheme": "👋🏾"
+        },
+        {
+          "name": "Waving Hand: dark skin tone",
+          "grapheme": "👋🏿"
+        }
+      ]
+    },
+    {
+      "id": "ok-hand",
+      "name": "OK Hand",
+      "keywords": [
+        "ok",
+        "hand",
+        "perfect"
+      ],
+      "group": "People & Body",
+      "base": "👌",
+      "variants": [
+        {
+          "name": "OK Hand: light skin tone",
+          "grapheme": "👌🏻"
+        },
+        {
+          "name": "OK Hand: medium-light skin tone",
+          "grapheme": "👌🏼"
+        },
+        {
+          "name": "OK Hand: medium skin tone",
+          "grapheme": "👌🏽"
+        },
+        {
+          "name": "OK Hand: medium-dark skin tone",
+          "grapheme": "👌🏾"
+        },
+        {
+          "name": "OK Hand: dark skin tone",
+          "grapheme": "👌🏿"
+        }
+      ]
+    },
+    {
+      "id": "thumbs-up",
+      "name": "Thumbs Up",
+      "keywords": [
+        "thumbs up",
+        "like",
+        "approve",
+        "yes"
+      ],
+      "group": "People & Body",
+      "base": "👍",
+      "variants": [
+        {
+          "name": "Thumbs Up: light skin tone",
+          "grapheme": "👍🏻"
+        },
+        {
+          "name": "Thumbs Up: medium-light skin tone",
+          "grapheme": "👍🏼"
+        },
+        {
+          "name": "Thumbs Up: medium skin tone",
+          "grapheme": "👍🏽"
+        },
+        {
+          "name": "Thumbs Up: medium-dark skin tone",
+          "grapheme": "👍🏾"
+        },
+        {
+          "name": "Thumbs Up: dark skin tone",
+          "grapheme": "👍🏿"
+        }
+      ]
+    },
+    {
+      "id": "thumbs-down",
+      "name": "Thumbs Down",
+      "keywords": [
+        "thumbs down",
+        "dislike",
+        "no"
+      ],
+      "group": "People & Body",
+      "base": "👎",
+      "variants": [
+        {
+          "name": "Thumbs Down: light skin tone",
+          "grapheme": "👎🏻"
+        },
+        {
+          "name": "Thumbs Down: medium-light skin tone",
+          "grapheme": "👎🏼"
+        },
+        {
+          "name": "Thumbs Down: medium skin tone",
+          "grapheme": "👎🏽"
+        },
+        {
+          "name": "Thumbs Down: medium-dark skin tone",
+          "grapheme": "👎🏾"
+        },
+        {
+          "name": "Thumbs Down: dark skin tone",
+          "grapheme": "👎🏿"
+        }
+      ]
+    },
+    {
+      "id": "clapping-hands",
+      "name": "Clapping Hands",
+      "keywords": [
+        "clap",
+        "applause",
+        "bravo"
+      ],
+      "group": "People & Body",
+      "base": "👏",
+      "variants": [
+        {
+          "name": "Clapping Hands: light skin tone",
+          "grapheme": "👏🏻"
+        },
+        {
+          "name": "Clapping Hands: medium-light skin tone",
+          "grapheme": "👏🏼"
+        },
+        {
+          "name": "Clapping Hands: medium skin tone",
+          "grapheme": "👏🏽"
+        },
+        {
+          "name": "Clapping Hands: medium-dark skin tone",
+          "grapheme": "👏🏾"
+        },
+        {
+          "name": "Clapping Hands: dark skin tone",
+          "grapheme": "👏🏿"
+        }
+      ]
+    },
+    {
+      "id": "raising-hands",
+      "name": "Raising Hands",
+      "keywords": [
+        "raise",
+        "hands",
+        "hooray",
+        "celebrate"
+      ],
+      "group": "People & Body",
+      "base": "🙌",
+      "variants": [
+        {
+          "name": "Raising Hands: light skin tone",
+          "grapheme": "🙌🏻"
+        },
+        {
+          "name": "Raising Hands: medium-light skin tone",
+          "grapheme": "🙌🏼"
+        },
+        {
+          "name": "Raising Hands: medium skin tone",
+          "grapheme": "🙌🏽"
+        },
+        {
+          "name": "Raising Hands: medium-dark skin tone",
+          "grapheme": "🙌🏾"
+        },
+        {
+          "name": "Raising Hands: dark skin tone",
+          "grapheme": "🙌🏿"
+        }
+      ]
+    },
+    {
+      "id": "folded-hands",
+      "name": "Folded Hands",
+      "keywords": [
+        "pray",
+        "thanks",
+        "please",
+        "namaste"
+      ],
+      "group": "People & Body",
+      "base": "🙏",
+      "variants": [
+        {
+          "name": "Folded Hands: light skin tone",
+          "grapheme": "🙏🏻"
+        },
+        {
+          "name": "Folded Hands: medium-light skin tone",
+          "grapheme": "🙏🏼"
+        },
+        {
+          "name": "Folded Hands: medium skin tone",
+          "grapheme": "🙏🏽"
+        },
+        {
+          "name": "Folded Hands: medium-dark skin tone",
+          "grapheme": "🙏🏾"
+        },
+        {
+          "name": "Folded Hands: dark skin tone",
+          "grapheme": "🙏🏿"
+        }
+      ]
+    },
+    {
+      "id": "flexed-biceps",
+      "name": "Flexed Biceps",
+      "keywords": [
+        "muscle",
+        "strong",
+        "flex",
+        "power"
+      ],
+      "group": "People & Body",
+      "base": "💪",
+      "variants": [
+        {
+          "name": "Flexed Biceps: light skin tone",
+          "grapheme": "💪🏻"
+        },
+        {
+          "name": "Flexed Biceps: medium-light skin tone",
+          "grapheme": "💪🏼"
+        },
+        {
+          "name": "Flexed Biceps: medium skin tone",
+          "grapheme": "💪🏽"
+        },
+        {
+          "name": "Flexed Biceps: medium-dark skin tone",
+          "grapheme": "💪🏾"
+        },
+        {
+          "name": "Flexed Biceps: dark skin tone",
+          "grapheme": "💪🏿"
+        }
+      ]
+    },
+    {
+      "id": "person-shrugging",
+      "name": "Person Shrugging",
+      "keywords": [
+        "shrug",
+        "dunno",
+        "whatever"
+      ],
+      "group": "People & Body",
+      "base": "🤷",
+      "variants": [
+        {
+          "name": "Person Shrugging: light skin tone",
+          "grapheme": "🤷🏻"
+        },
+        {
+          "name": "Person Shrugging: medium-light skin tone",
+          "grapheme": "🤷🏼"
+        },
+        {
+          "name": "Person Shrugging: medium skin tone",
+          "grapheme": "🤷🏽"
+        },
+        {
+          "name": "Person Shrugging: medium-dark skin tone",
+          "grapheme": "🤷🏾"
+        },
+        {
+          "name": "Person Shrugging: dark skin tone",
+          "grapheme": "🤷🏿"
+        }
+      ]
+    },
+    {
+      "id": "person-running",
+      "name": "Person Running",
+      "keywords": [
+        "run",
+        "runner",
+        "exercise",
+        "fast"
+      ],
+      "group": "People & Body",
+      "base": "🏃",
+      "variants": [
+        {
+          "name": "Person Running: light skin tone",
+          "grapheme": "🏃🏻"
+        },
+        {
+          "name": "Person Running: medium-light skin tone",
+          "grapheme": "🏃🏼"
+        },
+        {
+          "name": "Person Running: medium skin tone",
+          "grapheme": "🏃🏽"
+        },
+        {
+          "name": "Person Running: medium-dark skin tone",
+          "grapheme": "🏃🏾"
+        },
+        {
+          "name": "Person Running: dark skin tone",
+          "grapheme": "🏃🏿"
+        }
+      ]
+    },
+    {
+      "id": "baby",
+      "name": "Baby",
+      "keywords": [
+        "baby",
+        "infant",
+        "child"
+      ],
+      "group": "People & Body",
+      "base": "👶",
+      "variants": [
+        {
+          "name": "Baby: light skin tone",
+          "grapheme": "👶🏻"
+        },
+        {
+          "name": "Baby: medium-light skin tone",
+          "grapheme": "👶🏼"
+        },
+        {
+          "name": "Baby: medium skin tone",
+          "grapheme": "👶🏽"
+        },
+        {
+          "name": "Baby: medium-dark skin tone",
+          "grapheme": "👶🏾"
+        },
+        {
+          "name": "Baby: dark skin tone",
+          "grapheme": "👶🏿"
+        }
+      ]
+    },
+    {
+      "id": "woman-technologist",
+      "name": "Woman Technologist",
+      "keywords": [
+        "woman",
+        "technologist",
+        "developer",
+        "coder"
+      ],
+      "group": "People & Body",
+      "base": "👩‍💻",
+      "variants": []
+    },
+    {
+      "id": "man-technologist",
+      "name": "Man Technologist",
+      "keywords": [
+        "man",
+        "technologist",
+        "developer",
+        "coder"
+      ],
+      "group": "People & Body",
+      "base": "👨‍💻",
+      "variants": []
+    },
+    {
+      "id": "family-man-woman-girl-boy",
+      "name": "Family: Man, Woman, Girl, Boy",
+      "keywords": [
+        "family",
+        "parents",
+        "children",
+        "home"
+      ],
+      "group": "People & Body",
+      "base": "👨‍👩‍👧‍👦",
+      "variants": []
+    },
+    {
+      "id": "couple-with-heart-woman-man",
+      "name": "Couple with Heart: Woman, Man",
+      "keywords": [
+        "couple",
+        "love",
+        "heart",
+        "romance"
+      ],
+      "group": "People & Body",
+      "base": "👩‍❤️‍👨",
+      "variants": []
+    },
+    {
+      "id": "woman-dancing",
+      "name": "Woman Dancing",
+      "keywords": [
+        "dance",
+        "dancer",
+        "party"
+      ],
+      "group": "People & Body",
+      "base": "💃",
+      "variants": [
+        {
+          "name": "Woman Dancing: light skin tone",
+          "grapheme": "💃🏻"
+        },
+        {
+          "name": "Woman Dancing: medium-light skin tone",
+          "grapheme": "💃🏼"
+        },
+        {
+          "name": "Woman Dancing: medium skin tone",
+          "grapheme": "💃🏽"
+        },
+        {
+          "name": "Woman Dancing: medium-dark skin tone",
+          "grapheme": "💃🏾"
+        },
+        {
+          "name": "Woman Dancing: dark skin tone",
+          "grapheme": "💃🏿"
+        }
+      ]
+    },
+    {
+      "id": "dog-face",
+      "name": "Dog Face",
+      "keywords": [
+        "dog",
+        "puppy",
+        "pet",
+        "animal"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐶",
+      "variants": []
+    },
+    {
+      "id": "cat-face",
+      "name": "Cat Face",
+      "keywords": [
+        "cat",
+        "kitten",
+        "pet",
+        "animal"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐱",
+      "variants": []
+    },
+    {
+      "id": "mouse-face",
+      "name": "Mouse Face",
+      "keywords": [
+        "mouse",
+        "rodent",
+        "animal"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐭",
+      "variants": []
+    },
+    {
+      "id": "rabbit-face",
+      "name": "Rabbit Face",
+      "keywords": [
+        "rabbit",
+        "bunny",
+        "animal"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐰",
+      "variants": []
+    },
+    {
+      "id": "fox-face",
+      "name": "Fox Face",
+      "keywords": [
+        "fox",
+        "animal",
+        "clever"
+      ],
+      "group": "Animals & Nature",
+      "base": "🦊",
+      "variants": []
+    },
+    {
+      "id": "bear-face",
+      "name": "Bear Face",
+      "keywords": [
+        "bear",
+        "animal",
+        "grizzly"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐻",
+      "variants": []
+    },
+    {
+      "id": "panda-face",
+      "name": "Panda Face",
+      "keywords": [
+        "panda",
+        "animal",
+        "bear"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐼",
+      "variants": []
+    },
+    {
+      "id": "koala",
+      "name": "Koala",
+      "keywords": [
+        "koala",
+        "animal",
+        "australia"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐨",
+      "variants": []
+    },
+    {
+      "id": "tiger-face",
+      "name": "Tiger Face",
+      "keywords": [
+        "tiger",
+        "animal",
+        "cat"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐯",
+      "variants": []
+    },
+    {
+      "id": "lion-face",
+      "name": "Lion Face",
+      "keywords": [
+        "lion",
+        "animal",
+        "king"
+      ],
+      "group": "Animals & Nature",
+      "base": "🦁",
+      "variants": []
+    },
+    {
+      "id": "frog-face",
+      "name": "Frog Face",
+      "keywords": [
+        "frog",
+        "animal",
+        "toad"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐸",
+      "variants": []
+    },
+    {
+      "id": "penguin",
+      "name": "Penguin",
+      "keywords": [
+        "penguin",
+        "animal",
+        "bird",
+        "cold"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐧",
+      "variants": []
+    },
+    {
+      "id": "unicorn-face",
+      "name": "Unicorn Face",
+      "keywords": [
+        "unicorn",
+        "horse",
+        "fantasy",
+        "magic"
+      ],
+      "group": "Animals & Nature",
+      "base": "🦄",
+      "variants": []
+    },
+    {
+      "id": "dragon",
+      "name": "Dragon",
+      "keywords": [
+        "dragon",
+        "fantasy",
+        "myth"
+      ],
+      "group": "Animals & Nature",
+      "base": "🐉",
+      "variants": []
+    },
+    {
+      "id": "red-apple",
+      "name": "Red Apple",
+      "keywords": [
+        "apple",
+        "fruit",
+        "food",
+        "red"
+      ],
+      "group": "Food & Drink",
+      "base": "🍎",
+      "variants": []
+    },
+    {
+      "id": "banana",
+      "name": "Banana",
+      "keywords": [
+        "banana",
+        "fruit",
+        "food",
+        "yellow"
+      ],
+      "group": "Food & Drink",
+      "base": "🍌",
+      "variants": []
+    },
+    {
+      "id": "grapes",
+      "name": "Grapes",
+      "keywords": [
+        "grapes",
+        "fruit",
+        "food",
+        "wine"
+      ],
+      "group": "Food & Drink",
+      "base": "🍇",
+      "variants": []
+    },
+    {
+      "id": "strawberry",
+      "name": "Strawberry",
+      "keywords": [
+        "strawberry",
+        "fruit",
+        "food",
+        "berry"
+      ],
+      "group": "Food & Drink",
+      "base": "🍓",
+      "variants": []
+    },
+    {
+      "id": "watermelon",
+      "name": "Watermelon",
+      "keywords": [
+        "watermelon",
+        "fruit",
+        "food",
+        "summer"
+      ],
+      "group": "Food & Drink",
+      "base": "🍉",
+      "variants": []
+    },
+    {
+      "id": "pizza",
+      "name": "Pizza",
+      "keywords": [
+        "pizza",
+        "food",
+        "cheese",
+        "italian"
+      ],
+      "group": "Food & Drink",
+      "base": "🍕",
+      "variants": []
+    },
+    {
+      "id": "hamburger",
+      "name": "Hamburger",
+      "keywords": [
+        "hamburger",
+        "burger",
+        "food",
+        "fast food"
+      ],
+      "group": "Food & Drink",
+      "base": "🍔",
+      "variants": []
+    },
+    {
+      "id": "sushi",
+      "name": "Sushi",
+      "keywords": [
+        "sushi",
+        "food",
+        "japanese",
+        "fish"
+      ],
+      "group": "Food & Drink",
+      "base": "🍣",
+      "variants": []
+    },
+    {
+      "id": "taco",
+      "name": "Taco",
+      "keywords": [
+        "taco",
+        "food",
+        "mexican"
+      ],
+      "group": "Food & Drink",
+      "base": "🌮",
+      "variants": []
+    },
+    {
+      "id": "hot-beverage",
+      "name": "Hot Beverage",
+      "keywords": [
+        "coffee",
+        "tea",
+        "drink",
+        "hot"
+      ],
+      "group": "Food & Drink",
+      "base": "☕",
+      "variants": []
+    },
+    {
+      "id": "beer-mug",
+      "name": "Beer Mug",
+      "keywords": [
+        "beer",
+        "drink",
+        "pub",
+        "cheers"
+      ],
+      "group": "Food & Drink",
+      "base": "🍺",
+      "variants": []
+    },
+    {
+      "id": "birthday-cake",
+      "name": "Birthday Cake",
+      "keywords": [
+        "birthday",
+        "cake",
+        "dessert",
+        "party"
+      ],
+      "group": "Food & Drink",
+      "base": "🎂",
+      "variants": []
+    },
+    {
+      "id": "automobile",
+      "name": "Automobile",
+      "keywords": [
+        "car",
+        "vehicle",
+        "drive",
+        "travel"
+      ],
+      "group": "Travel & Places",
+      "base": "🚗",
+      "variants": []
+    },
+    {
+      "id": "bus",
+      "name": "Bus",
+      "keywords": [
+        "bus",
+        "vehicle",
+        "transit",
+        "travel"
+      ],
+      "group": "Travel & Places",
+      "base": "🚌",
+      "variants": []
+    },
+    {
+      "id": "train",
+      "name": "Train",
+      "keywords": [
+        "train",
+        "rail",
+        "transit",
+        "travel"
+      ],
+      "group": "Travel & Places",
+      "base": "🚆",
+      "variants": []
+    },
+    {
+      "id": "airplane",
+      "name": "Airplane",
+      "keywords": [
+        "plane",
+        "flight",
+        "travel",
+        "airport"
+      ],
+      "group": "Travel & Places",
+      "base": "✈️",
+      "variants": [
+        {
+          "name": "Airplane: text presentation",
+          "grapheme": "✈"
+        }
+      ]
+    },
+    {
+      "id": "rocket",
+      "name": "Rocket",
+      "keywords": [
+        "rocket",
+        "space",
+        "launch",
+        "fast"
+      ],
+      "group": "Travel & Places",
+      "base": "🚀",
+      "variants": []
+    },
+    {
+      "id": "bicycle",
+      "name": "Bicycle",
+      "keywords": [
+        "bike",
+        "bicycle",
+        "cycle",
+        "travel"
+      ],
+      "group": "Travel & Places",
+      "base": "🚲",
+      "variants": []
+    },
+    {
+      "id": "ship",
+      "name": "Ship",
+      "keywords": [
+        "ship",
+        "boat",
+        "sea",
+        "travel"
+      ],
+      "group": "Travel & Places",
+      "base": "🚢",
+      "variants": []
+    },
+    {
+      "id": "globe-europe-africa",
+      "name": "Globe Showing Europe-Africa",
+      "keywords": [
+        "globe",
+        "world",
+        "earth",
+        "europe",
+        "africa"
+      ],
+      "group": "Travel & Places",
+      "base": "🌍",
+      "variants": []
+    },
+    {
+      "id": "world-map",
+      "name": "World Map",
+      "keywords": [
+        "world map",
+        "map",
+        "travel",
+        "earth"
+      ],
+      "group": "Travel & Places",
+      "base": "🗺️",
+      "variants": [
+        {
+          "name": "World Map: text presentation",
+          "grapheme": "🗺"
+        }
+      ]
+    },
+    {
+      "id": "compass",
+      "name": "Compass",
+      "keywords": [
+        "compass",
+        "direction",
+        "navigate",
+        "travel"
+      ],
+      "group": "Travel & Places",
+      "base": "🧭",
+      "variants": []
+    },
+    {
+      "id": "mountain",
+      "name": "Mountain",
+      "keywords": [
+        "mountain",
+        "peak",
+        "nature",
+        "climb"
+      ],
+      "group": "Travel & Places",
+      "base": "⛰️",
+      "variants": [
+        {
+          "name": "Mountain: text presentation",
+          "grapheme": "⛰"
+        }
+      ]
+    },
+    {
+      "id": "house",
+      "name": "House",
+      "keywords": [
+        "house",
+        "home",
+        "building"
+      ],
+      "group": "Travel & Places",
+      "base": "🏠",
+      "variants": []
+    },
+    {
+      "id": "soccer-ball",
+      "name": "Soccer Ball",
+      "keywords": [
+        "soccer",
+        "football",
+        "ball",
+        "sport"
+      ],
+      "group": "Activities",
+      "base": "⚽",
+      "variants": []
+    },
+    {
+      "id": "basketball",
+      "name": "Basketball",
+      "keywords": [
+        "basketball",
+        "ball",
+        "sport"
+      ],
+      "group": "Activities",
+      "base": "🏀",
+      "variants": []
+    },
+    {
+      "id": "baseball",
+      "name": "Baseball",
+      "keywords": [
+        "baseball",
+        "ball",
+        "sport"
+      ],
+      "group": "Activities",
+      "base": "⚾",
+      "variants": []
+    },
+    {
+      "id": "tennis",
+      "name": "Tennis",
+      "keywords": [
+        "tennis",
+        "racket",
+        "ball",
+        "sport"
+      ],
+      "group": "Activities",
+      "base": "🎾",
+      "variants": []
+    },
+    {
+      "id": "trophy",
+      "name": "Trophy",
+      "keywords": [
+        "trophy",
+        "win",
+        "award",
+        "prize"
+      ],
+      "group": "Activities",
+      "base": "🏆",
+      "variants": []
+    },
+    {
+      "id": "gold-medal",
+      "name": "Gold Medal",
+      "keywords": [
+        "medal",
+        "gold",
+        "first",
+        "award"
+      ],
+      "group": "Activities",
+      "base": "🥇",
+      "variants": []
+    },
+    {
+      "id": "video-game",
+      "name": "Video Game",
+      "keywords": [
+        "game",
+        "controller",
+        "play",
+        "gaming"
+      ],
+      "group": "Activities",
+      "base": "🎮",
+      "variants": []
+    },
+    {
+      "id": "game-die",
+      "name": "Game Die",
+      "keywords": [
+        "dice",
+        "die",
+        "random",
+        "game"
+      ],
+      "group": "Activities",
+      "base": "🎲",
+      "variants": []
+    },
+    {
+      "id": "guitar",
+      "name": "Guitar",
+      "keywords": [
+        "guitar",
+        "music",
+        "instrument",
+        "rock"
+      ],
+      "group": "Activities",
+      "base": "🎸",
+      "variants": []
+    },
+    {
+      "id": "laptop",
+      "name": "Laptop",
+      "keywords": [
+        "laptop",
+        "computer",
+        "work",
+        "code"
+      ],
+      "group": "Objects",
+      "base": "💻",
+      "variants": []
+    },
+    {
+      "id": "mobile-phone",
+      "name": "Mobile Phone",
+      "keywords": [
+        "phone",
+        "mobile",
+        "call",
+        "smartphone"
+      ],
+      "group": "Objects",
+      "base": "📱",
+      "variants": []
+    },
+    {
+      "id": "keyboard",
+      "name": "Keyboard",
+      "keywords": [
+        "keyboard",
+        "computer",
+        "typing",
+        "input"
+      ],
+      "group": "Objects",
+      "base": "⌨️",
+      "variants": [
+        {
+          "name": "Keyboard: text presentation",
+          "grapheme": "⌨"
+        }
+      ]
+    },
+    {
+      "id": "desktop-computer",
+      "name": "Desktop Computer",
+      "keywords": [
+        "desktop",
+        "computer",
+        "monitor",
+        "work"
+      ],
+      "group": "Objects",
+      "base": "🖥️",
+      "variants": [
+        {
+          "name": "Desktop Computer: text presentation",
+          "grapheme": "🖥"
+        }
+      ]
+    },
+    {
+      "id": "camera",
+      "name": "Camera",
+      "keywords": [
+        "camera",
+        "photo",
+        "picture",
+        "lens"
+      ],
+      "group": "Objects",
+      "base": "📷",
+      "variants": []
+    },
+    {
+      "id": "light-bulb",
+      "name": "Light Bulb",
+      "keywords": [
+        "bulb",
+        "idea",
+        "light",
+        "electricity"
+      ],
+      "group": "Objects",
+      "base": "💡",
+      "variants": []
+    },
+    {
+      "id": "open-book",
+      "name": "Open Book",
+      "keywords": [
+        "book",
+        "read",
+        "learn",
+        "pages"
+      ],
+      "group": "Objects",
+      "base": "📖",
+      "variants": []
+    },
+    {
+      "id": "pencil",
+      "name": "Pencil",
+      "keywords": [
+        "pencil",
+        "write",
+        "edit",
+        "draw"
+      ],
+      "group": "Objects",
+      "base": "✏️",
+      "variants": [
+        {
+          "name": "Pencil: text presentation",
+          "grapheme": "✏"
+        }
+      ]
+    },
+    {
+      "id": "locked",
+      "name": "Locked",
+      "keywords": [
+        "lock",
+        "secure",
+        "private",
+        "password"
+      ],
+      "group": "Objects",
+      "base": "🔒",
+      "variants": []
+    },
+    {
+      "id": "key",
+      "name": "Key",
+      "keywords": [
+        "key",
+        "unlock",
+        "password",
+        "access"
+      ],
+      "group": "Objects",
+      "base": "🔑",
+      "variants": []
+    },
+    {
+      "id": "gear",
+      "name": "Gear",
+      "keywords": [
+        "gear",
+        "settings",
+        "cog",
+        "config"
+      ],
+      "group": "Objects",
+      "base": "⚙️",
+      "variants": [
+        {
+          "name": "Gear: text presentation",
+          "grapheme": "⚙"
+        }
+      ]
+    },
+    {
+      "id": "magnifying-glass-tilted-left",
+      "name": "Magnifying Glass Tilted Left",
+      "keywords": [
+        "search",
+        "magnify",
+        "zoom",
+        "find"
+      ],
+      "group": "Objects",
+      "base": "🔍",
+      "variants": []
+    },
+    {
+      "id": "check-mark",
+      "name": "Check Mark",
+      "keywords": [
+        "check",
+        "tick",
+        "done",
+        "yes"
+      ],
+      "group": "Symbols",
+      "base": "✔️",
+      "variants": [
+        {
+          "name": "Check Mark: text presentation",
+          "grapheme": "✔"
+        }
+      ]
+    },
+    {
+      "id": "check-mark-button",
+      "name": "Check Mark Button",
+      "keywords": [
+        "check",
+        "done",
+        "yes",
+        "complete"
+      ],
+      "group": "Symbols",
+      "base": "✅",
+      "variants": []
+    },
+    {
+      "id": "cross-mark",
+      "name": "Cross Mark",
+      "keywords": [
+        "cross",
+        "x",
+        "no",
+        "wrong"
+      ],
+      "group": "Symbols",
+      "base": "❌",
+      "variants": []
+    },
+    {
+      "id": "warning",
+      "name": "Warning",
+      "keywords": [
+        "warning",
+        "alert",
+        "caution"
+      ],
+      "group": "Symbols",
+      "base": "⚠️",
+      "variants": [
+        {
+          "name": "Warning: text presentation",
+          "grapheme": "⚠"
+        }
+      ]
+    },
+    {
+      "id": "red-heart",
+      "name": "Red Heart",
+      "keywords": [
+        "heart",
+        "love",
+        "red",
+        "romance"
+      ],
+      "group": "Symbols",
+      "base": "❤️",
+      "variants": [
+        {
+          "name": "Red Heart: text presentation",
+          "grapheme": "❤"
+        }
+      ]
+    },
+    {
+      "id": "broken-heart",
+      "name": "Broken Heart",
+      "keywords": [
+        "heart",
+        "broken",
+        "sad",
+        "breakup"
+      ],
+      "group": "Symbols",
+      "base": "💔",
+      "variants": []
+    },
+    {
+      "id": "star",
+      "name": "Star",
+      "keywords": [
+        "star",
+        "favorite",
+        "rating",
+        "gold"
+      ],
+      "group": "Symbols",
+      "base": "⭐",
+      "variants": []
+    },
+    {
+      "id": "sparkles",
+      "name": "Sparkles",
+      "keywords": [
+        "sparkles",
+        "magic",
+        "shine",
+        "new"
+      ],
+      "group": "Symbols",
+      "base": "✨",
+      "variants": []
+    },
+    {
+      "id": "fire",
+      "name": "Fire",
+      "keywords": [
+        "fire",
+        "hot",
+        "flame",
+        "lit"
+      ],
+      "group": "Symbols",
+      "base": "🔥",
+      "variants": []
+    },
+    {
+      "id": "hundred-points",
+      "name": "Hundred Points",
+      "keywords": [
+        "hundred",
+        "100",
+        "score",
+        "perfect"
+      ],
+      "group": "Symbols",
+      "base": "💯",
+      "variants": []
+    },
+    {
+      "id": "plus",
+      "name": "Plus",
+      "keywords": [
+        "plus",
+        "add",
+        "addition",
+        "math"
+      ],
+      "group": "Symbols",
+      "base": "➕",
+      "variants": []
+    },
+    {
+      "id": "minus",
+      "name": "Minus",
+      "keywords": [
+        "minus",
+        "subtract",
+        "subtraction",
+        "math"
+      ],
+      "group": "Symbols",
+      "base": "➖",
+      "variants": []
+    },
+    {
+      "id": "multiply",
+      "name": "Multiply",
+      "keywords": [
+        "multiply",
+        "times",
+        "math"
+      ],
+      "group": "Symbols",
+      "base": "✖️",
+      "variants": [
+        {
+          "name": "Multiply: text presentation",
+          "grapheme": "✖"
+        }
+      ]
+    },
+    {
+      "id": "divide",
+      "name": "Divide",
+      "keywords": [
+        "divide",
+        "division",
+        "math"
+      ],
+      "group": "Symbols",
+      "base": "➗",
+      "variants": []
+    },
+    {
+      "id": "infinity",
+      "name": "Infinity",
+      "keywords": [
+        "infinity",
+        "forever",
+        "math"
+      ],
+      "group": "Symbols",
+      "base": "♾️",
+      "variants": [
+        {
+          "name": "Infinity: text presentation",
+          "grapheme": "♾"
+        }
+      ]
+    },
+    {
+      "id": "right-arrow",
+      "name": "Right Arrow",
+      "keywords": [
+        "right",
+        "arrow",
+        "next",
+        "direction"
+      ],
+      "group": "Symbols",
+      "base": "➡️",
+      "variants": [
+        {
+          "name": "Right Arrow: text presentation",
+          "grapheme": "➡"
+        }
+      ]
+    },
+    {
+      "id": "left-arrow",
+      "name": "Left Arrow",
+      "keywords": [
+        "left",
+        "arrow",
+        "back",
+        "direction"
+      ],
+      "group": "Symbols",
+      "base": "⬅️",
+      "variants": [
+        {
+          "name": "Left Arrow: text presentation",
+          "grapheme": "⬅"
+        }
+      ]
+    },
+    {
+      "id": "up-arrow",
+      "name": "Up Arrow",
+      "keywords": [
+        "up",
+        "arrow",
+        "above",
+        "direction"
+      ],
+      "group": "Symbols",
+      "base": "⬆️",
+      "variants": [
+        {
+          "name": "Up Arrow: text presentation",
+          "grapheme": "⬆"
+        }
+      ]
+    },
+    {
+      "id": "down-arrow",
+      "name": "Down Arrow",
+      "keywords": [
+        "down",
+        "arrow",
+        "below",
+        "direction"
+      ],
+      "group": "Symbols",
+      "base": "⬇️",
+      "variants": [
+        {
+          "name": "Down Arrow: text presentation",
+          "grapheme": "⬇"
+        }
+      ]
+    },
+    {
+      "id": "repeat",
+      "name": "Repeat",
+      "keywords": [
+        "repeat",
+        "loop",
+        "again"
+      ],
+      "group": "Symbols",
+      "base": "🔁",
+      "variants": []
+    },
+    {
+      "id": "recycling-symbol",
+      "name": "Recycling Symbol",
+      "keywords": [
+        "recycle",
+        "green",
+        "environment"
+      ],
+      "group": "Symbols",
+      "base": "♻️",
+      "variants": [
+        {
+          "name": "Recycling Symbol: text presentation",
+          "grapheme": "♻"
+        }
+      ]
+    },
+    {
+      "id": "copyright",
+      "name": "Copyright",
+      "keywords": [
+        "copyright",
+        "legal",
+        "license"
+      ],
+      "group": "Symbols",
+      "base": "©️",
+      "variants": [
+        {
+          "name": "Copyright: text presentation",
+          "grapheme": "©"
+        }
+      ]
+    },
+    {
+      "id": "registered",
+      "name": "Registered",
+      "keywords": [
+        "registered",
+        "trademark",
+        "legal"
+      ],
+      "group": "Symbols",
+      "base": "®️",
+      "variants": [
+        {
+          "name": "Registered: text presentation",
+          "grapheme": "®"
+        }
+      ]
+    },
+    {
+      "id": "trade-mark",
+      "name": "Trade Mark",
+      "keywords": [
+        "trademark",
+        "legal",
+        "brand"
+      ],
+      "group": "Symbols",
+      "base": "™️",
+      "variants": [
+        {
+          "name": "Trade Mark: text presentation",
+          "grapheme": "™"
+        }
+      ]
+    },
+    {
+      "id": "n-ary-summation",
+      "name": "N-Ary Summation",
+      "keywords": [
+        "sum",
+        "summation",
+        "math",
+        "sigma"
+      ],
+      "group": "Symbols",
+      "base": "∑",
+      "variants": []
+    },
+    {
+      "id": "square-root",
+      "name": "Square Root",
+      "keywords": [
+        "square root",
+        "root",
+        "math"
+      ],
+      "group": "Symbols",
+      "base": "√",
+      "variants": []
+    },
+    {
+      "id": "not-equal",
+      "name": "Not Equal",
+      "keywords": [
+        "not equal",
+        "math",
+        "inequality"
+      ],
+      "group": "Symbols",
+      "base": "≠",
+      "variants": []
+    },
+    {
+      "id": "less-than-or-equal",
+      "name": "Less-Than or Equal",
+      "keywords": [
+        "less",
+        "equal",
+        "math",
+        "inequality"
+      ],
+      "group": "Symbols",
+      "base": "≤",
+      "variants": []
+    },
+    {
+      "id": "greater-than-or-equal",
+      "name": "Greater-Than or Equal",
+      "keywords": [
+        "greater",
+        "equal",
+        "math",
+        "inequality"
+      ],
+      "group": "Symbols",
+      "base": "≥",
+      "variants": []
+    },
+    {
+      "id": "plus-minus",
+      "name": "Plus-Minus Sign",
+      "keywords": [
+        "plus minus",
+        "math",
+        "tolerance"
+      ],
+      "group": "Symbols",
+      "base": "±",
+      "variants": []
+    },
+    {
+      "id": "flag-united-states",
+      "name": "Flag: United States",
+      "keywords": [
+        "flag",
+        "usa",
+        "united states",
+        "america"
+      ],
+      "group": "Flags",
+      "base": "🇺🇸",
+      "variants": []
+    },
+    {
+      "id": "flag-united-kingdom",
+      "name": "Flag: United Kingdom",
+      "keywords": [
+        "flag",
+        "uk",
+        "britain",
+        "england"
+      ],
+      "group": "Flags",
+      "base": "🇬🇧",
+      "variants": []
+    },
+    {
+      "id": "flag-canada",
+      "name": "Flag: Canada",
+      "keywords": [
+        "flag",
+        "canada",
+        "maple"
+      ],
+      "group": "Flags",
+      "base": "🇨🇦",
+      "variants": []
+    },
+    {
+      "id": "flag-france",
+      "name": "Flag: France",
+      "keywords": [
+        "flag",
+        "france",
+        "french"
+      ],
+      "group": "Flags",
+      "base": "🇫🇷",
+      "variants": []
+    },
+    {
+      "id": "flag-germany",
+      "name": "Flag: Germany",
+      "keywords": [
+        "flag",
+        "germany",
+        "german"
+      ],
+      "group": "Flags",
+      "base": "🇩🇪",
+      "variants": []
+    },
+    {
+      "id": "flag-japan",
+      "name": "Flag: Japan",
+      "keywords": [
+        "flag",
+        "japan",
+        "japanese"
+      ],
+      "group": "Flags",
+      "base": "🇯🇵",
+      "variants": []
+    },
+    {
+      "id": "flag-brazil",
+      "name": "Flag: Brazil",
+      "keywords": [
+        "flag",
+        "brazil",
+        "brazilian"
+      ],
+      "group": "Flags",
+      "base": "🇧🇷",
+      "variants": []
+    },
+    {
+      "id": "flag-india",
+      "name": "Flag: India",
+      "keywords": [
+        "flag",
+        "india",
+        "indian"
+      ],
+      "group": "Flags",
+      "base": "🇮🇳",
+      "variants": []
+    },
+    {
+      "id": "rainbow-flag",
+      "name": "Rainbow Flag",
+      "keywords": [
+        "rainbow",
+        "pride",
+        "lgbt",
+        "flag"
+      ],
+      "group": "Flags",
+      "base": "🏳️‍🌈",
+      "variants": []
+    },
+    {
+      "id": "pirate-flag",
+      "name": "Pirate Flag",
+      "keywords": [
+        "pirate",
+        "skull",
+        "flag",
+        "jolly roger"
+      ],
+      "group": "Flags",
+      "base": "🏴‍☠️",
+      "variants": []
+    },
+    {
+      "id": "keycap-one",
+      "name": "Keycap Digit One",
+      "keywords": [
+        "keycap",
+        "one",
+        "1",
+        "number"
+      ],
+      "group": "Symbols",
+      "base": "1️⃣",
+      "variants": []
+    },
+    {
+      "id": "keycap-two",
+      "name": "Keycap Digit Two",
+      "keywords": [
+        "keycap",
+        "two",
+        "2",
+        "number"
+      ],
+      "group": "Symbols",
+      "base": "2️⃣",
+      "variants": []
+    },
+    {
+      "id": "keycap-hash",
+      "name": "Keycap Number Sign",
+      "keywords": [
+        "keycap",
+        "hash",
+        "pound",
+        "number"
+      ],
+      "group": "Symbols",
+      "base": "#️⃣",
+      "variants": []
+    },
+    {
+      "id": "keycap-asterisk",
+      "name": "Keycap Asterisk",
+      "keywords": [
+        "keycap",
+        "asterisk",
+        "star"
+      ],
+      "group": "Symbols",
+      "base": "*️⃣",
+      "variants": []
+    }
+  ]
+}

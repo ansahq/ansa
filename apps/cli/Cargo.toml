@@ -9,6 +9,13 @@ name = "ansa"
 path = "src/main.rs"
 
 [dependencies]
+ansa-alpha = { path = "../../crates/alpha" }
 ansa-core = { path = "../../crates/core" }
 ansa-domain = { path = "../../crates/domain" }
+ansa-onboarding = { path = "../../crates/onboarding" }
 ansa-platform-windows = { path = "../../crates/platform-windows" }
+ansa-quicklinks = { path = "../../crates/quicklinks" }
+ansa-storage = { path = "../../crates/storage" }
+
+[dev-dependencies]
+tempfile = "3"

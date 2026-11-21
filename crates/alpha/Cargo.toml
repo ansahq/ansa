@@ -1,0 +1,27 @@
+[package]
+name = "ansa-alpha"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Daily-driver alpha composition and dogfood harness for Ansa"
+
+[lib]
+name = "ansa_alpha"
+path = "src/lib.rs"
+
+[dependencies]
+ansa-core = { path = "../core", version = "0.1.0" }
+ansa-domain = { path = "../domain", version = "0.1.0" }
+ansa-search = { path = "../search", version = "0.1.0" }
+ansa-registry = { path = "../registry", version = "0.1.0" }
+ansa-coordinator = { path = "../coordinator", version = "0.1.0" }
+ansa-storage = { path = "../storage", version = "0.1.0" }
+ansa-quicklinks = { path = "../quicklinks", version = "0.1.0" }
+ansa-emoji = { path = "../emoji", version = "0.1.0" }
+ansa-onboarding = { path = "../onboarding", version = "0.1.0" }
+ansa-platform-windows = { path = "../platform-windows", version = "0.1.0" }
+
+[dev-dependencies]
+tempfile = "3"
+serde_json = "1"

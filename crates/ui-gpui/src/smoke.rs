@@ -1,5 +1,6 @@
 //! Debug-only synthetic widget/action routing checks, not physical key or IME tests.
 use super::*;
+use ansa_onboarding::Step;
 use gpui::EntityInputHandler;
 
 fn replace(input: &Entity<TextInput>, text: &str, window: &mut Window, cx: &mut App) {
@@ -295,8 +296,125 @@ fn step(
                 view.read(cx).light,
                 std::env::args().any(|arg| arg == "--light")
             );
+            let input = view.read(cx).input.clone();
+            replace(&input, "emoji smile", window, cx);
+        }
+        30 => {
+            let this = view.read(cx);
+            assert_eq!(this.emoji_query.as_deref(), Some("smile"));
+            assert!(!this.emoji_results.is_empty());
+            assert!(this.emoji_results.len() <= daily::EMOJI_LIMIT);
+            assert_eq!(this.emoji_selected, 0);
+            assert!(this.emoji_error.is_none());
+            key("down", window, cx);
+        }
+        31 => {
+            let this = view.read(cx);
+            let expected = 1.min(this.emoji_results.len().saturating_sub(1));
+            assert_eq!(this.emoji_selected, expected);
+            assert_eq!(this.engine.query(), "emoji smile");
+            let input = this.input.clone();
+            replace(&input, "", window, cx);
+        }
+        32 => {
+            let this = view.read(cx);
+            assert!(this.emoji_query.is_none());
+            assert!(this.emoji_results.is_empty());
+            assert!(
+                daily::builtin_commands()
+                    .iter()
+                    .any(|command| command.id.as_str() == daily::SETUP_COMMAND_ID),
+                "Start Setup must be available without opening storage"
+            );
+            view.update(cx, |this, cx| {
+                this.engine.replace_catalog(daily::builtin_commands());
+                let index = this
+                    .engine
+                    .catalog()
+                    .iter()
+                    .position(|command| command.id.as_str() == daily::SETUP_COMMAND_ID)
+                    .expect("Start Setup in fixture catalog");
+                this.engine.select_index(index);
+                cx.notify();
+            });
+            window.dispatch_action(Box::new(Execute), cx);
+        }
+        33 => {
+            let this = view.read(cx);
+            let setup = this.setup.as_ref().expect("setup fixture must open");
+            assert_eq!(setup.onboarding().step(), Step::Welcome);
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Continue));
+            assert!(this.setup_focus.is_focused(window));
+            key("space", window, cx);
+        }
+        34 => {
+            let this = view.read(cx);
+            let setup = this.setup.as_ref().expect("setup must stay open");
+            assert_eq!(setup.onboarding().step(), Step::Shortcut);
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Continue));
+            key("tab", window, cx);
+            key("tab", window, cx);
+            let setup = view.read(cx).setup.as_ref().expect("setup");
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Skip));
+            key("enter", window, cx);
+        }
+        35 => {
+            let this = view.read(cx);
+            let setup = this.setup.as_ref().expect("setup");
+            assert_eq!(setup.onboarding().step(), Step::TryLaunch);
+            assert!(
+                setup
+                    .onboarding()
+                    .warning_for(Step::Shortcut)
+                    .is_some_and(|warning| warning.contains("Shortcut setup was skipped"))
+            );
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Continue));
+            key("tab", window, cx);
+            let setup = view.read(cx).setup.as_ref().expect("setup");
+            assert_eq!(setup.focused(), Some(daily::SetupControl::TestLaunch));
+            key("tab", window, cx);
+            let setup = view.read(cx).setup.as_ref().expect("setup");
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Skip));
+            key("space", window, cx);
+        }
+        36 => {
+            let this = view.read(cx);
+            let setup = this.setup.as_ref().expect("setup");
+            assert_eq!(setup.onboarding().step(), Step::Integrations);
+            assert!(
+                setup
+                    .onboarding()
+                    .warning_for(Step::TryLaunch)
+                    .is_some_and(|warning| warning.contains("No successful application launch"))
+            );
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Continue));
+            key("enter", window, cx);
+        }
+        37 => {
+            let this = view.read(cx);
+            let setup = this.setup.as_ref().expect("setup");
+            assert_eq!(setup.onboarding().step(), Step::Done);
+            assert!(!setup.onboarding().status().is_completed());
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Finish));
+            key("enter", window, cx);
+        }
+        38 => {
+            let this = view.read(cx);
+            let setup = this.setup.as_ref().expect("setup");
+            assert!(setup.onboarding().status().is_completed());
+            assert_eq!(setup.focused(), Some(daily::SetupControl::Reset));
+            key("enter", window, cx);
+            let setup = view.read(cx).setup.as_ref().expect("setup");
+            assert_eq!(setup.onboarding().step(), Step::Welcome);
+        }
+        39 => {
+            assert!(view.read(cx).setup.is_some());
+            key("escape", window, cx);
+            let this = view.read(cx);
+            assert!(this.setup.is_none());
+            assert!(this.input.focus_handle(cx).is_focused(window));
             println!(
-                "Ansa interaction smoke: 30 synthetic widget/action stages passed, including glass and light/dark theme toggling. No clipboard writes or external app launches."
+                "Ansa interaction smoke: 40 synthetic widget/action stages passed, including glass, light/dark theme toggling, bounded emoji navigation and keyboard-only setup traversal. No clipboard writes or external app launches."
             );
             cx.quit();
             return;

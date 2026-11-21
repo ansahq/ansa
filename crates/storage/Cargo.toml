@@ -1,0 +1,25 @@
+[package]
+name = "ansa-storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Transactional settings and user-record storage for Ansa"
+
+[lib]
+name = "ansa_storage"
+path = "src/lib.rs"
+
+[dependencies]
+rusqlite = { version = "=0.34.0", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[target.'cfg(windows)'.dependencies]
+# Safe wrapper over GetFileInformationByHandle, used to key the single-instance
+# lock to the durable file identity rather than its path. Already in the
+# workspace dependency graph (transitively); this makes the use explicit.
+winapi-util = "0.1.11"
+
+[dev-dependencies]
+tempfile = "3"

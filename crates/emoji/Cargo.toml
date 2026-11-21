@@ -1,0 +1,16 @@
+[package]
+name = "ansa-emoji"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Licensed, versioned local emoji and symbol search for Ansa"
+
+[lib]
+name = "ansa_emoji"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+unicode-segmentation.workspace = true

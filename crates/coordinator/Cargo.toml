@@ -1,0 +1,15 @@
+[package]
+name = "ansa-coordinator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Bounded asynchronous search provider coordinator for Ansa"
+
+[lib]
+name = "ansa_coordinator"
+path = "src/lib.rs"
+
+[dependencies]
+ansa-domain = { path = "../domain", version = "0.1.0" }
+ansa-search = { path = "../search", version = "0.1.0" }

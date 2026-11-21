@@ -17,3 +17,10 @@ ansa-ui-components = { path = "../ui-components" }
 ansa-core = { path = "../core" }
 ansa-domain = { path = "../domain" }
 ansa-platform-windows = { path = "../platform-windows" }
+ansa-alpha = { path = "../alpha" }
+ansa-onboarding = { path = "../onboarding" }
+ansa-storage = { path = "../storage" }
+
+[dev-dependencies]
+tempfile = "3"
+ansa-quicklinks = { path = "../quicklinks" }

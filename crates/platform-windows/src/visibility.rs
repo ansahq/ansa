@@ -78,6 +78,7 @@ const SW_SHOW: i32 = 5;
 #[link(name = "user32")]
 extern "system" {
     fn IsWindow(hwnd: *mut c_void) -> i32;
+    fn IsWindowVisible(hwnd: *mut c_void) -> i32;
     fn ShowWindow(hwnd: *mut c_void, command: i32) -> i32;
     fn SetForegroundWindow(hwnd: *mut c_void) -> i32;
     fn GetForegroundWindow() -> *mut c_void;
@@ -304,8 +305,12 @@ pub fn set_launcher_visible(hwnd: isize, visible: bool) -> Result<(), String> {
     if !visible {
         // SAFETY: the handle is live and owned by this thread. ShowWindow's
         // return value is the previous visibility state, not an error code.
-        unsafe {
-            ShowWindow(window, SW_HIDE);
+        let previous = unsafe { ShowWindow(window, SW_HIDE) };
+        // SAFETY: the same live, thread-owned handle.
+        if unsafe { IsWindowVisible(window) } != 0 {
+            return Err(format!(
+                "launcher window remained visible after ShowWindow(SW_HIDE) (previous state {previous})"
+            ));
         }
         return Ok(());
     }

@@ -27,6 +27,23 @@ pub(crate) fn open_application(path: &str) -> Result<(), String> {
     shell_open(target.as_os_str())
 }
 
+/// Opens a packaged application through `shell:AppsFolder\<AUMID>` after
+/// validating the AUMID. No metadata is interpolated into a command line.
+pub(crate) fn open_packaged(aumid: &str) -> Result<(), String> {
+    let target = packaged_launch_target(aumid)?;
+    shell_open(target.as_os_str())
+}
+
+fn packaged_launch_target(aumid: &str) -> Result<PathBuf, String> {
+    if !crate::packaged::is_valid_aumid(aumid) {
+        return Err(
+            "packaged application identity is not a valid AUMID; refresh the application catalog"
+                .to_owned(),
+        );
+    }
+    Ok(PathBuf::from(crate::packaged::packaged_launch_path(aumid)))
+}
+
 pub(crate) fn open_url(url: &str) -> Result<(), String> {
     shell_open(OsStr::new(url))
 }
@@ -170,6 +187,25 @@ mod tests {
         let result = prepare_application_target(&path);
         let _ = fs::remove_dir_all(&directory);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn packaged_launch_rejects_invalid_aumids_before_calling_the_shell() {
+        for aumid in [
+            "",
+            r"C:\Windows\notepad.exe",
+            r"Vendor.App_pkg",
+            "Vendor.App_pkg!App with space",
+            "Vendor.App_pkg!App;Calc",
+        ] {
+            assert!(packaged_launch_target(aumid).is_err(), "{aumid}");
+        }
+
+        let target = packaged_launch_target("Vendor.App_pkg!App").expect("valid AUMID");
+        assert_eq!(
+            target.to_string_lossy(),
+            r"shell:AppsFolder\Vendor.App_pkg!App"
+        );
     }
 
     #[test]

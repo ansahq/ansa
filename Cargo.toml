@@ -4,8 +4,15 @@ exclude = ["experiments/gpui-accessibility", "target/framework-candidates/pinned
 members = [
     "apps/desktop", "apps/cli", "crates/domain", "crates/search", "crates/core",
     "crates/platform-api", "crates/platform-windows", "crates/ui-components", "crates/ui-gpui",
+    "crates/registry", "crates/coordinator", "crates/storage", "crates/quicklinks",
+    "crates/emoji", "crates/onboarding", "crates/alpha", "crates/vault", "crates/clipboard",
 ]
-default-members = ["apps/cli", "crates/domain", "crates/search", "crates/core", "crates/platform-api", "crates/platform-windows"]
+default-members = [
+    "apps/cli", "crates/domain", "crates/search", "crates/core", "crates/platform-api",
+    "crates/platform-windows", "crates/registry", "crates/coordinator", "crates/storage",
+    "crates/quicklinks", "crates/emoji", "crates/onboarding", "crates/alpha", "crates/vault",
+    "crates/clipboard",
+]
 
 [workspace.package]
 version = "0.1.0"

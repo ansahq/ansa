@@ -61,12 +61,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansa-alpha"
+version = "0.1.0"
+dependencies = [
+ "ansa-coordinator",
+ "ansa-core",
+ "ansa-domain",
+ "ansa-emoji",
+ "ansa-onboarding",
+ "ansa-platform-windows",
+ "ansa-quicklinks",
+ "ansa-registry",
+ "ansa-search",
+ "ansa-storage",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "ansa-cli"
 version = "0.1.0"
 dependencies = [
+ "ansa-alpha",
  "ansa-core",
  "ansa-domain",
+ "ansa-onboarding",
  "ansa-platform-windows",
+ "ansa-quicklinks",
+ "ansa-storage",
+ "tempfile",
+]
+
+[[package]]
+name = "ansa-clipboard"
+version = "0.1.0"
+dependencies = [
+ "ansa-vault",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "ansa-coordinator"
+version = "0.1.0"
+dependencies = [
+ "ansa-domain",
+ "ansa-search",
 ]
 
 [[package]]
@@ -75,6 +116,7 @@ version = "0.1.0"
 dependencies = [
  "ansa-domain",
  "ansa-search",
+ "serde_json",
 ]
 
 [[package]]
@@ -87,6 +129,25 @@ dependencies = [
 [[package]]
 name = "ansa-domain"
 version = "0.1.0"
+
+[[package]]
+name = "ansa-emoji"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "ansa-onboarding"
+version = "0.1.0"
+dependencies = [
+ "ansa-domain",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
 
 [[package]]
 name = "ansa-platform-api"
@@ -105,10 +166,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansa-quicklinks"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "ansa-registry"
+version = "0.1.0"
+dependencies = [
+ "ansa-domain",
+]
+
+[[package]]
 name = "ansa-search"
 version = "0.1.0"
 dependencies = [
  "ansa-domain",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "ansa-storage"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "winapi-util",
 ]
 
 [[package]]
@@ -123,13 +212,27 @@ dependencies = [
 name = "ansa-ui-gpui"
 version = "0.1.0"
 dependencies = [
+ "ansa-alpha",
  "ansa-core",
  "ansa-domain",
+ "ansa-onboarding",
  "ansa-platform-windows",
+ "ansa-quicklinks",
+ "ansa-storage",
  "ansa-ui-components",
  "async-channel 2.5.0",
  "gpui",
  "raw-window-handle",
+ "tempfile",
+]
+
+[[package]]
+name = "ansa-vault"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
@@ -1663,6 +1766,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fallible-iterator"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2acce4a10f12dc2fb14a218589d4f1f62ef011b2d0cc4b3cb1bba8e94da14649"
+
+[[package]]
+name = "fallible-streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
+
+[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2457,6 +2572,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
+name = "hashlink"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
+dependencies = [
+ "hashbrown 0.15.5",
+]
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3012,6 +3136,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61ff90caf6077a803a240f62fdbe88645a890bbca49ef8174c3cb0404362171d"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "libsqlite3-sys"
+version = "0.32.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbb8270bb4060bd76c6e96f20c52d80620f1d82a3470885694e41e0f81ef6fe7"
+dependencies = [
+ "cc",
+ "pkg-config",
+ "vcpkg",
 ]
 
 [[package]]
@@ -4424,6 +4559,20 @@ name = "roxmltree"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
+
+[[package]]
+name = "rusqlite"
+version = "0.34.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37e34486da88d8e051c7c0e23c3f15fd806ea8546260aa2fec247e97242ec143"
+dependencies = [
+ "bitflags 2.13.2",
+ "fallible-iterator",
+ "fallible-streaming-iterator",
+ "hashlink",
+ "libsqlite3-sys",
+ "smallvec",
+]
 
 [[package]]
 name = "rust-embed"
@@ -5953,6 +6102,12 @@ dependencies = [
  "sval_ref",
  "sval_serde",
 ]
+
+[[package]]
+name = "vcpkg"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "version_check"

@@ -169,6 +169,26 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "name": "ansa-alpha",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-alpha@0.1.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
       "name": "ansa-cli",
       "versionInfo": "0.1.0",
@@ -185,6 +205,46 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/ansa-cli@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "name": "ansa-clipboard",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-clipboard@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ansa-coordinator-0.1.0-3e74f326a8",
+      "name": "ansa-coordinator",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-coordinator@0.1.0"
         }
       ]
     },
@@ -249,6 +309,46 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-ansa-emoji-0.1.0-0540d6acb4",
+      "name": "ansa-emoji",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-emoji@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635",
+      "name": "ansa-onboarding",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-onboarding@0.1.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
       "name": "ansa-platform-api",
       "versionInfo": "0.1.0",
@@ -289,6 +389,46 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913",
+      "name": "ansa-quicklinks",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-quicklinks@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ansa-registry-0.1.0-e122002a4b",
+      "name": "ansa-registry",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-registry@0.1.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321",
       "name": "ansa-search",
       "versionInfo": "0.1.0",
@@ -305,6 +445,26 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/ansa-search@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
+      "name": "ansa-storage",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-storage@0.1.0"
         }
       ]
     },
@@ -345,6 +505,26 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/ansa-ui-gpui@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "name": "ansa-vault",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-vault@0.1.0"
         }
       ]
     },
@@ -4197,6 +4377,58 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-fallible-iterator-0.3.0-3fc3854bf1",
+      "name": "fallible-iterator",
+      "versionInfo": "0.3.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/fallible-iterator/0.3.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT/Apache-2.0; Declared string was not emitted as an SPDX expression; no normalisation performed.",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2acce4a10f12dc2fb14a218589d4f1f62ef011b2d0cc4b3cb1bba8e94da14649"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/fallible-iterator@0.3.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-fallible-streaming-iterator-0.1.9-1a159ac885",
+      "name": "fallible-streaming-iterator",
+      "versionInfo": "0.1.9",
+      "downloadLocation": "https://crates.io/api/v1/crates/fallible-streaming-iterator/0.1.9/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT/Apache-2.0; Declared string was not emitted as an SPDX expression; no normalisation performed.",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/fallible-streaming-iterator@0.1.9"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-fastrand-1.9.0-47b6c58046",
       "name": "fastrand",
       "versionInfo": "1.9.0",
@@ -5939,6 +6171,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-hashlink-0.10.0-10a0e30185",
+      "name": "hashlink",
+      "versionInfo": "0.10.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/hashlink/0.10.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/hashlink@0.10.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-heck-0.4.1-d2bf64fd3d",
       "name": "heck",
       "versionInfo": "0.4.1",
@@ -7391,6 +7649,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/libredox@0.1.25"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-libsqlite3-sys-0.32.0-b8bf8d1f2b",
+      "name": "libsqlite3-sys",
+      "versionInfo": "0.32.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/libsqlite3-sys/0.32.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fbb8270bb4060bd76c6e96f20c52d80620f1d82a3470885694e41e0f81ef6fe7"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/libsqlite3-sys@0.32.0"
         }
       ]
     },
@@ -9614,7 +9898,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT OR Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
       "comment": "Review status: unreviewed; platform scope: declared-ci-target",
       "checksums": [
         {
@@ -11031,6 +11315,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/roxmltree@0.20.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "name": "rusqlite",
+      "versionInfo": "0.34.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/rusqlite/0.34.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "37e34486da88d8e051c7c0e23c3f15fd806ea8546260aa2fec247e97242ec143"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/rusqlite@0.34.0"
         }
       ]
     },
@@ -15169,6 +15479,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-vcpkg-0.2.15-4e0cf92934",
+      "name": "vcpkg",
+      "versionInfo": "0.2.15",
+      "downloadLocation": "https://crates.io/api/v1/crates/vcpkg/0.2.15/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT/Apache-2.0; Declared string was not emitted as an SPDX expression; no normalisation performed.",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/vcpkg@0.2.15"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-version-check-0.9.5-ee0227940e",
       "name": "version_check",
       "versionInfo": "0.9.5",
@@ -18635,7 +18971,22 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-coordinator-0.1.0-3e74f326a8"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -18655,6 +19006,16 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-emoji-0.1.0-0540d6acb4"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1"
     },
     {
@@ -18665,7 +19026,22 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-registry-0.1.0-e122002a4b"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -18676,6 +19052,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -19420,6 +19801,16 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-fallible-iterator-0.3.0-3fc3854bf1"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-fallible-streaming-iterator-0.1.9-1a159ac885"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-fastrand-1.9.0-47b6c58046"
     },
     {
@@ -19755,6 +20146,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-hashlink-0.10.0-10a0e30185"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-heck-0.4.1-d2bf64fd3d"
     },
     {
@@ -20031,6 +20427,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-libredox-0.1.25-d30e12e27f"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-libsqlite3-sys-0.32.0-b8bf8d1f2b"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -20731,6 +21132,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-roxmltree-0.20.0-a3a7e316e8"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -21530,6 +21936,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-vcpkg-0.2.15-4e0cf92934"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-version-check-0.9.5-ee0227940e"
     },
     {
@@ -22248,6 +22659,71 @@
       "relatedSpdxElement": "SPDXRef-Package-equator-0.4.2-f4b1250a23"
     },
     {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-coordinator-0.1.0-3e74f326a8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-core-0.1.0-a11713923f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-domain-0.1.0-ba91bfbffd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-emoji-0.1.0-0540d6acb4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-registry-0.1.0-e122002a4b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-core-0.1.0-a11713923f"
@@ -22260,7 +22736,57 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-cli-0.1.0-e819c27072",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-coordinator-0.1.0-3e74f326a8",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-domain-0.1.0-ba91bfbffd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-coordinator-0.1.0-3e74f326a8",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-core-0.1.0-a11713923f",
@@ -22273,9 +22799,49 @@
       "relatedSpdxElement": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321"
     },
     {
+      "spdxElementId": "SPDXRef-Package-ansa-core-0.1.0-a11713923f",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-ansa-desktop-0.1.0-2fc34eba3c",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-emoji-0.1.0-0540d6acb4",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-emoji-0.1.0-0540d6acb4",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-emoji-0.1.0-0540d6acb4",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-unicode-segmentation-1.13.3-9237bdaceb"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-domain-0.1.0-ba91bfbffd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
@@ -22298,9 +22864,59 @@
       "relatedSpdxElement": "SPDXRef-Package-windows-numerics-0.2.0-ed29c22051"
     },
     {
+      "spdxElementId": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-registry-0.1.0-e122002a4b",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-domain-0.1.0-ba91bfbffd"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-domain-0.1.0-ba91bfbffd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-search-0.1.0-02ff4ac321",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-winapi-util-0.1.11-86b6f42c81"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-components-0.1.0-a6db75b955",
@@ -22315,6 +22931,11 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-core-0.1.0-a11713923f"
     },
     {
@@ -22325,7 +22946,22 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-onboarding-0.1.0-820a98a635"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
@@ -22346,6 +22982,26 @@
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-raw-window-handle-0.6.2-f01b69beae"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
     },
     {
       "spdxElementId": "SPDXRef-Package-ar-archive-writer-0.5.3-8eaaaefc7e",
@@ -25968,6 +26624,11 @@
       "relatedSpdxElement": "SPDXRef-Package-foldhash-0.1.5-45c0e88d2b"
     },
     {
+      "spdxElementId": "SPDXRef-Package-hashlink-0.10.0-10a0e30185",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hashbrown-0.15.5-392943534a"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-hidden-trait-0.1.2-516675e4ee",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-proc-macro2-1.0.107-230e140b27"
@@ -26676,6 +27337,21 @@
       "spdxElementId": "SPDXRef-Package-libredox-0.1.25-d30e12e27f",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-libc-0.2.189-01d23b1294"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-libsqlite3-sys-0.32.0-b8bf8d1f2b",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cc-1.11.1-093697104f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-libsqlite3-sys-0.32.0-b8bf8d1f2b",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-pkg-config-0.3.34-0aba139931"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-libsqlite3-sys-0.32.0-b8bf8d1f2b",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-vcpkg-0.2.15-4e0cf92934"
     },
     {
       "spdxElementId": "SPDXRef-Package-lock-api-0.4.14-50fc4a550c",
@@ -28471,6 +29147,36 @@
       "spdxElementId": "SPDXRef-Package-ring-0.17.14-dc95a2788f",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-windows-sys-0.52.0-920ec6a2d8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-bitflags-2.13.2-7d2573190d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-fallible-iterator-0.3.0-3fc3854bf1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-fallible-streaming-iterator-0.1.9-1a159ac885"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hashlink-0.10.0-10a0e30185"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-libsqlite3-sys-0.32.0-b8bf8d1f2b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-rusqlite-0.34.0-4ef82a0360",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-smallvec-1.16.5-9ce9c500bf"
     },
     {
       "spdxElementId": "SPDXRef-Package-rust-embed-8.14.0-c1a0882479",
@@ -32031,6 +32737,6 @@
       "comment": "Review statuses are explicit per package. All third-party packages are unreviewed unless review-status.toml records evidence."
     }
   ],
-  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-c886c86d040be4d8677a6c0c7f9217739c187edff7034fe0b74984e7e6eaabca-673e52570973b1f165e6862b0ceaa5021fa76b1e099499ada1c0af6f597660d7",
-  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): c886c86d040be4d8677a6c0c7f9217739c187edff7034fe0b74984e7e6eaabca. SPDX content digest: 673e52570973b1f165e6862b0ceaa5021fa76b1e099499ada1c0af6f597660d7."
+  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-5d11fc48ee4ab46e6c96529814b164c072fef5b9c33cb878f7ec76761dac15bb-f25e0577501f9b7670150e907c4136ef1b44f2fdb45db487a215b246af834305",
+  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): 5d11fc48ee4ab46e6c96529814b164c072fef5b9c33cb878f7ec76761dac15bb. SPDX content digest: f25e0577501f9b7670150e907c4136ef1b44f2fdb45db487a215b246af834305."
 }

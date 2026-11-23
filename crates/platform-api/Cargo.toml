@@ -2,7 +2,7 @@
 name = "ansa-platform-api"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.74"
+rust-version.workspace = true
 description = "Platform-neutral application discovery, launch and capability contract for Ansa"
 license = "Apache-2.0"
 publish = false
@@ -11,7 +11,28 @@ publish = false
 name = "ansa_platform_api"
 path = "src/lib.rs"
 
-# The Windows adapter is the only concrete backend in this slice. It is a
-# target-specific dependency so non-Windows builds do not compile Win32 code.
+[dependencies]
+ansa-quicklinks = { path = "../quicklinks" }
+raw-window-handle = "0.6"
+
 [target.'cfg(windows)'.dependencies]
 ansa-platform-windows = { path = "../platform-windows" }
+
+[target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+rustix = { version = "1.1", features = ["event", "net"] }
+tempfile = "3"
+x11rb = { version = "0.13", features = ["randr", "xkb"] }
+x11rb-protocol = "0.13"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = { version = "=1.10.4", default-features = false, features = ["enable_unstable_features_that_may_break_with_minor_version_bumps"] }
+objc2 = "0.6.5"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "libc", "NSApplication", "NSEvent", "NSResponder", "NSRunningApplication", "NSScreen", "NSView", "NSWindow", "NSWorkspace"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSDictionary", "NSError", "NSGeometry", "NSString", "NSURL", "NSValue"] }
+
+[dev-dependencies]
+plist = { version = "=1.10.4", default-features = false, features = ["enable_unstable_features_that_may_break_with_minor_version_bumps"] }
+tempfile = "3"

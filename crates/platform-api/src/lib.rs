@@ -1,6 +1,6 @@
 //! Platform-neutral host contract for the first Ansa platform slice.
 //!
-//! The contract is deliberately small and dependency-free:
+//! The contract is deliberately small:
 //!
 //! * [`AppEntry`] describes a launchable application discovered on the host.
 //! * [`IconCacheEntry`] describes a bounded ICO produced by
@@ -17,12 +17,34 @@
 //! ID and ranking policy and avoids a circular dependency with the Windows
 //! adapter.
 //!
-//! On Windows these functions delegate to `ansa-platform-windows`. On every
-//! other operating system they return an explicit unsupported error instead of
-//! pretending a native adapter exists.
+//! On Windows these functions delegate to `ansa-platform-windows`. macOS uses
+//! bundle identity and LaunchServices; Linux uses XDG desktop entries.
 
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(missing_debug_implementations)]
+
+pub mod host_lifecycle;
+pub mod hotkey;
+
+mod opener;
+pub use opener::{NativeOpenerProbe, OpenerCapabilities};
+
+#[cfg(any(target_os = "macos", target_os = "linux", test))]
+mod catalog;
+#[cfg(any(target_os = "linux", test))]
+mod linux_catalog;
+#[cfg(any(target_os = "linux", test))]
+mod linux_icons;
+#[cfg(any(target_os = "macos", test))]
+mod mac_catalog;
+
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+#[path = "mac_native.rs"]
+mod imp;
+#[cfg(target_os = "linux")]
+#[path = "linux_native.rs"]
+mod imp;
 
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -59,6 +81,15 @@ pub struct AppEntry {
     /// Why the entry is known to be broken, if it is. Broken entries remain
     /// visible so the user can refresh instead of silently losing them.
     pub broken: Option<String>,
+    /// Per-discovery selection token for macOS and Linux.
+    ///
+    /// This is not part of the determined application identity. It lets a
+    /// caller prove that it retained the exact entry from the current native
+    /// snapshot rather than a rediscovered row at the same path and stable ID.
+    /// Keep this value with the entry; do not construct it or compare it across
+    /// processes. It is always zero on Windows and for manually built entries.
+    #[doc(hidden)]
+    pub selection: u64,
 }
 
 impl AppEntry {
@@ -74,6 +105,7 @@ impl AppEntry {
             icon_source: None,
             packaged: false,
             broken: None,
+            selection: 0,
         }
     }
 
@@ -137,14 +169,17 @@ pub struct IconCacheEntry {
 /// What happened when the caller asked to launch or switch to an application.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LaunchOutcome {
-    /// A new process/instance was handed to the shell.
+    /// The native host accepted a launch or a new executable was started.
     Launched,
     /// An existing top-level window was observed as the foreground window.
     Switched {
         /// Native window handle that was verified as foreground.
         window: isize,
     },
-    /// Windows denied the activation request or the launch was rejected.
+    /// macOS reported the selected existing application as foreground.
+    /// This does not assert focus of a particular window.
+    SwitchedApplication { process_id: i32 },
+    /// The host denied the activation request or the launch was rejected.
     Denied {
         /// Human-readable reason suitable for diagnostics or a status line.
         reason: String,
@@ -173,25 +208,39 @@ impl LaunchOutcome {
         matches!(self, Self::Launched)
     }
 
-    /// Returns `true` only for a verified [`Self::Switched`] outcome.
+    /// Returns `true` only for a verified window or application switch.
     pub fn is_switched(&self) -> bool {
-        matches!(self, Self::Switched { .. })
+        matches!(
+            self,
+            Self::Switched { .. } | Self::SwitchedApplication { .. }
+        )
     }
 
     /// Returns `true` only when the caller has a positive, observed result.
     pub fn is_success(&self) -> bool {
-        matches!(self, Self::Launched | Self::Switched { .. })
+        self.is_launched() || self.is_switched()
     }
 
     /// Returns a stable label for UI and logs.
     pub fn label(&self) -> &'static str {
         match self {
             Self::Launched => "launched",
-            Self::Switched { .. } => "switched",
+            Self::Switched { .. } | Self::SwitchedApplication { .. } => "switched",
             Self::Denied { .. } => "denied",
             Self::Failed { .. } => "failed",
             Self::Unverified { .. } => "unverified",
             Self::NoTarget { .. } => "no-target",
+        }
+    }
+
+    /// An actionable error or explanation when the operation did not succeed.
+    pub fn reason(&self) -> Option<&str> {
+        match self {
+            Self::Launched | Self::Switched { .. } | Self::SwitchedApplication { .. } => None,
+            Self::Denied { reason }
+            | Self::Failed { reason }
+            | Self::Unverified { reason }
+            | Self::NoTarget { reason } => Some(reason),
         }
     }
 }
@@ -303,7 +352,7 @@ pub struct HostCapabilities {
     pub platform: Platform,
     /// Identifier/version of the adapter that answered the probe.
     pub adapter: &'static str,
-    /// Start Menu application catalog.
+    /// Native application catalog.
     pub application_catalog: CapabilityStatus,
     /// Launching a discovered application entry.
     pub application_launch: CapabilityStatus,
@@ -323,8 +372,7 @@ pub struct HostCapabilities {
 
 /// Discovers launchable applications known to the host.
 ///
-/// On Windows this is a bounded Start Menu catalog scan. On all other
-/// platforms it returns an explicit unsupported error.
+/// A new bounded scan replaces the Unix adapter's discovery snapshot.
 pub fn discover_applications() -> Result<Vec<AppEntry>, String> {
     imp::discover_applications()
 }
@@ -334,7 +382,13 @@ pub fn discover_applications() -> Result<Vec<AppEntry>, String> {
 /// The Windows adapter accepts only existing `.lnk` and `.exe` files. It never
 /// builds a command line or interpolates the path into a shell string.
 pub fn open_application(path: &str) -> Result<(), String> {
-    imp::open_application(path)
+    #[cfg(windows)]
+    return imp::open_application(path);
+    #[cfg(not(windows))]
+    match launch_or_switch(path) {
+        outcome if outcome.is_success() => Ok(()),
+        outcome => Err(outcome.reason().unwrap_or("No launch target").to_owned()),
+    }
 }
 
 /// Launches an application or switches to an existing verified window.
@@ -343,8 +397,34 @@ pub fn open_application(path: &str) -> Result<(), String> {
 /// process image path. A switch is reported only when the target window is
 /// observed as foreground. Missing, moved or unreadable targets return
 /// [`LaunchOutcome::NoTarget`] with a refresh hint instead of a silent no-op.
+/// macOS verifies the foreground application, not an individual window.
+/// Linux launches literal argv and does not attempt switch.
 pub fn launch_or_switch(path: &str) -> LaunchOutcome {
-    imp::launch_or_switch(path)
+    imp::launch_or_switch(path, None)
+}
+
+/// Launches the selected application only when its identity matches the
+/// current discovery snapshot on macOS and Linux.
+///
+/// This checks path and stable ID against the *current* snapshot. It cannot
+/// distinguish an old selection from a newly discovered entry at the same path
+/// and ID; use [`launch_or_switch_selected`] with the retained [`AppEntry`]
+/// when the selection outlives a refresh. Windows keeps its existing path
+/// validation and launch behavior.
+pub fn launch_or_switch_identified(path: &str, id: &str) -> LaunchOutcome {
+    imp::launch_or_switch(path, Some(id))
+}
+
+/// Launches or switches using the exact application entry the caller retained.
+///
+/// On macOS and Linux, the current native snapshot must still contain the same
+/// path, stable ID and per-discovery selection token before the entry is
+/// rechecked and launched. A rediscovery at the same path and ID receives a new
+/// token, so an old row cannot launch its replacement. This is the API a
+/// launcher UI should use after rendering a catalog. Windows retains its
+/// existing path validation because its adapter has no per-discovery token.
+pub fn launch_or_switch_selected(entry: &AppEntry) -> LaunchOutcome {
+    imp::launch_or_switch_selected(entry)
 }
 
 /// Opens an `http` or `https` URL using the host's registered handler.
@@ -352,6 +432,21 @@ pub fn launch_or_switch(path: &str) -> LaunchOutcome {
 /// Any other scheme is rejected before the host is called.
 pub fn open_url(url: &str) -> Result<(), String> {
     imp::open_url(url)
+}
+
+/// Executes an inert quicklink request under the caller's preview policy.
+/// Always revalidates scheme, native path and actual file type before handoff.
+/// This is not a substitute for the quicklink preview/commit gate.
+pub fn execute_open_request(
+    request: &ansa_quicklinks::OpenRequest,
+    policy: ansa_quicklinks::OpenPolicy,
+) -> Result<(), String> {
+    opener::execute(request, policy)
+}
+
+/// Reports browser, reveal and default-app capability for the current backend.
+pub fn opener_capabilities() -> OpenerCapabilities {
+    imp::opener_capabilities()
 }
 
 /// Probes the host's current capabilities.
@@ -376,7 +471,27 @@ pub fn host_capabilities() -> HostCapabilities {
 /// An extraction failure is returned as an explicit error; callers should show
 /// a generic icon instead of claiming a real one.
 pub fn extract_icon_to_ico(icon_source: &str, cache_dir: &Path) -> Result<IconCacheEntry, String> {
-    imp::extract_icon_to_ico(icon_source, cache_dir)
+    #[cfg(windows)]
+    return imp::extract_icon_to_ico(icon_source, cache_dir);
+    #[cfg(not(windows))]
+    {
+        let _ = (icon_source, cache_dir);
+        Err("ICO extraction is only available on Windows; use a native icon resource or a generic icon".to_owned())
+    }
+}
+
+/// Resolves a discovery icon source to a bounded native image (ICNS on macOS,
+/// PNG from the XDG theme on Linux). Does not decode the image into a bitmap.
+pub fn resolve_application_icon(icon_source: &str) -> Result<PathBuf, String> {
+    #[cfg(target_os = "macos")]
+    return mac_catalog::icon(Path::new(icon_source));
+    #[cfg(target_os = "linux")]
+    return imp::icon(icon_source);
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        let _ = icon_source;
+        Err("Native icon resource lookup is unsupported on this platform".to_owned())
+    }
 }
 
 /// Reveals an existing absolute path in the registered file manager.
@@ -397,9 +512,7 @@ pub fn copy_identity(entry: &AppEntry) -> String {
     entry.identity_summary()
 }
 
-/// Returns the standard Start Menu roots used by discovery and watching.
-///
-/// On non-Windows platforms this returns an explicit unsupported error.
+/// Returns the standard roots used by discovery and watching.
 pub fn catalog_watch_roots() -> Result<Vec<PathBuf>, String> {
     imp::catalog_watch_roots()
 }
@@ -407,7 +520,8 @@ pub fn catalog_watch_roots() -> Result<Vec<PathBuf>, String> {
 #[cfg(windows)]
 mod imp {
     use super::{
-        AppEntry, CapabilityStatus, HostCapabilities, IconCacheEntry, LaunchOutcome, Platform,
+        AppEntry, CapabilityStatus, HostCapabilities, IconCacheEntry, LaunchOutcome,
+        OpenerCapabilities, Platform,
     };
     use ansa_platform_windows as host;
     use std::path::{Path, PathBuf};
@@ -426,6 +540,7 @@ mod imp {
                     icon_source: entry.icon_source,
                     packaged: entry.packaged,
                     broken: entry.broken,
+                    selection: 0,
                 })
                 .collect()
         })
@@ -435,8 +550,14 @@ mod imp {
         host::open_application(path)
     }
 
-    pub(super) fn launch_or_switch(path: &str) -> LaunchOutcome {
+    pub(super) fn launch_or_switch(path: &str, _expected_id: Option<&str>) -> LaunchOutcome {
         map_launch_outcome(host::launch_or_switch(path))
+    }
+
+    pub(super) fn launch_or_switch_selected(entry: &AppEntry) -> LaunchOutcome {
+        // The Windows adapter validates the entry path and has no snapshot
+        // token. Keep its existing behavior rather than inventing one.
+        launch_or_switch(&entry.path, Some(&entry.id))
     }
 
     fn map_launch_outcome(outcome: host::LaunchOutcome) -> LaunchOutcome {
@@ -452,6 +573,22 @@ mod imp {
 
     pub(super) fn open_url(url: &str) -> Result<(), String> {
         host::open_url(url)
+    }
+
+    pub(super) fn open_document(_target: &crate::opener::LocalTarget) -> Result<(), String> {
+        Err("Default application document opening is not implemented on Windows; reveal it in Explorer instead".to_owned())
+    }
+
+    pub(super) fn opener_capabilities() -> OpenerCapabilities {
+        OpenerCapabilities {
+            backend: crate::host_lifecycle::HostBackend::Windows,
+            browser: CapabilityStatus::Available,
+            file_manager: CapabilityStatus::Available,
+            default_application: CapabilityStatus::Degraded {
+                reason: "Default application routing supports web URLs only".to_owned(),
+                alternative: "Reveal a local item in Explorer".to_owned(),
+            },
+        }
     }
 
     pub(super) fn extract_icon_to_ico(
@@ -519,12 +656,12 @@ mod imp {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 mod imp {
     use super::{
-        AppEntry, CapabilityStatus, HostCapabilities, IconCacheEntry, LaunchOutcome, Platform,
+        AppEntry, CapabilityStatus, HostCapabilities, LaunchOutcome, OpenerCapabilities, Platform,
     };
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     fn unsupported(operation: &str) -> String {
         format!(
@@ -537,25 +674,31 @@ mod imp {
         Err(unsupported("application discovery"))
     }
 
-    pub(super) fn open_application(_path: &str) -> Result<(), String> {
-        Err(unsupported("opening an application"))
-    }
-
-    pub(super) fn launch_or_switch(_path: &str) -> LaunchOutcome {
+    pub(super) fn launch_or_switch(_path: &str, _expected_id: Option<&str>) -> LaunchOutcome {
         LaunchOutcome::NoTarget {
             reason: unsupported("launching or switching applications"),
         }
+    }
+
+    pub(super) fn launch_or_switch_selected(_entry: &AppEntry) -> LaunchOutcome {
+        launch_or_switch("", None)
     }
 
     pub(super) fn open_url(_url: &str) -> Result<(), String> {
         Err(unsupported("opening a URL"))
     }
 
-    pub(super) fn extract_icon_to_ico(
-        _icon_source: &str,
-        _cache_dir: &Path,
-    ) -> Result<IconCacheEntry, String> {
-        Err(unsupported("icon extraction"))
+    pub(super) fn open_document(_target: &crate::opener::LocalTarget) -> Result<(), String> {
+        Err(unsupported("opening a document"))
+    }
+
+    pub(super) fn opener_capabilities() -> OpenerCapabilities {
+        OpenerCapabilities {
+            backend: crate::host_lifecycle::HostBackend::Other,
+            browser: CapabilityStatus::Unsupported,
+            file_manager: CapabilityStatus::Unsupported,
+            default_application: CapabilityStatus::Unsupported,
+        }
     }
 
     pub(super) fn reveal_in_file_manager(_path: &str) -> Result<(), String> {
@@ -578,7 +721,6 @@ mod imp {
             clipboard_capture: CapabilityStatus::Unsupported,
             window_control: CapabilityStatus::Unsupported,
             notes: vec![
-                "This slice implements the Windows adapter only.",
                 "No application discovery, launch or URL handler is claimed on this platform.",
             ],
         }
@@ -632,6 +774,7 @@ mod tests {
     fn launch_outcome_success_is_conservative() {
         assert!(LaunchOutcome::Launched.is_success());
         assert!(LaunchOutcome::Switched { window: 3 }.is_success());
+        assert!(LaunchOutcome::SwitchedApplication { process_id: 42 }.is_switched());
         assert!(!LaunchOutcome::Denied {
             reason: "denied".to_owned()
         }
@@ -702,7 +845,7 @@ mod tests {
         assert_eq!(Platform::Other.as_str(), "other");
     }
 
-    #[cfg(not(windows))]
+    #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
     #[test]
     fn non_windows_api_is_explicitly_unsupported() {
         assert!(discover_applications().is_err());

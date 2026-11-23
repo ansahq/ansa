@@ -1,8 +1,8 @@
 //! Errors surfaced by clipboard capture, storage and insertion.
 //!
-//! Error values never contain clipboard text, file paths, ciphertext or DPAPI
-//! blobs. They carry static operation names, bounds and OS error codes only, so
-//! they are safe to log and display.
+//! Error values never contain clipboard text, file paths, ciphertext, DPAPI
+//! blobs or native keyring secrets. They carry static operation names, bounds
+//! and OS error codes only, so they are safe to log and display.
 
 use std::fmt;
 
@@ -18,7 +18,7 @@ pub enum ClipboardError {
     Locked,
     /// A filesystem operation failed.
     Io(std::io::Error),
-    /// The DPAPI vault rejected an operation.
+    /// The vault rejected an operation.
     Vault(VaultError),
     /// The metadata model rejected an operation.
     History(HistoryError),
@@ -67,6 +67,23 @@ pub enum ClipboardError {
     UnsupportedPlatform {
         /// Operating system reported by `std::env::consts::OS`.
         platform: &'static str,
+    },
+    /// The selected desktop session lacks a required capture capability.
+    CaptureUnavailable {
+        /// Static explanation suitable for diagnostics.
+        reason: &'static str,
+    },
+    /// The selection changed while it was being read; retry on the next poll.
+    ClipboardChanged,
+    /// An untrusted offer or payload exceeded a native adapter bound.
+    CaptureLimit {
+        /// Static description of the bounded resource.
+        reason: &'static str,
+    },
+    /// A desktop clipboard operation failed without returning usable data.
+    CaptureFailed {
+        /// Static operation description, never clipboard content.
+        operation: &'static str,
     },
     /// The clipboard could not be opened after bounded retries.
     ClipboardBusy {
@@ -132,6 +149,14 @@ impl fmt::Display for ClipboardError {
             }
             Self::UnsupportedPlatform { platform } => {
                 write!(formatter, "clipboard capture is unsupported on {platform}")
+            }
+            Self::CaptureUnavailable { reason } => {
+                write!(formatter, "clipboard capture is unavailable: {reason}")
+            }
+            Self::ClipboardChanged => formatter.write_str("clipboard changed during capture"),
+            Self::CaptureLimit { reason } => write!(formatter, "clipboard capture limit: {reason}"),
+            Self::CaptureFailed { operation } => {
+                write!(formatter, "clipboard capture failed: {operation}")
             }
             Self::ClipboardBusy { attempts } => {
                 write!(formatter, "clipboard was busy after {attempts} attempts")

@@ -6,7 +6,7 @@
 //! <store>/.lock                   cross-process single-instance lock
 //! <store>/manifest.json           clipboard-owned alias manifest
 //! <store>/history.json            bounded, non-sensitive metadata
-//! <vault>/secrets/ansa-clip-<store>-<id>.sealed   DPAPI envelope
+//! <vault>/secrets/ansa-clip-<store>-<id>.sealed   vault envelope
 //! ```
 //!
 //! The metadata file never contains clipboard text or paths. Payloads are
@@ -58,12 +58,13 @@
 //!
 //! ## Honest limits
 //!
-//! DPAPI is user-bound, not passphrase-bound. The lock is a session gate and
-//! cannot stop another process running as the same Windows user from opening
-//! the sealed files. Wiping in-memory previews is best-effort: the allocator
-//! and the operating system may retain old pages. Payload deletion is
-//! authoritative in metadata first; a failed ciphertext delete leaves a
-//! manifest tombstone for a later non-empty cleanup or explicit clear.
+//! DPAPI is user-bound, not passphrase-bound; on macOS/Linux the OS keyring
+//! provider policy decides which same-user processes can read the vault key.
+//! The lock is a session gate and cannot stop another process the OS/provider
+//! allows to open the sealed files. Wiping in-memory previews is best-effort:
+//! the allocator and the operating system may retain old pages. Payload
+//! deletion is authoritative in metadata first; a failed ciphertext delete
+//! leaves a manifest tombstone for a later non-empty cleanup or explicit clear.
 
 use std::collections::BTreeSet;
 use std::fmt;
@@ -75,16 +76,18 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use ansa_vault::Vault;
+use ansa_vault::{Vault, VaultError};
 use serde::{Deserialize, Serialize};
 
 use crate::content::{ClipboardContent, wipe_bytes, wipe_string};
 use crate::error::ClipboardError;
-use crate::filter::{CaptureGate, CaptureRejection, ClipboardSnapshot, FilterOutcome, evaluate};
+use crate::filter::{
+    CaptureGate, CaptureRejection, ClipboardSnapshot, FilterOutcome, evaluate, gate_rejection,
+};
 use crate::lock::StoreLock;
 use crate::model::{
     ABSOLUTE_MAX_ITEMS, CapturePolicy, ClipboardHistory, ClipboardItem, HistoryError, ItemDraft,
-    SourceConfidence,
+    ItemSummary, SourceConfidence,
 };
 
 const METADATA_FILE: &str = "history.json";
@@ -107,6 +110,13 @@ const MAX_PREVIEW_ENTRIES: usize = 32;
 const MAX_PREVIEW_BYTES: usize = 16 * 1024;
 const MAX_PREVIEW_CHARS: usize = 512;
 
+/// Vault context prefix for a named secret; the context tag is stored with the
+/// in-memory payload and counts toward the encoded budget.
+const VAULT_CONTEXT_PREFIX: &str = "secret:";
+/// Conservative framing allowance for one in-memory vault secret: the XChaCha
+/// nonce and tag are 40 bytes, plus slack for future envelope changes.
+const VAULT_ENCODED_OVERHEAD: usize = 64;
+
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Storage for sealed payloads.
@@ -116,6 +126,22 @@ static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 pub trait SealBackend {
     /// Seal `plaintext` under `alias`.
     fn seal(&self, alias: &str, plaintext: &[u8]) -> Result<(), ClipboardError>;
+    /// Seal `plaintext` under `alias` while removing `remove_aliases`.
+    ///
+    /// A backend that budgets its encoded representation must implement this
+    /// transactionally: a quota, count or cryptographic failure must leave
+    /// every existing payload, including the removals, untouched. The default
+    /// delegates to [`Self::seal`] for backends without such a budget; the
+    /// caller deletes the removals after the metadata commit.
+    fn seal_replacing(
+        &self,
+        alias: &str,
+        plaintext: &[u8],
+        remove_aliases: &[&str],
+    ) -> Result<(), ClipboardError> {
+        let _ = remove_aliases;
+        self.seal(alias, plaintext)
+    }
     /// Open the sealed payload stored under `alias`.
     fn open(&self, alias: &str) -> Result<Vec<u8>, ClipboardError>;
     /// Delete the payload under `alias`; returns whether one existed.
@@ -124,8 +150,41 @@ pub trait SealBackend {
     fn lock(&self);
     /// Unlock the backend for this session.
     fn unlock(&self);
+    /// Explicitly unlock, allowing the backend to report recovery errors.
+    fn try_unlock(&self) -> Result<(), ClipboardError> {
+        self.unlock();
+        if self.is_locked() {
+            return Err(ClipboardError::Locked);
+        }
+        Ok(())
+    }
+    /// Authenticate an explicitly passphrase-backed backend.
+    fn unlock_with_passphrase(&self, _: &[u8]) -> Result<(), ClipboardError> {
+        Err(ClipboardError::InvalidArgument {
+            reason: "this clipboard backend does not accept a passphrase",
+        })
+    }
     /// Whether sealed operations currently fail.
     fn is_locked(&self) -> bool;
+
+    /// Encoded in-memory limit for a volatile backend, if it enforces one.
+    ///
+    /// The limit covers the backend's own encoded representation (for example
+    /// hexadecimal ciphertext), not the plaintext. `None` means the backend has
+    /// no encoded in-memory budget, so history quotas are the only bound.
+    fn encoded_memory_limit(&self) -> Option<usize> {
+        None
+    }
+
+    /// Estimated encoded bytes this backend stores for `plaintext_len` under
+    /// `alias`, or `None` when [`Self::encoded_memory_limit`] is `None`.
+    ///
+    /// The estimate must not undercount the backend's actual encoded size; a
+    /// slight overestimate only evicts history earlier.
+    fn encoded_memory_cost(&self, alias: &str, plaintext_len: usize) -> Option<usize> {
+        let _ = (alias, plaintext_len);
+        None
+    }
 }
 
 /// Production backend that delegates to [`ansa_vault::Vault`].
@@ -148,6 +207,17 @@ impl SealBackend for VaultBackend {
         Ok(())
     }
 
+    fn seal_replacing(
+        &self,
+        alias: &str,
+        plaintext: &[u8],
+        remove_aliases: &[&str],
+    ) -> Result<(), ClipboardError> {
+        self.vault
+            .put_secret_replacing(alias, plaintext, remove_aliases)?;
+        Ok(())
+    }
+
     fn open(&self, alias: &str) -> Result<Vec<u8>, ClipboardError> {
         Ok(self.vault.get_secret(alias)?)
     }
@@ -164,8 +234,38 @@ impl SealBackend for VaultBackend {
         self.vault.unlock();
     }
 
+    fn try_unlock(&self) -> Result<(), ClipboardError> {
+        Ok(self.vault.try_unlock()?)
+    }
+
+    fn unlock_with_passphrase(&self, passphrase: &[u8]) -> Result<(), ClipboardError> {
+        Ok(self.vault.unlock_with_passphrase(passphrase)?)
+    }
+
     fn is_locked(&self) -> bool {
         self.vault.is_locked()
+    }
+
+    fn encoded_memory_limit(&self) -> Option<usize> {
+        (!self.vault.status().mode.is_persistent()).then_some(ansa_vault::MAX_MEMORY_SECRET_BYTES)
+    }
+
+    fn encoded_memory_cost(&self, alias: &str, plaintext_len: usize) -> Option<usize> {
+        if self.vault.status().mode.is_persistent() {
+            return None;
+        }
+        let alias_len = alias.len();
+        let context_len = VAULT_CONTEXT_PREFIX.len().saturating_add(alias_len);
+        Some(
+            alias_len
+                .saturating_mul(2)
+                .saturating_add(context_len)
+                .saturating_add(
+                    plaintext_len
+                        .saturating_add(VAULT_ENCODED_OVERHEAD)
+                        .saturating_mul(2),
+                ),
+        )
     }
 }
 
@@ -574,7 +674,8 @@ pub struct ClipboardStore {
     store_id: String,
     manifest: Manifest,
     metadata_present: bool,
-    _lock: StoreLock,
+    directory_lock: Option<StoreLock>,
+    last_memory_sequence: u64,
 }
 
 impl fmt::Debug for ClipboardStore {
@@ -592,22 +693,59 @@ impl fmt::Debug for ClipboardStore {
 }
 
 impl ClipboardStore {
-    /// Open a store backed by an already-open DPAPI vault.
+    /// Open a store backed by an already-open vault.
     ///
-    /// The caller must pass [`Vault::open`]'s result; this crate never creates
-    /// a plaintext fallback.
+    /// Memory-only vaults keep history and metadata entirely in memory; the
+    /// requested directory is not accessed. Lock clears memory-only items.
+    /// This crate never creates a plaintext fallback.
     pub fn open(
         root: impl AsRef<Path>,
         policy: CapturePolicy,
         vault: Vault,
     ) -> Result<Self, ClipboardError> {
-        Self::open_with_backend(root, policy, Box::new(VaultBackend::new(vault)))
+        let status = vault.status();
+        let backend = Box::new(VaultBackend::new(vault));
+        if status.mode.is_persistent() {
+            return Self::open_with_backend(root, policy, backend);
+        }
+        Ok(Self::open_volatile(root.as_ref(), policy, backend))
+    }
+
+    /// Construct a store whose history and payloads are entirely volatile.
+    ///
+    /// The requested directory is recorded for compatibility but never
+    /// accessed, validated, created or locked. This is the only representation
+    /// used for a backend that reports an encoded in-memory budget: combining
+    /// disk metadata with a transactional volatile vault could lose an evicted
+    /// payload if the final metadata write failed after the vault replacement.
+    fn open_volatile(root: &Path, policy: CapturePolicy, backend: Box<dyn SealBackend>) -> Self {
+        let manifest = Manifest::empty_with_new_id();
+        Self {
+            root: root.to_owned(),
+            locked: backend.is_locked(),
+            backend,
+            history: ClipboardHistory::new(policy),
+            previews: PreviewCache::default(),
+            store_id: manifest.store_id.clone(),
+            manifest,
+            metadata_present: false,
+            directory_lock: None,
+            last_memory_sequence: 0,
+        }
     }
 
     /// Open a store with an explicit sealing backend.
     ///
     /// This is the test/embedding constructor. Production code should use
-    /// [`ClipboardStore::open`] so payloads are DPAPI-sealed.
+    /// [`ClipboardStore::open`] so payloads use the configured vault.
+    ///
+    /// A backend that reports [`SealBackend::encoded_memory_limit`] is treated
+    /// as volatile: the store is constructed with no directory access, lock or
+    /// metadata files, exactly like a memory-only vault. That removes the
+    /// mixed disk-metadata/volatile-vault configuration, where a successful
+    /// transactional eviction followed by a failed history write could lose a
+    /// valid row. Backends without an encoded limit keep the persistent
+    /// behavior.
     #[doc(hidden)]
     pub fn open_with_backend(
         root: impl AsRef<Path>,
@@ -615,6 +753,9 @@ impl ClipboardStore {
         backend: Box<dyn SealBackend>,
     ) -> Result<Self, ClipboardError> {
         let root = root.as_ref();
+        if backend.encoded_memory_limit().is_some() {
+            return Ok(Self::open_volatile(root, policy, backend));
+        }
         if root.exists() && !root.is_dir() {
             return Err(ClipboardError::CorruptHistory {
                 reason: "store path exists but is not a directory",
@@ -649,7 +790,8 @@ impl ClipboardStore {
             store_id,
             manifest,
             metadata_present: loaded.metadata_present,
-            _lock: lock,
+            directory_lock: Some(lock),
+            last_memory_sequence: 0,
         };
         if legacy {
             store.migrate_legacy()?;
@@ -689,10 +831,16 @@ impl ClipboardStore {
         Ok(store)
     }
 
-    /// Store root directory.
+    /// Store root directory, unused when history is memory-only.
     #[must_use]
     pub fn root(&self) -> &Path {
         &self.root
+    }
+
+    /// Whether history and sealed payloads are durable across process restarts.
+    #[must_use]
+    pub fn is_persistent(&self) -> bool {
+        self.directory_lock.is_some()
     }
 
     /// Current non-sensitive state.
@@ -741,11 +889,45 @@ impl ClipboardStore {
         self.locked
     }
 
+    /// Read and capture the current native selection. A locked, paused or
+    /// private store does not ask the desktop for clipboard contents.
+    pub fn capture_current(&mut self, now: u64) -> Result<CaptureReport, ClipboardError> {
+        self.capture_from(now, |policy| crate::native::read(Some(policy)))
+    }
+
+    fn capture_from(
+        &mut self,
+        now: u64,
+        read: impl FnOnce(&CapturePolicy) -> Result<ClipboardSnapshot, ClipboardError>,
+    ) -> Result<CaptureReport, ClipboardError> {
+        self.sync_lock();
+        if let Some(reason) = gate_rejection(self.capture_gate()) {
+            return Ok(CaptureReport::Skipped(reason));
+        }
+        let snapshot = read(self.history.policy())?;
+        self.capture(snapshot, now)
+    }
+
+    fn capture_gate(&self) -> CaptureGate {
+        CaptureGate {
+            locked: self.locked,
+            paused: self.history.is_paused(),
+            private_mode: self.history.is_private_mode(),
+        }
+    }
+
     /// Capture a snapshot.
     ///
     /// Filtering, sealing and metadata commitment happen in that order. On any
     /// rejection or error no metadata entry, sealed payload or preview entry is
-    /// created.
+    /// created. A volatile backend that budgets its encoded representation may
+    /// require more room than the plaintext history quota; unpinned candidates
+    /// are evicted from the candidate until the encoded envelope is estimated
+    /// to fit. The replacement itself is transactional in the vault: it seals
+    /// first and commits the evictions and insertion only if the exact encoded
+    /// budget allows. If it fails, the pre-capture history and manifest are
+    /// restored and every stored payload remains intact. Pinned items are never
+    /// evicted for this budget.
     pub fn capture(
         &mut self,
         snapshot: ClipboardSnapshot,
@@ -753,13 +935,16 @@ impl ClipboardStore {
     ) -> Result<CaptureReport, ClipboardError> {
         self.sync_lock();
 
-        let gate = CaptureGate {
-            locked: self.locked,
-            paused: self.history.is_paused(),
-            private_mode: self.history.is_private_mode(),
-        };
-        if let FilterOutcome::Reject(rejection) = evaluate(&snapshot, self.history.policy(), gate) {
+        if let FilterOutcome::Reject(rejection) =
+            evaluate(&snapshot, self.history.policy(), self.capture_gate())
+        {
             return Ok(CaptureReport::Skipped(rejection));
+        }
+        if !self.is_persistent()
+            && snapshot.sequence != 0
+            && snapshot.sequence == self.last_memory_sequence
+        {
+            return Ok(CaptureReport::Duplicate);
         }
 
         let format = snapshot.format();
@@ -816,6 +1001,34 @@ impl ClipboardStore {
         };
 
         let alias = self.alias_for(inserted.item.id);
+        let mut evicted = inserted.evicted;
+        let memory_limit = self.backend.encoded_memory_limit();
+        // The embedding API may wrap a backend whose encoded budget appears
+        // only after open. A persistent store must not enter the transactional
+        // volatile path: it would pre-commit reduced metadata and let the vault
+        // remove victims before the final history write can still fail. Reject
+        // before any metadata or payload mutation.
+        if memory_limit.is_some() && self.is_persistent() {
+            wipe_bytes(&mut plaintext);
+            return Err(ClipboardError::InvalidArgument {
+                reason: "a persistent clipboard store cannot switch to a volatile encoded budget after open",
+            });
+        }
+        if let Some(limit) = memory_limit
+            && !self.evict_for_encoded_memory(
+                &mut candidate,
+                inserted.item.id,
+                plaintext.len(),
+                limit,
+                &mut evicted,
+            )
+        {
+            wipe_bytes(&mut plaintext);
+            return Ok(CaptureReport::Skipped(CaptureRejection::QuotaExhausted));
+        }
+        let victim_aliases: Vec<String> =
+            evicted.iter().map(|item| self.alias_for(item.id)).collect();
+
         let mut manifest = self.manifest.clone();
         let referenced: BTreeSet<String> = candidate
             .items()
@@ -825,58 +1038,215 @@ impl ClipboardStore {
         manifest.insert(alias.clone(), &referenced);
         manifest.present = true;
 
+        // State to restore if a volatile replacement fails after the reduced
+        // metadata pre-commit below. Cloning metadata is cheap; no payload is
+        // copied.
+        let previous_history = self.history.clone();
+        let previous_manifest = self.manifest.clone();
+        let previous_metadata_present = self.metadata_present;
+
+        // A volatile backend removes evicted payloads as part of the
+        // replacement. Commit the reduced metadata and victim tombstones first:
+        // a crash after the replacement but before the full candidate commit
+        // must not leave live rows whose ciphertext is already gone. Unlike the
+        // old protocol, no payload is deleted here; `seal_replacing` performs
+        // the removals atomically with the insertion, or not at all.
+        let precommit = memory_limit.is_some() && !evicted.is_empty();
+        if precommit {
+            let mut reduced = candidate.clone();
+            reduced.remove(inserted.item.id);
+            // Tombstones let cleanup reconcile a crash between the reduced
+            // history commit and the replacement.
+            for victim in &victim_aliases {
+                manifest.aliases.insert(victim.clone());
+            }
+            if let Err(error) = self.persist_manifest_value(&manifest) {
+                wipe_bytes(&mut plaintext);
+                return Err(error);
+            }
+            if let Err(error) = self.persist_history(&reduced) {
+                self.restore_capture_metadata(
+                    previous_history.clone(),
+                    previous_manifest.clone(),
+                    previous_metadata_present,
+                );
+                wipe_bytes(&mut plaintext);
+                return Err(error);
+            }
+            self.history = reduced;
+            self.manifest = manifest.clone();
+            self.metadata_present = true;
+        }
+
         // Record ownership before the sealed payload can exist, so a crash
-        // cannot leave a clipboard seal that no manifest claims.
-        if let Err(error) = self.persist_manifest_value(&manifest) {
+        // cannot leave a clipboard seal that no manifest claims. The precommit
+        // path already committed this manifest (with victim tombstones).
+        if !precommit && let Err(error) = self.persist_manifest_value(&manifest) {
+            self.restore_capture_metadata(
+                previous_history.clone(),
+                previous_manifest.clone(),
+                previous_metadata_present,
+            );
             wipe_bytes(&mut plaintext);
             return Err(error);
         }
 
-        let sealed = self.backend.seal(&alias, &plaintext);
+        let sealed = match memory_limit {
+            // The volatile vault applies the replacement transactionally:
+            // new payload seal, exact encoded-budget check, then map mutation.
+            Some(_) => {
+                let victim_refs: Vec<&str> = victim_aliases.iter().map(String::as_str).collect();
+                self.backend
+                    .seal_replacing(&alias, &plaintext, &victim_refs)
+            }
+            // File-backed backends have no volatile encoded budget. Keep the
+            // established seal-then-delete-after-commit protocol.
+            None => self.backend.seal(&alias, &plaintext),
+        };
         wipe_bytes(&mut plaintext);
         if let Err(error) = sealed {
-            manifest.aliases.remove(&alias);
-            let _ = self.persist_manifest_value(&manifest);
+            // The replacement was rejected before mutating the vault. Restore
+            // the pre-capture metadata in memory and on disk; every prior row
+            // and payload remains intact.
+            self.restore_capture_metadata(
+                previous_history,
+                previous_manifest,
+                previous_metadata_present,
+            );
+            self.sync_lock();
+            if memory_limit.is_some() && quota_exhausted(&error) {
+                return Ok(CaptureReport::Skipped(CaptureRejection::QuotaExhausted));
+            }
             return Err(error);
         }
 
         if let Err(error) = self.persist_history(&candidate) {
             // Remove the just-written payload so a failed metadata commit does
             // not leave a hidden entry behind. Keep the manifest tombstone if
-            // deletion fails; cleanup will retry it later.
+            // deletion fails; cleanup will retry it later. A pre-committed
+            // reduced history stays authoritative: the victims were removed by
+            // the successful replacement and must not be resurrected.
             if self.backend.delete(&alias).is_ok() {
-                manifest.aliases.remove(&alias);
-                let _ = self.persist_manifest_value(&manifest);
+                self.manifest.aliases.remove(&alias);
             }
+            if precommit {
+                for victim in &victim_aliases {
+                    self.manifest.aliases.remove(victim);
+                }
+            }
+            let _ = self.persist_manifest();
             return Err(error);
         }
 
         self.history = candidate;
         self.manifest = manifest;
         self.metadata_present = true;
-
-        // Metadata is committed first; deleting evicted ciphertext is
-        // best-effort. A failed delete stays in the manifest as a tombstone.
-        let mut manifest_changed = false;
-        for evicted in &inserted.evicted {
-            let alias = self.alias_for(evicted.id);
-            self.manifest.aliases.insert(alias.clone());
-            self.manifest.present = true;
-            manifest_changed = true;
-            if self.backend.delete(&alias).is_ok() {
-                self.manifest.aliases.remove(&alias);
-            }
-            let _ = self.backend.delete(&legacy_alias_for(evicted.id));
-            self.previews.remove(evicted.id);
+        if !self.is_persistent() {
+            self.last_memory_sequence = sequence;
         }
-        if manifest_changed {
-            let _ = self.persist_manifest();
+
+        if memory_limit.is_some() {
+            // `seal_replacing` already removed every victim alias in the same
+            // transaction. Drop their tombstones and best-effort legacy
+            // aliases; a failed legacy delete is harmless to history.
+            for item in &evicted {
+                let _ = self.backend.delete(&legacy_alias_for(item.id));
+                self.previews.remove(item.id);
+            }
+            if precommit {
+                for victim in &victim_aliases {
+                    self.manifest.aliases.remove(victim);
+                }
+                let _ = self.persist_manifest();
+            }
+        } else {
+            // Metadata is committed first; deleting evicted ciphertext is
+            // best-effort. A failed delete stays in the manifest as a
+            // tombstone.
+            let mut manifest_changed = false;
+            for evicted in &evicted {
+                let alias = self.alias_for(evicted.id);
+                self.manifest.aliases.insert(alias.clone());
+                self.manifest.present = true;
+                manifest_changed = true;
+                if self.backend.delete(&alias).is_ok() {
+                    self.manifest.aliases.remove(&alias);
+                }
+                let _ = self.backend.delete(&legacy_alias_for(evicted.id));
+                self.previews.remove(evicted.id);
+            }
+            if manifest_changed {
+                let _ = self.persist_manifest();
+            }
         }
 
         Ok(CaptureReport::Stored(CaptureRecord {
             item: inserted.item,
-            evicted: inserted.evicted.into_iter().map(|item| item.id).collect(),
+            evicted: evicted.into_iter().map(|item| item.id).collect(),
         }))
+    }
+
+    /// Evict the oldest unpinned rows until the encoded in-memory total fits.
+    ///
+    /// Returns `false` when the newly inserted row itself had to be evicted, in
+    /// which case the capture is rejected and the candidate is discarded.
+    fn evict_for_encoded_memory(
+        &self,
+        candidate: &mut ClipboardHistory,
+        new_id: u64,
+        new_plaintext_len: usize,
+        limit: usize,
+        evicted: &mut Vec<ClipboardItem>,
+    ) -> bool {
+        loop {
+            let Some(total) = self.encoded_memory_total(candidate, new_id, new_plaintext_len)
+            else {
+                // A backend that publishes a limit must publish a cost. Without
+                // an estimate, do not evict speculatively.
+                return true;
+            };
+            if total <= limit {
+                return true;
+            }
+            let Some(victim) = candidate
+                .items()
+                .iter()
+                .filter(|item| !item.pinned)
+                .min_by_key(|item| (item.captured_at, item.id))
+            else {
+                return candidate.get(new_id).is_some();
+            };
+            let id = victim.id;
+            let Some(removed) = candidate.remove(id) else {
+                return candidate.get(new_id).is_some();
+            };
+            evicted.push(removed);
+            if id == new_id {
+                return false;
+            }
+        }
+    }
+
+    /// Estimated encoded in-memory size of every candidate row.
+    fn encoded_memory_total(
+        &self,
+        history: &ClipboardHistory,
+        new_id: u64,
+        new_plaintext_len: usize,
+    ) -> Option<usize> {
+        let mut total = 0usize;
+        for item in history.items() {
+            let plaintext_len = if item.id == new_id {
+                new_plaintext_len
+            } else {
+                envelope_len(item)
+            };
+            let cost = self
+                .backend
+                .encoded_memory_cost(&self.alias_for(item.id), plaintext_len)?;
+            total = total.saturating_add(cost);
+        }
+        Some(total)
     }
 
     /// Explicitly decrypt one item for preview or search.
@@ -887,7 +1257,13 @@ impl ClipboardStore {
             .get(id)
             .cloned()
             .ok_or(ClipboardError::ItemNotFound)?;
-        let mut plaintext = self.backend.open(&self.alias_for(id))?;
+        let mut plaintext = match self.backend.open(&self.alias_for(id)) {
+            Ok(plaintext) => plaintext,
+            Err(error) => {
+                self.sync_lock();
+                return Err(error);
+            }
+        };
         let decoded = decode_payload(&plaintext);
         wipe_bytes(&mut plaintext);
         let content = decoded?;
@@ -912,17 +1288,38 @@ impl ClipboardStore {
     pub fn lock(&mut self) {
         self.locked = true;
         self.backend.lock();
-        self.previews.clear();
+        self.wipe_locked_memory();
     }
 
     /// Unlock and rebuild the metadata index from disk.
     ///
     /// Paused and private-mode session flags are preserved. Captures are never
-    /// replayed, so entries are not duplicated.
+    /// replayed, so entries are not duplicated. A native vault may prompt;
+    /// call only in response to an explicit unlock action.
     pub fn unlock(&mut self) -> Result<(), ClipboardError> {
-        self.backend.unlock();
-        self.locked = false;
+        let authorization = self.backend.try_unlock();
+        self.finish_unlock(authorization)
+    }
+
+    /// Unlock an explicitly passphrase-backed vault and reload sealed history.
+    pub fn unlock_with_passphrase(&mut self, passphrase: &[u8]) -> Result<(), ClipboardError> {
+        let authorization = self.backend.unlock_with_passphrase(passphrase);
+        self.finish_unlock(authorization)
+    }
+
+    fn finish_unlock(
+        &mut self,
+        authorization: Result<(), ClipboardError>,
+    ) -> Result<(), ClipboardError> {
+        if let Err(error) = authorization {
+            self.lock();
+            return Err(error);
+        }
         self.previews.clear();
+        self.locked = self.backend.is_locked();
+        if self.locked {
+            return Err(ClipboardError::Locked);
+        }
         if let Err(error) = self.reload_from_disk() {
             self.locked = true;
             self.backend.lock();
@@ -1070,11 +1467,23 @@ impl ClipboardStore {
     fn sync_lock(&mut self) {
         if self.backend.is_locked() {
             self.locked = true;
-            self.previews.clear();
+            self.wipe_locked_memory();
+        }
+    }
+
+    fn wipe_locked_memory(&mut self) {
+        self.previews.clear();
+        if !self.is_persistent() {
+            self.history.clear();
+            self.manifest.aliases.clear();
+            self.metadata_present = false;
         }
     }
 
     fn reload_from_disk(&mut self) -> Result<(), ClipboardError> {
+        if !self.is_persistent() {
+            return Ok(());
+        }
         let paused = self.history.is_paused();
         let private_mode = self.history.is_private_mode();
         let policy = self.history.policy().clone();
@@ -1121,7 +1530,43 @@ impl ClipboardStore {
         Ok(())
     }
 
+    /// Restore the metadata observed before a capture attempt.
+    ///
+    /// Volatile stores have nothing to write and never pre-commit reduced
+    /// history. A persistent store rewrites the previous history and manifest,
+    /// or removes the files this attempt created when none existed before.
+    /// Payloads are never touched here. The rollback writes are best-effort: if
+    /// they fail, the last successfully committed persistent metadata remains
+    /// for recovery. A persistent store never enters the transactional volatile
+    /// path, so this cannot delete a payload after the vault replaced it.
+    fn restore_capture_metadata(
+        &mut self,
+        history: ClipboardHistory,
+        manifest: Manifest,
+        metadata_present: bool,
+    ) {
+        self.history = history;
+        self.manifest = manifest;
+        self.metadata_present = metadata_present;
+        if !self.is_persistent() {
+            return;
+        }
+        if metadata_present {
+            let _ = self.persist_history(&self.history);
+        } else {
+            let _ = fs::remove_file(self.metadata_path());
+        }
+        if self.manifest.present {
+            let _ = self.persist_manifest();
+        } else {
+            let _ = fs::remove_file(self.manifest_path());
+        }
+    }
+
     fn persist_history(&self, history: &ClipboardHistory) -> Result<(), ClipboardError> {
+        if !self.is_persistent() {
+            return Ok(());
+        }
         let metadata = HistoryMetadata {
             version: METADATA_VERSION,
             store_id: Some(self.store_id.clone()),
@@ -1144,6 +1589,9 @@ impl ClipboardStore {
     }
 
     fn persist_manifest_value(&self, manifest: &Manifest) -> Result<(), ClipboardError> {
+        if !self.is_persistent() {
+            return Ok(());
+        }
         if !manifest.present && manifest.aliases.is_empty() {
             return Ok(());
         }
@@ -1384,9 +1832,28 @@ fn read_bounded(path: &Path, limit: usize) -> Result<Vec<u8>, ClipboardError> {
     Ok(bytes)
 }
 
-fn atomic_write(directory: &Path, target: &Path, bytes: &[u8]) -> Result<(), ClipboardError> {
+fn temp_name() -> String {
+    // A process id and a per-process counter are not unique across a restart:
+    // a reused pid can collide with a stale temp file left by a crash. Add a
+    // random suffix so a stale file cannot block the next atomic write.
     let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let temp = directory.join(format!("{TEMP_PREFIX}{}-{counter}", std::process::id()));
+    let mut hasher = std::collections::hash_map::RandomState::new().build_hasher();
+    hasher.write_u64(counter);
+    hasher.write_u32(std::process::id());
+    hasher.write_u128(
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_or(0, |duration| duration.as_nanos()),
+    );
+    format!(
+        "{TEMP_PREFIX}{}-{counter}-{:016x}",
+        std::process::id(),
+        hasher.finish()
+    )
+}
+
+fn atomic_write(directory: &Path, target: &Path, bytes: &[u8]) -> Result<(), ClipboardError> {
+    let temp = directory.join(temp_name());
 
     let result = (|| -> std::io::Result<()> {
         let mut file = OpenOptions::new()
@@ -1401,6 +1868,28 @@ fn atomic_write(directory: &Path, target: &Path, bytes: &[u8]) -> Result<(), Cli
         let _ = fs::remove_file(&temp);
     }
     Ok(result?)
+}
+
+/// Whether a sealing failure is a volatile quota rejection rather than an I/O,
+/// lock or crypto failure.
+fn quota_exhausted(error: &ClipboardError) -> bool {
+    matches!(
+        error,
+        ClipboardError::Vault(VaultError::LimitExceeded { kind, .. })
+            if matches!(*kind, "memory-only encoded secret bytes" | "stored secrets")
+    )
+}
+
+/// Envelope length for an already stored row, derived from content-free
+/// metadata.
+fn envelope_len(item: &ClipboardItem) -> usize {
+    let header = match item.summary {
+        ItemSummary::FileList { files } => 6usize
+            .saturating_add(4)
+            .saturating_add(files.saturating_mul(4)),
+        ItemSummary::Text { .. } | ItemSummary::Image => 6,
+    };
+    item.bytes.saturating_add(header)
 }
 
 fn encode_payload(content: &ClipboardContent) -> Vec<u8> {
@@ -1561,8 +2050,130 @@ mod tests {
         (store, handle)
     }
 
+    /// Test backend that reports no encoded budget at open and enables one
+    /// later, modelling an embedding backend whose capability changes.
+    #[derive(Clone)]
+    struct LateBudgetBackend {
+        inner: MemorySealBackend,
+        enabled: Arc<std::sync::atomic::AtomicBool>,
+    }
+
+    impl LateBudgetBackend {
+        fn new() -> Self {
+            Self {
+                inner: MemorySealBackend::new(),
+                enabled: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            }
+        }
+    }
+
+    impl SealBackend for LateBudgetBackend {
+        fn seal(&self, alias: &str, plaintext: &[u8]) -> Result<(), ClipboardError> {
+            self.inner.seal(alias, plaintext)
+        }
+
+        fn open(&self, alias: &str) -> Result<Vec<u8>, ClipboardError> {
+            self.inner.open(alias)
+        }
+
+        fn delete(&self, alias: &str) -> Result<bool, ClipboardError> {
+            self.inner.delete(alias)
+        }
+
+        fn lock(&self) {
+            self.inner.lock();
+        }
+
+        fn unlock(&self) {
+            self.inner.unlock();
+        }
+
+        fn is_locked(&self) -> bool {
+            self.inner.is_locked()
+        }
+
+        fn encoded_memory_limit(&self) -> Option<usize> {
+            self.enabled
+                .load(std::sync::atomic::Ordering::SeqCst)
+                .then_some(1024 * 1024)
+        }
+
+        fn encoded_memory_cost(&self, alias: &str, plaintext_len: usize) -> Option<usize> {
+            self.encoded_memory_limit()
+                .map(|_| alias.len() + plaintext_len + 64)
+        }
+    }
+
+    #[test]
+    fn persistent_store_rejects_a_budget_enabled_after_open() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let backend = LateBudgetBackend::new();
+        let handle = backend.clone();
+        let mut store = ClipboardStore::open_with_backend(
+            dir.path(),
+            CapturePolicy::default(),
+            Box::new(backend),
+        )
+        .expect("store opens");
+        assert!(store.is_persistent(), "no budget at open is persistent");
+        assert!(matches!(
+            store.capture(text(1, "first"), 1).expect("capture"),
+            CaptureReport::Stored(_)
+        ));
+        let history = fs::read(dir.path().join(METADATA_FILE)).expect("history exists");
+        let sealed_alias = store.alias_for(1);
+
+        handle
+            .enabled
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+        let error = store
+            .capture(text(2, "second"), 2)
+            .expect_err("a late volatile budget must not enter the mixed path");
+        assert!(matches!(error, ClipboardError::InvalidArgument { .. }));
+        assert_eq!(store.items().len(), 1);
+        assert_eq!(
+            fs::read(dir.path().join(METADATA_FILE)).expect("history still exists"),
+            history,
+            "the rejected capture must not rewrite disk metadata"
+        );
+        assert_eq!(
+            store.decrypt_item(1).expect("first row intact").content,
+            ClipboardContent::text("first")
+        );
+        assert_eq!(
+            handle.open(&sealed_alias).expect("sealed payload intact"),
+            encode_payload(&ClipboardContent::text("first"))
+        );
+    }
+
     fn text(sequence: u64, value: &str) -> ClipboardSnapshot {
         ClipboardSnapshot::text(sequence, value)
+    }
+
+    #[test]
+    fn native_capture_gate_does_not_invoke_a_provider() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let (mut store, backend) = open_store(dir.path(), CapturePolicy::default());
+        let provider = |_: &CapturePolicy| panic!("a gated store invoked a clipboard reader");
+        store.pause();
+        assert_eq!(
+            store.capture_from(1, provider).unwrap(),
+            CaptureReport::Skipped(CaptureRejection::Paused)
+        );
+        store.resume();
+        store.set_private_mode(true);
+        assert_eq!(
+            store.capture_from(2, provider).unwrap(),
+            CaptureReport::Skipped(CaptureRejection::PrivateMode)
+        );
+        store.set_private_mode(false);
+        store.lock();
+        assert_eq!(
+            store.capture_from(3, provider).unwrap(),
+            CaptureReport::Skipped(CaptureRejection::Locked)
+        );
+        assert!(backend.is_empty());
+        assert_eq!(store.cached_preview_count(), 0);
     }
 
     fn assert_no_sentinel(path: &Path, sentinel: &str) {
@@ -1668,6 +2279,69 @@ mod tests {
     }
 
     #[test]
+    fn truncated_oversized_and_credential_path_snapshots_never_seal() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let policy = CapturePolicy {
+            max_item_bytes: 32,
+            ..CapturePolicy::default()
+        };
+        let (mut store, backend) = open_store(dir.path(), policy);
+
+        let truncated = ClipboardSnapshot::text(1, "truncated payload sentinel").truncated();
+        assert_eq!(
+            store.capture(truncated, 1).expect("capture"),
+            CaptureReport::Skipped(CaptureRejection::Truncated)
+        );
+
+        let oversized = ClipboardSnapshot::text(2, "x".repeat(33));
+        assert_eq!(
+            store.capture(oversized, 2).expect("capture"),
+            CaptureReport::Skipped(CaptureRejection::TooLarge {
+                bytes: 33,
+                limit: 32,
+            })
+        );
+
+        let credentials =
+            ClipboardSnapshot::file_list(3, vec!["/home/person/.ssh/id_rsa".to_owned()]);
+        assert_eq!(
+            store.capture(credentials, 3).expect("capture"),
+            CaptureReport::Skipped(CaptureRejection::SensitiveContent)
+        );
+
+        assert!(backend.is_empty());
+        assert!(store.items().is_empty());
+        assert_eq!(store.cached_preview_count(), 0);
+        assert!(!dir.path().join("history.json").exists());
+        assert_no_sentinel(dir.path(), "truncated payload sentinel");
+        assert_no_sentinel(dir.path(), "id_rsa");
+    }
+
+    #[test]
+    fn offered_mime_and_native_type_names_are_not_persisted() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let (mut store, _) = open_store(dir.path(), CapturePolicy::default());
+        let mut snapshot = ClipboardSnapshot::text(1, "ordinary payload sentinel")
+            .with_mime_type("application/x-ansa-mime-sentinel");
+        snapshot.offered_types = vec![
+            "application/x-ansa-offered-type-sentinel".to_owned(),
+            "public.utf8-plain-text".to_owned(),
+        ];
+        assert!(store.capture(snapshot, 1).expect("capture").is_stored());
+
+        let metadata = fs::read_to_string(dir.path().join("history.json")).expect("metadata");
+        for sentinel in [
+            "application/x-ansa-mime-sentinel",
+            "application/x-ansa-offered-type-sentinel",
+            "public.utf8-plain-text",
+            "ordinary payload sentinel",
+        ] {
+            assert!(!metadata.contains(sentinel), "{sentinel} reached metadata");
+            assert_no_sentinel(dir.path(), sentinel);
+        }
+    }
+
+    #[test]
     fn exclusion_markers_and_app_exclusions_prevent_sealing() {
         let dir = tempfile::tempdir().expect("tempdir");
         let policy = CapturePolicy {
@@ -1762,6 +2436,142 @@ mod tests {
         );
         assert_eq!(store.items().len(), 1);
         assert_eq!(store.items()[0].id, first.item.id);
+    }
+
+    #[test]
+    fn memory_only_capture_evicts_before_the_encoded_budget_stops_it() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let root = dir.path().join("never-created");
+        let vault = Vault::memory_only().expect("memory-only vault");
+        assert!(
+            !vault.status().mode.is_persistent(),
+            "unexpected vault mode: {:?}",
+            vault.status().mode
+        );
+        let mut store =
+            ClipboardStore::open(&root, CapturePolicy::default(), vault).expect("store opens");
+        assert!(
+            !store.is_persistent(),
+            "a volatile-budget backend must not use disk metadata"
+        );
+
+        // Synthetic, non-sensitive payloads at the default per-item limit. The
+        // plaintext history quota admits 64 of them exactly (8 MiB), but the
+        // hex-encoded volatile vault envelope does not, so capture must evict
+        // an unpinned row before sealing.
+        let fill = "x".repeat(crate::model::DEFAULT_MAX_ITEM_BYTES);
+        let first = store.capture(text(1, &fill), 1).expect("capture");
+        let CaptureReport::Stored(first) = first else {
+            panic!("expected stored");
+        };
+        assert!(store.set_pinned(first.item.id, true).expect("pin"));
+
+        for sequence in 2..=70 {
+            let report = store
+                .capture(text(sequence, &fill), sequence)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "capture {sequence} failed: {error:?}; items={}",
+                        store.items().len()
+                    )
+                });
+            let CaptureReport::Stored(record) = report else {
+                panic!("capture {sequence} was not stored: {report}");
+            };
+            assert!(
+                record.evicted.is_empty() || sequence >= 64,
+                "unexpected early eviction at {sequence}"
+            );
+            if sequence == 64 {
+                assert_eq!(
+                    store.items().len(),
+                    63,
+                    "the encoded memory budget, not the plaintext history quota, must evict"
+                );
+            }
+        }
+
+        assert!(store.item(first.item.id).is_some(), "pinned row survived");
+        assert_eq!(store.items().len(), 63);
+        assert!(!store.items().iter().any(|item| item.id == 2));
+        let pinned = store
+            .decrypt_item(first.item.id)
+            .expect("pinned payload remains sealed");
+        match &pinned.content {
+            ClipboardContent::Text(value) => assert_eq!(value, &fill),
+            ClipboardContent::FileList(_) => panic!("wrong content"),
+        }
+        let newest = store.items()[0].id;
+        assert_eq!(
+            store
+                .decrypt_item(newest)
+                .expect("newest payload remains sealed")
+                .content
+                .byte_len(),
+            fill.len()
+        );
+        assert!(!root.exists(), "memory-only capture must not touch disk");
+
+        // With every remaining row pinned, the only eviction candidate is the
+        // new item itself. The encoded budget must reject it rather than evict
+        // a pinned row.
+        let pinned: Vec<u64> = store.items().iter().map(|item| item.id).collect();
+        for id in &pinned {
+            assert!(store.set_pinned(*id, true).expect("pin remaining row"));
+        }
+        assert_eq!(
+            store
+                .capture(text(71, &fill), 71)
+                .expect("capture is rejected"),
+            CaptureReport::Skipped(CaptureRejection::QuotaExhausted)
+        );
+        assert_eq!(store.items().len(), pinned.len());
+        assert!(pinned.iter().all(|id| store.item(*id).is_some()));
+        assert!(!root.exists());
+    }
+
+    #[test]
+    fn volatile_budget_backend_open_is_non_persistent_and_writes_no_metadata() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let root = dir.path().join("never-created");
+        let vault = Vault::memory_only().expect("memory-only vault");
+        let policy = CapturePolicy {
+            max_items: 1,
+            ..CapturePolicy::default()
+        };
+        let mut store =
+            ClipboardStore::open_with_backend(&root, policy, Box::new(VaultBackend::new(vault)))
+                .expect("volatile store opens");
+
+        assert!(
+            !store.is_persistent(),
+            "an encoded-budget backend must construct a non-persistent store"
+        );
+        assert!(!root.exists(), "the store directory must not be created");
+
+        // Two valid rows exercise the reduced-history pre-commit and
+        // transactional replacement path. With no persisted metadata there is
+        // no final history write that can fail after the victim is removed.
+        for (sequence, value) in [(1, "first volatile row"), (2, "second volatile row")] {
+            let report = store
+                .capture(text(sequence, value), sequence)
+                .expect("capture");
+            assert!(
+                matches!(report, CaptureReport::Stored(_)),
+                "capture {sequence} was not stored: {report}"
+            );
+        }
+        assert_eq!(store.items().len(), 1);
+        assert_eq!(store.items()[0].sequence, 2);
+        assert!(store.persist_history(&store.history.clone()).is_ok());
+        assert!(store.persist_manifest().is_ok());
+        for name in [".lock", "history.json", "manifest.json"] {
+            assert!(
+                !root.join(name).exists(),
+                "{name} must not exist for a volatile-budget backend"
+            );
+        }
+        assert!(!root.exists());
     }
 
     #[test]
@@ -1999,9 +2809,11 @@ mod tests {
             source: None,
             confidence: SourceConfidence::Unknown,
             mime_type: Some("text/plain".into()),
+            offered_types: vec!["secondary-secret-sentinel".into()],
             truncated: false,
         };
         assert!(!format!("{snapshot:?}").contains("secret sentinel"));
+        assert!(!format!("{snapshot:?}").contains("secondary-secret-sentinel"));
     }
 
     #[test]

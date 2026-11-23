@@ -2,16 +2,16 @@
 //!
 //! # What this crate does
 //!
-//! * [`windows::read_clipboard_snapshot`] reads text, file lists, exclusion
-//!   markers and best-effort source attribution from the Windows clipboard
-//!   without ever writing to it.
+//! * [`read_clipboard_snapshot`] reads bounded text, file lists, exclusion
+//!   markers and best-effort source attribution on supported native desktops
+//!   without writing to the clipboard.
 //! * [`filter::evaluate`] rejects excluded, sensitive, oversized, truncated and
 //!   gated content **before** any sealing, metadata write or preview entry. The
 //!   Windows marker set includes `ExcludeClipboardContentFromMonitorProcessing`,
 //!   `CanIncludeInClipboardHistory`, `CanUploadToCloudClipboard` and
 //!   `Clipboard Viewer Ignore`.
-//! * [`store::ClipboardStore`] seals accepted payloads with `ansa-vault` (DPAPI
-//!   on Windows) and persists only sealed envelopes plus bounded, non-sensitive
+//! * [`store::ClipboardStore`] seals accepted payloads with `ansa-vault`
+//!   and persists only sealed envelopes plus bounded, non-sensitive
 //!   metadata. Quotas are deterministic and pinned items survive eviction. A
 //!   per-store manifest and non-blocking cross-process lock prevent two
 //!   instances from losing captures or deleting each other's fresh payloads.
@@ -31,21 +31,22 @@
 //!   constructor.
 //! * Image capture is not implemented. It is modelled and reported as
 //!   unsupported.
-//! * Capture is pull-only: there is no `WM_CLIPBOARDUPDATE` listener, message
-//!   loop or self-copy suppression in this crate. A host must call
-//!   [`read_clipboard_snapshot`] and then [`store::ClipboardStore::capture`].
+//! * Capture is pull-only: a host must call [`ClipboardStore::capture_current`]
+//!   and forward OS lock events to the store. There is no self-copy suppression.
 //! * Pause and private mode are session flags, not persisted settings. The
 //!   caller must restore them and the capture policy after reopening a store.
 //! * This crate does not ship a Windows automatic-paste host or a `SendInput`
 //!   adapter. Copy-only is the only production insertion path today; the
 //!   automatic transaction is policy code exercised by host fakes.
-//! * DPAPI is user-bound, not passphrase-bound. [`store::ClipboardStore::lock`]
-//!   is a session gate and a preview-cache wipe, not protection against another
-//!   process running as the same Windows user.
+//! * DPAPI is user-bound, not passphrase-bound, and the macOS Keychain/Linux
+//!   Secret Service key is likewise available according to OS/provider policy.
+//!   [`store::ClipboardStore::lock`] is a session gate and a preview-cache wipe,
+//!   not cryptographic re-authentication or protection from another process the
+//!   OS/provider allows to read the key.
 //!
 //! # Filtering order
 //!
-//! Lock/pause/private-mode gate, Windows exclusion markers, configured
+//! Lock/pause/private-mode gate, native exclusion markers, configured
 //! format/MIME/app exclusions, size and truncation bounds, then content-based
 //! sensitive detection. App attribution is never the only filter because it can
 //! be missing or wrong.
@@ -53,9 +54,7 @@
 //! # Example
 //!
 //! ```no_run
-//! use ansa_clipboard::{
-//!     CapturePolicy, ClipboardStore, read_clipboard_snapshot,
-//! };
+//! use ansa_clipboard::{CapturePolicy, ClipboardStore};
 //! use ansa_vault::Vault;
 //!
 //! let Ok(vault) = Vault::open("vault") else {
@@ -64,9 +63,7 @@
 //! let Ok(mut store) = ClipboardStore::open("history", CapturePolicy::default(), vault) else {
 //!     return;
 //! };
-//! if let Ok(snapshot) = read_clipboard_snapshot() {
-//!     let _ = store.capture(snapshot, 0);
-//! }
+//! let _ = store.capture_current(0);
 //! ```
 
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -76,8 +73,13 @@ mod content;
 mod error;
 mod filter;
 mod insertion;
+#[cfg(target_os = "linux")]
+mod linux;
 mod lock;
+#[cfg(target_os = "macos")]
+mod macos;
 mod model;
+mod native;
 mod store;
 mod windows;
 
@@ -98,6 +100,10 @@ pub use model::{
     DEFAULT_MAX_ITEM_BYTES, DEFAULT_MAX_ITEMS, HistoryError, InsertedItems, ItemDraft, ItemSummary,
     MAX_POLICY_ENTRIES, MAX_POLICY_ENTRY_CHARS, MAX_SOURCE_APP_CHARS, SourceApp, SourceConfidence,
 };
+pub use native::{
+    CaptureCapabilities, CaptureSupport, ClipboardTransport, clipboard_capture_capabilities,
+    read_clipboard_snapshot,
+};
 #[doc(hidden)]
 pub use store::MemorySealBackend;
 pub use store::{
@@ -106,5 +112,5 @@ pub use store::{
 };
 pub use windows::{
     MAX_FILES, MAX_HDROP_UNITS, MAX_OPEN_ATTEMPTS, MAX_PATH_UNITS, MAX_TEXT_BYTES,
-    OPEN_RETRY_DELAY_MS, read_clipboard_snapshot,
+    OPEN_RETRY_DELAY_MS,
 };

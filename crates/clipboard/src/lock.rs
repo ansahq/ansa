@@ -7,9 +7,16 @@
 //! intentionally left in place: deleting it would allow a third process to
 //! create a new file while a second process still holds the old one.
 //!
-//! Non-Windows builds fall back to an exclusive-create lock file and remove it
-//! on drop. That fallback cannot distinguish a stale file left by a crash from a
-//! live lock; Windows is the supported desktop target for this crate.
+//! Linux and macOS use an advisory `flock` on `<root>/.lock`. The kernel
+//! releases the lock when the process exits or crashes, so a stale file does
+//! not block a later open. The file is intentionally left in place: unlinking a
+//! live lock file would let two processes lock different inodes and both
+//! proceed. Linux uses `rustix`; macOS uses a minimal `extern "C"` declaration
+//! so the clipboard crate does not gain a new dependency.
+//!
+//! Other Unix builds fall back to an exclusive-create lock file and remove it
+//! on drop. That fallback cannot distinguish a stale file left by a crash from
+//! a live lock, so those targets may require deleting a stale `.lock` manually.
 //!
 //! The lock is non-blocking by design. A caller that wants to wait must retry
 //! `ClipboardStore::open` rather than block the capture thread.
@@ -47,7 +54,15 @@ impl StoreLock {
         {
             Self::acquire_windows(path)
         }
-        #[cfg(not(windows))]
+        #[cfg(target_os = "linux")]
+        {
+            Self::acquire_linux_flock(path)
+        }
+        #[cfg(target_os = "macos")]
+        {
+            Self::acquire_macos_flock(path)
+        }
+        #[cfg(all(not(windows), not(target_os = "linux"), not(target_os = "macos")))]
         {
             Self::acquire_fallback(path)
         }
@@ -92,7 +107,49 @@ impl StoreLock {
         Ok(Self { path, handle })
     }
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
+    fn acquire_linux_flock(path: PathBuf) -> Result<Self, ClipboardError> {
+        use rustix::io::Errno;
+
+        let file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&path)?;
+        match rustix::fs::flock(&file, rustix::fs::FlockOperation::NonBlockingLockExclusive) {
+            Ok(()) => Ok(Self { path, _file: file }),
+            Err(Errno::WOULDBLOCK) => Err(ClipboardError::AlreadyLocked),
+            Err(error) => Err(ClipboardError::Io(error.into())),
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    fn acquire_macos_flock(path: PathBuf) -> Result<Self, ClipboardError> {
+        use std::os::fd::AsRawFd;
+
+        let file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&path)?;
+        // SAFETY: `file` owns a valid descriptor for this call. The operation
+        // is a bitmask of platform constants, and `flock` has no pointer
+        // arguments or caller-owned memory.
+        let result = unsafe { flock(file.as_raw_fd(), LOCK_EX | LOCK_NB) };
+        if result == 0 {
+            return Ok(Self { path, _file: file });
+        }
+        let error = std::io::Error::last_os_error();
+        if error.kind() == std::io::ErrorKind::WouldBlock {
+            Err(ClipboardError::AlreadyLocked)
+        } else {
+            Err(ClipboardError::Io(error))
+        }
+    }
+
+    #[cfg(all(not(windows), not(target_os = "linux"), not(target_os = "macos")))]
     fn acquire_fallback(path: PathBuf) -> Result<Self, ClipboardError> {
         match std::fs::OpenOptions::new()
             .write(true)
@@ -117,13 +174,76 @@ impl Drop for StoreLock {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 impl Drop for StoreLock {
     fn drop(&mut self) {
-        // Best-effort release for the non-Windows fallback. The open file keeps
-        // the name present until this point.
+        // Closing the file releases the kernel `flock`. Keep the lock file in
+        // place so another process cannot lock a different inode while a
+        // concurrent open is still using the old one.
+    }
+}
+
+#[cfg(all(not(windows), not(target_os = "linux"), not(target_os = "macos")))]
+impl Drop for StoreLock {
+    fn drop(&mut self) {
+        // Best-effort release for the fallback. The open file keeps the name
+        // present until this point.
         let _ = std::fs::remove_file(&self.path);
     }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn linux_flock_is_exclusive_and_recoverable_after_release() {
+        let directory = tempfile::tempdir().expect("tempdir");
+        let first = StoreLock::acquire(directory.path()).expect("first lock");
+        assert!(matches!(
+            StoreLock::acquire(directory.path()),
+            Err(ClipboardError::AlreadyLocked)
+        ));
+        drop(first);
+
+        // A stale lock *file* must not look like a held lock after a crash or
+        // normal release.
+        let second = StoreLock::acquire(directory.path()).expect("reacquire");
+        drop(second);
+        assert!(directory.path().join(LOCK_FILE).exists());
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod macos_tests {
+    use super::*;
+
+    #[test]
+    #[ignore = "requires a real macOS host and file-locking support"]
+    fn macos_flock_is_exclusive_and_recoverable_after_release() {
+        let directory = tempfile::tempdir().expect("tempdir");
+        let first = StoreLock::acquire(directory.path()).expect("first lock");
+        assert!(matches!(
+            StoreLock::acquire(directory.path()),
+            Err(ClipboardError::AlreadyLocked)
+        ));
+        drop(first);
+
+        let second = StoreLock::acquire(directory.path()).expect("reacquire");
+        drop(second);
+        assert!(directory.path().join(LOCK_FILE).exists());
+    }
+}
+
+#[cfg(target_os = "macos")]
+const LOCK_EX: std::ffi::c_int = 2;
+#[cfg(target_os = "macos")]
+const LOCK_NB: std::ffi::c_int = 4;
+
+#[cfg(target_os = "macos")]
+#[link(name = "System")]
+unsafe extern "C" {
+    fn flock(fd: std::ffi::c_int, operation: std::ffi::c_int) -> std::ffi::c_int;
 }
 
 #[cfg(windows)]

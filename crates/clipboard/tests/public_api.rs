@@ -143,7 +143,10 @@ impl InsertionHost for FakeHost {
         FocusOutcome::Granted
     }
 
-    fn send_paste(&mut self, _target: &InsertionTarget) -> PasteAttempt {
+    fn send_paste(&mut self, _target: &InsertionTarget, expected_sequence: u64) -> PasteAttempt {
+        if expected_sequence != self.sequence {
+            return PasteAttempt::Failed;
+        }
         self.pasted = true;
         PasteAttempt::Sent
     }

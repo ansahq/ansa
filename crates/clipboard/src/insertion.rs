@@ -279,7 +279,12 @@ pub trait InsertionHost {
     /// Request foreground focus.
     fn request_focus(&mut self, target: &InsertionTarget) -> FocusOutcome;
     /// Send paste input to the target.
-    fn send_paste(&mut self, target: &InsertionTarget) -> PasteAttempt;
+    ///
+    /// `expected_sequence` is the sequence returned by the copy. The host must
+    /// verify both the destination and this expected clipboard sequence
+    /// immediately before injecting; a mismatch must return
+    /// [`PasteAttempt::Failed`] rather than paste a newer user copy.
+    fn send_paste(&mut self, target: &InsertionTarget, expected_sequence: u64) -> PasteAttempt;
     /// Look for destination evidence that the content arrived.
     fn observe_insertion(
         &mut self,
@@ -381,6 +386,9 @@ pub fn execute_insertion(
             };
         }
     };
+    // `Unknown` here is not permission to inject. The automatic path checks
+    // ownership again immediately before input and requires `Ours`; copy-only
+    // never injects and still reports the successful write.
     if host.clipboard_owner() == ClipboardOwner::Other {
         return InsertionOutcome::Denied {
             reason: "another application took clipboard ownership during the copy".to_owned(),
@@ -443,17 +451,8 @@ pub fn execute_insertion(
         Err(issue) => return denied_or_fallback(issue, sequence),
     }
 
-    // A user copy between the fallback write and the paste must win. The
-    // launcher never restores its older value.
-    if host.clipboard_sequence() != sequence {
-        return fallback(sequence, "the clipboard changed before insertion");
-    }
-    if host.clipboard_owner() == ClipboardOwner::Other {
-        return fallback(sequence, "clipboard ownership changed before insertion");
-    }
-
-    // Re-verify immediately before input; focus may have changed while the
-    // clipboard was checked.
+    // Re-verify immediately before input; focus may have changed since the
+    // first observation.
     let observed = match host.observe_target(target) {
         Ok(observed) => observed,
         Err(error) => return fallback(sequence, &format!("final target check failed: {error}")),
@@ -462,7 +461,29 @@ pub fn execute_insertion(
         return denied_or_fallback(issue, sequence);
     }
 
-    match host.send_paste(target) {
+    // The command and its target are now fixed. Check the clipboard last: a
+    // user copy during the final target observation must still win, and the
+    // launcher never restores its older value.
+    if host.clipboard_sequence() != sequence {
+        return fallback(sequence, "the clipboard changed before insertion");
+    }
+    // Unobservable ownership is not proof of ours. Only `Ours` permits input:
+    // `Unknown` could mean another process replaced the clipboard between the
+    // write and this check, and injecting would paste unintended content.
+    match host.clipboard_owner() {
+        ClipboardOwner::Ours => {}
+        ClipboardOwner::Other => {
+            return fallback(sequence, "clipboard ownership changed before insertion");
+        }
+        ClipboardOwner::Unknown => {
+            return fallback(
+                sequence,
+                "clipboard ownership could not be verified before insertion",
+            );
+        }
+    }
+
+    match host.send_paste(target, sequence) {
         PasteAttempt::Sent => {}
         PasteAttempt::Unsupported => {
             return fallback(sequence, "input injection is not supported by this host");
@@ -517,6 +538,9 @@ mod tests {
         evidence: InsertionEvidence,
         bump_sequence_on_focus: bool,
         bump_generation_on_focus: bool,
+        change_sequence_on_observe: Option<usize>,
+        change_owner_on_observe: Option<usize>,
+        observe_calls: usize,
         writes: usize,
         focus_requests: usize,
         paste_attempts: usize,
@@ -535,6 +559,9 @@ mod tests {
                 evidence: InsertionEvidence::Confirmed,
                 bump_sequence_on_focus: false,
                 bump_generation_on_focus: false,
+                change_sequence_on_observe: None,
+                change_owner_on_observe: None,
+                observe_calls: 0,
                 writes: 0,
                 focus_requests: 0,
                 paste_attempts: 0,
@@ -567,6 +594,13 @@ mod tests {
             if self.observe_fails {
                 return Err(HostFailure::TargetQuery);
             }
+            self.observe_calls += 1;
+            if self.change_sequence_on_observe == Some(self.observe_calls) {
+                self.sequence += 1;
+            }
+            if self.change_owner_on_observe == Some(self.observe_calls) {
+                self.owner = ClipboardOwner::Other;
+            }
             Ok(self.observed)
         }
 
@@ -584,8 +618,15 @@ mod tests {
             self.focus
         }
 
-        fn send_paste(&mut self, _target: &InsertionTarget) -> PasteAttempt {
+        fn send_paste(
+            &mut self,
+            _target: &InsertionTarget,
+            expected_sequence: u64,
+        ) -> PasteAttempt {
             self.paste_attempts += 1;
+            if expected_sequence != self.sequence {
+                return PasteAttempt::Failed;
+            }
             self.paste
         }
 
@@ -749,6 +790,27 @@ mod tests {
     }
 
     #[test]
+    fn a_copy_during_the_final_target_observation_blocks_paste() {
+        for configure in [
+            |host: &mut FakeHost| host.change_sequence_on_observe = Some(1),
+            |host: &mut FakeHost| host.change_owner_on_observe = Some(1),
+        ] {
+            let mut host = FakeHost::new();
+            configure(&mut host);
+            let outcome = run(&mut host, InsertionPolicy::Automatic, enabled());
+            assert!(
+                matches!(outcome, InsertionOutcome::CopyFallback { .. }),
+                "unexpected outcome: {outcome:?}"
+            );
+            assert_eq!(
+                host.paste_attempts, 0,
+                "the clipboard changed during the final observation and must not be pasted"
+            );
+            assert_eq!(host.writes, 1);
+        }
+    }
+
+    #[test]
     fn denied_permission_secure_input_and_ime_block_injection() {
         for configure in [
             |host: &mut FakeHost| host.observed.permission = TargetPermission::Denied,
@@ -796,6 +858,22 @@ mod tests {
             outcome,
             InsertionOutcome::Denied { copied: true, .. }
         ));
+        assert_eq!(host.paste_attempts, 0);
+    }
+
+    #[test]
+    fn unobservable_clipboard_ownership_blocks_automatic_paste() {
+        let mut host = FakeHost::new();
+        host.owner = ClipboardOwner::Unknown;
+        let outcome = run(&mut host, InsertionPolicy::Automatic, enabled());
+        assert!(matches!(outcome, InsertionOutcome::CopyFallback { .. }));
+        assert_eq!(host.paste_attempts, 0);
+
+        // Copy-only still reports the successful write: it never injects.
+        let mut host = FakeHost::new();
+        host.owner = ClipboardOwner::Unknown;
+        let outcome = run(&mut host, InsertionPolicy::CopyOnly, enabled());
+        assert_eq!(outcome, InsertionOutcome::Copied { sequence: 11 });
         assert_eq!(host.paste_attempts, 0);
     }
 

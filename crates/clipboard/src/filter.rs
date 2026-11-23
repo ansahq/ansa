@@ -4,7 +4,7 @@
 //! The order is deliberately conservative:
 //!
 //! 1. session gate (locked, paused, private mode);
-//! 2. Windows exclusion markers;
+//! 2. native exclusion markers;
 //! 3. configured format/MIME/app exclusions;
 //! 4. size and truncation bounds;
 //! 5. content-based sensitive detection.
@@ -18,7 +18,7 @@ use std::fmt;
 use crate::content::{ClipboardContent, wipe_string};
 use crate::model::{CapturePolicy, ClipboardFormat, ItemSummary, SourceApp, SourceConfidence};
 
-/// Windows exclusion markers read alongside a clipboard snapshot.
+/// Producer exclusion markers read alongside a clipboard snapshot.
 ///
 /// Missing (`None`) means the marker format was absent. A present marker with
 /// malformed data is reported as `Some(false)` by the adapter, which fails
@@ -36,8 +36,9 @@ pub struct ExclusionMarkers {
     /// `Clipboard Viewer Ignore`: presence asks viewers not to observe the
     /// content. This build treats presence as a full capture exclusion.
     pub viewer_ignore: bool,
-    /// `ExcludeClipboardContentFromMonitorProcessing`: presence asks every
-    /// clipboard monitor to ignore all formats currently on the clipboard.
+    /// A native presence marker that excludes the entire offer, such as
+    /// Windows `ExcludeClipboardContentFromMonitorProcessing`, macOS
+    /// `org.nspasteboard.ConcealedType` or Linux `x-kde-passwordManagerHint`.
     /// This build treats presence as a full capture exclusion.
     pub exclude_from_monitor_processing: bool,
 }
@@ -204,7 +205,7 @@ impl Drop for SnapshotContent {
 /// One clipboard observation from a platform adapter.
 #[derive(PartialEq, Eq)]
 pub struct ClipboardSnapshot {
-    /// Windows clipboard sequence number, or `0` when unavailable.
+    /// Native selection generation, or `0` when unavailable.
     pub sequence: u64,
     /// Observed content.
     pub content: SnapshotContent,
@@ -216,6 +217,9 @@ pub struct ClipboardSnapshot {
     pub confidence: SourceConfidence,
     /// MIME type reported by the adapter, if any.
     pub mime_type: Option<String>,
+    /// Other types advertised with the offer, including platform identifiers.
+    /// Used for filtering only; they are never persisted or printed.
+    pub offered_types: Vec<String>,
     /// Whether the adapter had to stop at its size bound. Truncated content is
     /// rejected rather than scanned incompletely.
     pub truncated: bool,
@@ -230,7 +234,8 @@ impl fmt::Debug for ClipboardSnapshot {
             .field("markers", &self.markers)
             .field("source", &self.source)
             .field("confidence", &self.confidence)
-            .field("mime_type", &self.mime_type)
+            .field("has_mime_type", &self.mime_type.is_some())
+            .field("offered_type_count", &self.offered_types.len())
             .field("truncated", &self.truncated)
             .finish()
     }
@@ -247,6 +252,7 @@ impl ClipboardSnapshot {
             source: None,
             confidence: SourceConfidence::Unknown,
             mime_type: None,
+            offered_types: Vec::new(),
             truncated: false,
         }
     }
@@ -261,6 +267,7 @@ impl ClipboardSnapshot {
             source: None,
             confidence: SourceConfidence::Unknown,
             mime_type: None,
+            offered_types: Vec::new(),
             truncated: false,
         }
     }
@@ -277,6 +284,7 @@ impl ClipboardSnapshot {
             source: None,
             confidence: SourceConfidence::Unknown,
             mime_type: None,
+            offered_types: Vec::new(),
             truncated: false,
         }
     }
@@ -359,7 +367,7 @@ pub enum CaptureRejection {
     CloudMarker,
     /// `Clipboard Viewer Ignore` was present.
     ViewerIgnore,
-    /// `ExcludeClipboardContentFromMonitorProcessing` was present.
+    /// A native monitor-processing/privacy exclusion was present.
     MonitorProcessingExcluded,
     /// The format is excluded by policy.
     FormatExcluded(ClipboardFormat),
@@ -470,35 +478,8 @@ pub fn evaluate(
     policy: &CapturePolicy,
     gate: CaptureGate,
 ) -> FilterOutcome {
-    if gate.locked {
-        return FilterOutcome::Reject(CaptureRejection::Locked);
-    }
-    if gate.paused {
-        return FilterOutcome::Reject(CaptureRejection::Paused);
-    }
-    if gate.private_mode {
-        return FilterOutcome::Reject(CaptureRejection::PrivateMode);
-    }
-
-    if snapshot.markers.viewer_ignore {
-        return FilterOutcome::Reject(CaptureRejection::ViewerIgnore);
-    }
-    if snapshot.markers.exclude_from_monitor_processing {
-        return FilterOutcome::Reject(CaptureRejection::MonitorProcessingExcluded);
-    }
-    if snapshot.markers.can_include_in_history == Some(false) {
-        return FilterOutcome::Reject(CaptureRejection::HistoryMarker);
-    }
-    if snapshot.markers.is_cloud_opt_out() && !policy.capture_cloud_excluded {
-        return FilterOutcome::Reject(CaptureRejection::CloudMarker);
-    }
-
-    let format = snapshot.format();
-    if policy.excludes_format(format) {
-        return FilterOutcome::Reject(CaptureRejection::FormatExcluded(format));
-    }
-    if format == ClipboardFormat::Image {
-        return FilterOutcome::Reject(CaptureRejection::ImageUnsupported);
+    if let Some(rejection) = gate_rejection(gate).or_else(|| offer_rejection(snapshot, policy)) {
+        return FilterOutcome::Reject(rejection);
     }
     if snapshot.truncated {
         return FilterOutcome::Reject(CaptureRejection::Truncated);
@@ -515,20 +496,6 @@ pub fn evaluate(
         });
     }
 
-    if let Some(mime_type) = snapshot.mime_type.as_deref()
-        && policy.excludes_mime_type(mime_type)
-    {
-        return FilterOutcome::Reject(CaptureRejection::MimeExcluded);
-    }
-
-    // App attribution is checked only when it exists. It is never required and
-    // never the only filter: content is scanned below regardless of source.
-    if let Some(source) = snapshot.source.as_ref()
-        && policy.excludes_app(source)
-    {
-        return FilterOutcome::Reject(CaptureRejection::AppExcluded);
-    }
-
     let sensitive = match &snapshot.content {
         SnapshotContent::Text(value) => is_sensitive_text(value, policy),
         SnapshotContent::FileList(paths) => paths
@@ -541,6 +508,64 @@ pub fn evaluate(
     }
 
     FilterOutcome::Accept
+}
+
+pub(crate) fn gate_rejection(gate: CaptureGate) -> Option<CaptureRejection> {
+    if gate.locked {
+        return Some(CaptureRejection::Locked);
+    }
+    if gate.paused {
+        return Some(CaptureRejection::Paused);
+    }
+    if gate.private_mode {
+        return Some(CaptureRejection::PrivateMode);
+    }
+    None
+}
+
+/// Rejections that can be determined from offer metadata, before requesting bytes.
+pub(crate) fn offer_rejection(
+    snapshot: &ClipboardSnapshot,
+    policy: &CapturePolicy,
+) -> Option<CaptureRejection> {
+    if snapshot.markers.viewer_ignore {
+        return Some(CaptureRejection::ViewerIgnore);
+    }
+    if snapshot.markers.exclude_from_monitor_processing {
+        return Some(CaptureRejection::MonitorProcessingExcluded);
+    }
+    if snapshot.markers.can_include_in_history == Some(false) {
+        return Some(CaptureRejection::HistoryMarker);
+    }
+    if snapshot.markers.is_cloud_opt_out() && !policy.capture_cloud_excluded {
+        return Some(CaptureRejection::CloudMarker);
+    }
+
+    let format = snapshot.format();
+    if policy.excludes_format(format) {
+        return Some(CaptureRejection::FormatExcluded(format));
+    }
+    if format == ClipboardFormat::Image {
+        return Some(CaptureRejection::ImageUnsupported);
+    }
+    if snapshot
+        .mime_type
+        .iter()
+        .chain(&snapshot.offered_types)
+        .any(|mime_type| policy.excludes_mime_type(mime_type))
+    {
+        return Some(CaptureRejection::MimeExcluded);
+    }
+
+    // App attribution is checked only when it exists. It is never required and
+    // never the only filter: content is scanned below regardless of source.
+    if let Some(source) = snapshot.source.as_ref()
+        && policy.excludes_app(source)
+    {
+        return Some(CaptureRejection::AppExcluded);
+    }
+
+    None
 }
 
 /// Built-in and configured sensitive-content detection.
@@ -752,12 +777,14 @@ fn contains_ssn(bytes: &[u8]) -> bool {
 }
 
 fn looks_like_credential_path(path: &str) -> bool {
-    let lower = path.to_ascii_lowercase();
-    lower.contains("id_rsa")
+    let mut lower = path.to_ascii_lowercase();
+    let sensitive = lower.contains("id_rsa")
         || lower.contains("id_ed25519")
         || lower.ends_with(".pem")
         || lower.ends_with(".key")
-        || lower.contains("\\.ssh\\")
+        || lower.split(['/', '\\']).any(|part| part == ".ssh");
+    wipe_string(&mut lower);
+    sensitive
 }
 
 #[cfg(test)]

@@ -54,8 +54,10 @@
 //! without clipboard text. Run it only on a test workstation, never on a
 //! desktop whose clipboard contains sensitive content.
 
-use crate::error::ClipboardError;
-use crate::filter::ClipboardSnapshot;
+#[cfg(any(windows, test))]
+use crate::ClipboardError;
+#[cfg(windows)]
+use crate::ClipboardSnapshot;
 
 /// Maximum UTF-16 text bytes read from one snapshot (512 KiB).
 pub const MAX_TEXT_BYTES: usize = 512 * 1024;
@@ -77,20 +79,11 @@ pub const OPEN_RETRY_DELAY_MS: u64 = 10;
 
 /// Read a clipboard snapshot.
 ///
-/// On non-Windows targets this returns [`ClipboardError::UnsupportedPlatform`].
 /// Callers must still run the snapshot through
 /// [`crate::filter::evaluate`] before persisting anything.
 #[cfg(windows)]
 pub fn read_clipboard_snapshot() -> Result<ClipboardSnapshot, ClipboardError> {
     imp::read()
-}
-
-/// Non-Windows stub: no clipboard adapter is implemented.
-#[cfg(not(windows))]
-pub fn read_clipboard_snapshot() -> Result<ClipboardSnapshot, ClipboardError> {
-    Err(ClipboardError::UnsupportedPlatform {
-        platform: std::env::consts::OS,
-    })
 }
 
 #[cfg(any(windows, test))]
@@ -269,6 +262,7 @@ mod imp {
             source: None,
             confidence: SourceConfidence::Unknown,
             mime_type: mime_type.map(str::to_owned),
+            offered_types: Vec::new(),
             truncated,
         };
         if let Some((source, confidence)) = attribution {
@@ -509,15 +503,6 @@ mod tests {
             assert!(MAX_OPEN_ATTEMPTS >= 1);
             assert!(OPEN_RETRY_DELAY_MS >= 1);
         }
-    }
-
-    #[cfg(not(windows))]
-    #[test]
-    fn non_windows_adapter_is_explicitly_unsupported() {
-        assert!(matches!(
-            read_clipboard_snapshot(),
-            Err(ClipboardError::UnsupportedPlatform { .. })
-        ));
     }
 
     #[cfg(windows)]

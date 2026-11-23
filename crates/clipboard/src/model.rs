@@ -53,9 +53,9 @@ const MAX_MAX_AGE_SECS: u64 = 365 * 24 * 60 * 60;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ClipboardFormat {
-    /// `CF_UNICODETEXT` on Windows.
+    /// Plain Unicode text.
     Text,
-    /// `CF_HDROP` on Windows.
+    /// Local file paths.
     FileList,
     /// `CF_DIB`/`CF_DIBV5`; modelled but unsupported for capture.
     Image,
@@ -217,7 +217,7 @@ pub struct ClipboardItem {
     pub bytes: usize,
     /// Caller-supplied capture time in seconds. Used only for ordering and age.
     pub captured_at: u64,
-    /// Windows clipboard sequence number, or `0` when unavailable.
+    /// Native selection generation, or `0` when unavailable.
     pub sequence: u64,
     /// Sanitized source application, if attribution was available.
     pub source: Option<SourceApp>,
@@ -374,6 +374,7 @@ fn normalize_list(values: &mut Vec<String>) {
 }
 
 fn mime_type_matches(excluded: &str, mime_type: &str) -> bool {
+    let mime_type = mime_type.trim();
     if excluded == "*" {
         return true;
     }
@@ -385,6 +386,10 @@ fn mime_type_matches(excluded: &str, mime_type: &str) -> bool {
             && mime_type.as_bytes().get(prefix.len()) == Some(&b'/');
     }
     excluded.eq_ignore_ascii_case(mime_type)
+        || (!excluded.contains(';')
+            && mime_type
+                .split_once(';')
+                .is_some_and(|(base, _)| excluded.eq_ignore_ascii_case(base.trim_end())))
 }
 
 /// The metadata-only capture log.

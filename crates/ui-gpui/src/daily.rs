@@ -16,7 +16,7 @@ use ansa_onboarding::{
     LaunchOutcome as OnboardingLaunchOutcome, LaunchProbe, Onboarding, OnboardingStatus,
     ProbeOutcome, Shortcut, ShortcutProbe, Step,
 };
-use ansa_platform_windows::{AppEntry, LaunchOutcome};
+use ansa_platform_api::{AppEntry, LaunchOutcome, Platform};
 use ansa_storage::{LaunchMode, SettingKey, SettingValue, Theme as StoredTheme};
 
 /// Environment variable that overrides the per-user data directory.
@@ -79,8 +79,11 @@ fn platform_data_dir(env: &impl Fn(&str) -> Option<OsString>) -> Option<PathBuf>
 
 #[cfg(not(any(windows, target_os = "macos")))]
 fn platform_data_dir(env: &impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
-    if let Some(value) = env("XDG_DATA_HOME").filter(|value| !is_blank(value)) {
-        return Some(PathBuf::from(value).join("Ansa").join("alpha"));
+    if let Some(path) = env("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+    {
+        return Some(path.join("Ansa").join("alpha"));
     }
     env("HOME")
         .filter(|value| !is_blank(value))
@@ -142,11 +145,22 @@ fn app_commands(apps: &[AppEntry]) -> Vec<Command> {
         .filter_map(|app| {
             let id = CommandId::new(&app.id).ok()?;
             let subtitle = if let Some(reason) = &app.broken {
-                format!("Broken shortcut · {reason} · refresh required")
+                let kind = if cfg!(windows) {
+                    "Broken shortcut"
+                } else {
+                    "Unavailable application"
+                };
+                format!("{kind} · {reason} · refresh required")
             } else if app.packaged {
                 "Packaged application · Windows".to_owned()
             } else {
-                "Application · Windows Start Menu".to_owned()
+                match Platform::current() {
+                    Platform::Windows => "Application · Windows Start Menu",
+                    Platform::MacOs => "Application · macOS",
+                    Platform::Linux => "Application · Linux desktop entry",
+                    Platform::Other => "Application",
+                }
+                .to_owned()
             };
             let mut keywords = vec!["application".to_owned(), "app".to_owned()];
             if app.packaged {
@@ -167,6 +181,7 @@ fn app_commands(apps: &[AppEntry]) -> Vec<Command> {
         .collect()
 }
 
+#[cfg(any(windows, test))]
 fn with_setup_command(mut commands: Vec<Command>) -> Vec<Command> {
     if !commands
         .iter()
@@ -340,16 +355,51 @@ pub fn skipped_warning(skipped: &[SkippedQuicklink]) -> Option<String> {
 /// through `quicklink_warning`, and the desktop must surface that warning
 /// instead of pretending the library was simply empty.
 pub fn compose_catalog(driver: &DailyDriver, apps: &[AppEntry]) -> Result<CatalogLoad, String> {
+    #[cfg(windows)]
     let composition = driver
-        .compose_catalog(apps)
+        .compose_catalog(
+            &apps
+                .iter()
+                .map(|app| ansa_platform_windows::AppEntry {
+                    id: app.id.clone(),
+                    title: app.title.clone(),
+                    path: app.path.clone(),
+                    target: app.target.clone(),
+                    arguments: app.arguments.clone(),
+                    working_directory: app.working_directory.clone(),
+                    icon_source: app.icon_source.clone(),
+                    packaged: app.packaged,
+                    broken: app.broken.clone(),
+                })
+                .collect::<Vec<_>>(),
+        )
         .map_err(|error| error.to_string())?;
-    let quicklinks = composition
-        .commands
+    // Alpha's application input and labels still belong to its Windows
+    // slice. Reuse its saved quicklink policy without passing Unix entries
+    // through that adapter or duplicating target validation.
+    #[cfg(not(windows))]
+    let composition = driver
+        .compose_catalog(&[])
+        .map_err(|error| error.to_string())?;
+    #[cfg(not(windows))]
+    let commands = builtin_commands()
+        .into_iter()
+        .chain(app_commands(apps))
+        .chain(
+            composition
+                .commands
+                .into_iter()
+                .filter(|command| matches!(command.kind, CommandKind::Quicklink { .. })),
+        )
+        .collect();
+    #[cfg(windows)]
+    let commands = with_setup_command(composition.commands);
+    let quicklinks = commands
         .iter()
         .filter(|command| matches!(command.kind, CommandKind::Quicklink { .. }))
         .count();
     Ok(CatalogLoad {
-        commands: with_setup_command(composition.commands),
+        commands,
         applications: apps.len(),
         quicklinks,
         skipped: composition.skipped_quicklinks,
@@ -384,17 +434,50 @@ pub fn reload_and_compose(
 
 /// The pre-alpha behavior: built-ins plus discovered applications, with no
 /// quicklinks. Used when storage cannot be opened or composition fails.
-pub fn legacy_catalog() -> Result<CatalogLoad, String> {
-    let apps = ansa_platform_windows::discover_applications()?;
+pub fn legacy_catalog(apps: &[AppEntry]) -> CatalogLoad {
     let mut commands = builtin_commands();
-    commands.extend(app_commands(&apps));
-    Ok(CatalogLoad {
+    commands.extend(app_commands(apps));
+    CatalogLoad {
         commands,
         applications: apps.len(),
         quicklinks: 0,
         skipped: Vec::new(),
         warning: None,
-    })
+    }
+}
+
+/// Refreshes the shared catalog without losing access to saved quicklinks on
+/// a macOS/Linux profile whose native app discovery is unavailable.
+pub fn refresh_catalog(
+    driver: Option<&mut DailyDriver>,
+    discovery: Result<Vec<AppEntry>, String>,
+) -> Result<CatalogLoad, String> {
+    let mut discovery_warning = None;
+    let apps = match discovery {
+        Ok(apps) => apps,
+        Err(error) => {
+            let warning = format!("Application discovery failed: {error}");
+            if cfg!(windows) {
+                return Err(warning);
+            }
+            discovery_warning = Some(warning);
+            Vec::new()
+        }
+    };
+    let mut load = match driver {
+        Some(driver) => reload_and_compose(driver, &apps).unwrap_or_else(|error| {
+            let mut load = legacy_catalog(&apps);
+            load.add_warning(format!(
+                "Quicklink composition failed; using built-ins and applications only: {error}"
+            ));
+            load
+        }),
+        None => legacy_catalog(&apps),
+    };
+    if let Some(warning) = discovery_warning {
+        load.add_warning(warning);
+    }
+    Ok(load)
 }
 
 /// Actionable recovery line for a storage failure.
@@ -480,7 +563,14 @@ pub fn describe_onboarding(onboarding: &Onboarding, hotkey_registered: bool) -> 
         None => format!("Ctrl+Space is not registered · {session}"),
     };
     let launch = match onboarding.verified_launch() {
-        Some(verification) => format!("Verified launch: {}", verification.command_id()),
+        Some(verification) => {
+            let label = if cfg!(windows) {
+                "Verified launch"
+            } else {
+                "Recorded launch handoff or verified application switch"
+            };
+            format!("{label}: {}", verification.command_id())
+        }
         None if onboarding.is_skipped(Step::TryLaunch) => {
             "Skipped — no application launch was verified".to_owned()
         }
@@ -830,29 +920,33 @@ impl SetupSession {
 
 /// Real shortcut probe backed by the launcher's registered hotkey.
 pub struct HotkeyProbe {
-    registered: bool,
-    reason: String,
+    outcome: ProbeOutcome,
 }
 
 impl HotkeyProbe {
     /// Builds a probe from the launcher's `hotkey.is_some()` state.
+    #[cfg(any(windows, test))]
     pub fn new(registered: bool, reason: impl Into<String>) -> Self {
         Self {
-            registered,
-            reason: reason.into(),
+            outcome: if registered {
+                ProbeOutcome::Available
+            } else {
+                ProbeOutcome::Denied {
+                    reason: reason.into(),
+                }
+            },
         }
+    }
+
+    #[cfg(not(windows))]
+    pub fn from_outcome(outcome: ProbeOutcome) -> Self {
+        Self { outcome }
     }
 }
 
 impl ShortcutProbe for HotkeyProbe {
     fn probe(&self, _shortcut: &Shortcut) -> ProbeOutcome {
-        if self.registered {
-            ProbeOutcome::Available
-        } else {
-            ProbeOutcome::Denied {
-                reason: self.reason.clone(),
-            }
-        }
+        self.outcome.clone()
     }
 }
 
@@ -904,10 +998,17 @@ impl LaunchProbe for FixedLaunchProbe {
 /// outcome. Everything else remains failed or unverified.
 pub fn map_launch_outcome(outcome: LaunchOutcome) -> (OnboardingLaunchOutcome, String) {
     match outcome {
-        LaunchOutcome::Launched => (OnboardingLaunchOutcome::Launched, "Launched".to_owned()),
+        LaunchOutcome::Launched => (
+            OnboardingLaunchOutcome::Launched,
+            launch_handoff_label().to_owned(),
+        ),
         LaunchOutcome::Switched { window } => (
             OnboardingLaunchOutcome::Launched,
             format!("Switched to an existing window (0x{window:x})"),
+        ),
+        LaunchOutcome::SwitchedApplication { process_id } => (
+            OnboardingLaunchOutcome::Launched,
+            format!("Existing application observed in the foreground (PID {process_id})"),
         ),
         LaunchOutcome::Denied { reason } => (
             OnboardingLaunchOutcome::Failed {
@@ -931,6 +1032,15 @@ pub fn map_launch_outcome(outcome: LaunchOutcome) -> (OnboardingLaunchOutcome, S
             },
             format!("No launch target: {reason}"),
         ),
+    }
+}
+
+/// A native opener handoff does not verify a new process or foreground window.
+pub fn launch_handoff_label() -> &'static str {
+    if cfg!(windows) {
+        "Launched"
+    } else {
+        "Launch handed to the desktop"
     }
 }
 
@@ -968,6 +1078,32 @@ mod tests {
         assert_eq!(
             data_dir,
             PathBuf::from(r"C:\Users\test\AppData\Local\Ansa\alpha")
+        );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn data_dir_uses_macos_application_support() {
+        let data_dir = resolve_data_dir(env(&[("HOME", "/Users/test")]));
+        assert_eq!(
+            data_dir,
+            PathBuf::from("/Users/test/Library/Application Support/Ansa/alpha")
+        );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn data_dir_uses_absolute_xdg_path_or_home() {
+        assert_eq!(
+            resolve_data_dir(env(&[("XDG_DATA_HOME", "/data"), ("HOME", "/home/test")])),
+            PathBuf::from("/data/Ansa/alpha")
+        );
+        assert_eq!(
+            resolve_data_dir(env(&[
+                ("XDG_DATA_HOME", "relative"),
+                ("HOME", "/home/test")
+            ])),
+            PathBuf::from("/home/test/.local/share/Ansa/alpha")
         );
     }
 
@@ -1128,6 +1264,73 @@ mod tests {
         let warning = load.warning.expect("warning must be surfaced");
         assert!(warning.contains("Quicklink library warning"));
         assert!(warning.contains("not used"));
+        assert_eq!(load.quicklinks, 0);
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn native_refresh_keeps_setup_and_saved_links_when_discovery_fails() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let mut driver = DailyDriver::open(dir.path()).expect("driver");
+        driver
+            .store()
+            .create_record(
+                ansa_alpha::QUICKLINK_RECORD_ID,
+                ansa_alpha::QUICKLINK_RECORD_KIND,
+                &sample_library_json(),
+            )
+            .expect("record");
+        let load = refresh_catalog(Some(&mut driver), Err("fixture scan failure".into()))
+            .expect("quicklinks do not depend on discovery");
+        assert!(load.warning.unwrap().contains("fixture scan failure"));
+        assert_eq!(load.applications, 0);
+        assert_eq!(load.quicklinks, 1);
+        assert!(
+            load.commands
+                .iter()
+                .any(|command| command.id.as_str() == SETUP_COMMAND_ID)
+        );
+
+        let app = AppEntry::new("app:fixture", "Fixture", "/native/fixture");
+        let load = refresh_catalog(Some(&mut driver), Ok(vec![app])).expect("native catalog");
+        assert_eq!(load.applications, 1);
+        assert_eq!(load.quicklinks, 1);
+        let command = load
+            .commands
+            .iter()
+            .find(|entry| entry.id.as_str() == "app:fixture")
+            .unwrap();
+        assert_eq!(
+            command.kind,
+            CommandKind::Application {
+                path: "/native/fixture".into()
+            }
+        );
+        assert!(!command.subtitle.as_deref().unwrap().contains("Windows"));
+    }
+
+    #[test]
+    fn locked_and_corrupt_profile_recovery_keeps_native_catalog() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let locked = DailyDriver::open(dir.path()).expect("first driver");
+        let database = locked.main_database_path().to_owned();
+        let locked_error = DailyDriver::open(dir.path()).expect_err("exclusive profile lock");
+        let recovery = storage_recovery(dir.path(), &locked_error.to_string());
+        assert!(recovery.contains("Close another Ansa instance"));
+        assert!(recovery.contains(&dir.path().display().to_string()));
+        drop(locked);
+
+        std::fs::write(database, b"invalid sqlite fixture").expect("write corrupt profile");
+        let corrupt_error = DailyDriver::open(dir.path()).expect_err("corrupt database");
+        let recovery = storage_recovery(dir.path(), &corrupt_error.to_string());
+        assert!(recovery.contains("move a corrupt or newer database aside, then refresh"));
+
+        let load = refresh_catalog(
+            None,
+            Ok(vec![AppEntry::new("app:fixture", "Fixture", "/fixture")]),
+        )
+        .expect("catalog fallback");
+        assert_eq!(load.applications, 1);
         assert_eq!(load.quicklinks, 0);
     }
 

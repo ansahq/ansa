@@ -280,6 +280,27 @@ fn step(
                 );
                 println!("Ansa appearance smoke: native backdrop attached and toggled");
             }
+            #[cfg(target_os = "linux")]
+            {
+                assert!(!this.glass);
+                assert_eq!(
+                    crate::glass_label(
+                        ansa_platform_api::Platform::Linux,
+                        this.glass,
+                        this.appearance_notice.is_some(),
+                    ),
+                    "Glass: Unavailable"
+                );
+                assert!(
+                    !std::env::args().any(|arg| arg == "--require-frost"),
+                    "No native Linux frosted backdrop is implemented"
+                );
+                println!("Ansa appearance smoke: opaque fallback; native blur unimplemented");
+            }
+            #[cfg(target_os = "macos")]
+            println!(
+                "Ansa appearance smoke: GPUI request or opaque fallback checked; actual vibrancy not verified"
+            );
             key("ctrl-shift-t", window, cx);
         }
         28 => {

@@ -4,6 +4,7 @@ use ansa_core::{
     query::{QueryRoute, route_query},
 };
 use ansa_domain::{BuiltinCommand, CommandId, CommandKind};
+use ansa_platform_api::{AppEntry, LaunchOutcome, Platform};
 use ansa_ui_components::{Changed, EditRejected, TextInput, Theme, install_keybindings};
 #[cfg(feature = "upstream-candidate")]
 use gpui::Role;
@@ -15,10 +16,14 @@ use gpui::{
 };
 use std::path::PathBuf;
 
+#[cfg(any(not(windows), test))]
+mod catalog_dispatch;
 mod compat;
 mod daily;
 #[cfg(feature = "upstream-candidate")]
 mod live_status;
+#[cfg(not(windows))]
+mod native_host;
 
 actions!(
     ansa,
@@ -54,17 +59,26 @@ struct Launcher {
     #[cfg(feature = "upstream-candidate")]
     selection_announcement: Option<String>,
     detail: Option<String>,
+    #[cfg(windows)]
     hotkey: Option<ansa_platform_windows::HotkeyRegistration>,
+    #[cfg(not(windows))]
+    native_host: native_host::NativeHost,
+    #[cfg(windows)]
     hotkey_notice: Option<String>,
+    #[cfg(any(windows, target_os = "macos"))]
     visible: bool,
     glass: bool,
+    #[cfg(target_os = "macos")]
+    glass_request: MacGlassRequest,
     light: bool,
     #[cfg(target_os = "windows")]
     backdrop: Option<ansa_platform_windows::LauncherBackdrop>,
     appearance_notice: Option<String>,
     #[cfg(target_os = "windows")]
     native_shape: Option<(i32, i32, i32)>,
+    #[cfg(windows)]
     native_handle: Option<isize>,
+    #[cfg(windows)]
     previous_target: Option<ansa_platform_windows::FocusTarget>,
     catalog_refresh: ansa_core::refresh::RefreshGate,
     driver: Option<ansa_alpha::DailyDriver>,
@@ -72,6 +86,16 @@ struct Launcher {
     storage_error: Option<String>,
     catalog_skipped: Vec<ansa_alpha::SkippedQuicklink>,
     catalog_warning: Option<String>,
+    #[cfg(not(windows))]
+    host_capabilities: Option<ansa_platform_api::HostCapabilities>,
+    #[cfg(not(windows))]
+    catalog_generation: Option<u64>,
+    #[cfg(not(windows))]
+    displayed_catalog_generation: Option<u64>,
+    /// The exact native entries rendered by the current catalog generation.
+    /// Execution uses their selection tokens, not a rediscovered path and ID.
+    #[cfg(not(windows))]
+    native_entries: Vec<AppEntry>,
     persisted_settings: Option<daily::PersistedSettings>,
     setup: Option<daily::SetupSession>,
     setup_focus: FocusHandle,
@@ -92,6 +116,15 @@ fn action_slug(id: ActionId) -> &'static str {
         ActionId::Primary => "primary",
         ActionId::CopyTarget => "copy-target",
         ActionId::ToggleFavorite => "toggle-favorite",
+    }
+}
+
+fn copy_status(subject: &str) -> String {
+    if cfg!(windows) {
+        format!("{subject} copied — paste manually")
+    } else {
+        // GPUI dispatches the native write but returns no completion result.
+        format!("Copy requested: {subject} — paste manually")
     }
 }
 
@@ -129,7 +162,7 @@ impl Launcher {
         window: &mut Window,
         cx: &mut Context<Self>,
         a11y_fixture: bool,
-        glass: bool,
+        appearance: InitialAppearance,
         light: bool,
         data_dir: PathBuf,
         smoke_fixture: bool,
@@ -189,6 +222,22 @@ impl Launcher {
                 })
             })
             .collect();
+        // GPUI exposes activation but no accessibility display-option change
+        // notification. Re-evaluate the OS Reduce Transparency state on every
+        // activation; retain the requested glass preference separately from the
+        // effective opaque fallback.
+        #[cfg(target_os = "macos")]
+        cx.observe_window_activation(window, |this, window, cx| {
+            if !window.is_window_active() {
+                return;
+            }
+            let before = (this.glass, this.appearance_notice.clone());
+            this.set_glass(this.glass_request, window);
+            if before != (this.glass, this.appearance_notice.clone()) {
+                cx.notify();
+            }
+        })
+        .detach();
         Self {
             input,
             action_input,
@@ -200,23 +249,27 @@ impl Launcher {
             selection_announcement: None,
             detail: None,
             scroll: UniformListScrollHandle::new(),
+            #[cfg(windows)]
             hotkey: None,
+            #[cfg(not(windows))]
+            native_host: native_host::NativeHost::new(),
+            #[cfg(windows)]
             hotkey_notice: None,
+            #[cfg(any(windows, target_os = "macos"))]
             visible: true,
-            // On Windows the native blur layer must attach first. macOS gets
-            // its blur from the window's NSVisualEffectView.
-            glass: if cfg!(target_os = "windows") {
-                false
-            } else {
-                glass
-            },
+            // Windows enables tint only after its separate native layer attaches.
+            glass: appearance.background == WindowBackgroundAppearance::Blurred,
+            #[cfg(target_os = "macos")]
+            glass_request: MacGlassRequest::new(appearance.requested),
             light,
             #[cfg(target_os = "windows")]
             backdrop: None,
-            appearance_notice: None,
+            appearance_notice: appearance.unavailable.map(str::to_owned),
             #[cfg(target_os = "windows")]
             native_shape: None,
+            #[cfg(windows)]
             native_handle: native_handle(window),
+            #[cfg(windows)]
             previous_target: None,
             catalog_refresh: Default::default(),
             driver: None,
@@ -224,6 +277,14 @@ impl Launcher {
             storage_error: None,
             catalog_skipped: Vec::new(),
             catalog_warning: None,
+            #[cfg(not(windows))]
+            host_capabilities: None,
+            #[cfg(not(windows))]
+            catalog_generation: None,
+            #[cfg(not(windows))]
+            displayed_catalog_generation: None,
+            #[cfg(not(windows))]
+            native_entries: Vec::new(),
             persisted_settings: None,
             setup: None,
             setup_focus: cx.focus_handle(),
@@ -241,10 +302,17 @@ impl Launcher {
     }
 
     fn toggle_glass(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.is_composing(cx) || self.appearance_notice.is_some() {
+        if self.is_composing(cx) {
             return;
         }
-        self.set_glass(!self.glass, window);
+        #[cfg(windows)]
+        if self.appearance_notice.is_none() {
+            self.set_glass(!self.glass, window);
+        }
+        #[cfg(target_os = "macos")]
+        self.set_glass(self.glass_request.toggled(), window);
+        #[cfg(not(any(windows, target_os = "macos")))]
+        let _ = window;
         cx.notify();
     }
 
@@ -269,18 +337,16 @@ impl Launcher {
         }
     }
 
-    #[cfg(not(target_os = "windows"))]
-    fn set_glass(&mut self, enabled: bool, window: &Window) {
-        #[cfg(target_os = "macos")]
-        window.set_background_appearance(if enabled {
-            WindowBackgroundAppearance::Blurred
-        } else {
-            WindowBackgroundAppearance::Transparent
-        });
-        #[cfg(not(target_os = "macos"))]
-        let _ = window;
-        self.glass = enabled;
-        self.appearance_notice = None;
+    #[cfg(target_os = "macos")]
+    fn set_glass(&mut self, request: MacGlassRequest, window: &Window) {
+        // Keep the requested preference even when Reduce Transparency forces
+        // the effective surface opaque. Clearing the OS setting later must
+        // restore the requested vibrancy, not silently turn glass off.
+        self.glass_request = request;
+        let appearance = request.evaluate(macos_reduce_transparency());
+        window.set_background_appearance(appearance.background);
+        self.glass = appearance.background == WindowBackgroundAppearance::Blurred;
+        self.appearance_notice = appearance.unavailable.map(str::to_owned);
     }
 
     #[cfg(target_os = "windows")]
@@ -378,6 +444,7 @@ impl Launcher {
         };
     }
 
+    #[cfg(windows)]
     fn dismiss(&mut self, restore: bool, window: &mut Window, cx: &mut Context<Self>) {
         if self.is_composing(cx) {
             return;
@@ -455,7 +522,7 @@ impl Launcher {
             match result {
                 Ok(value) => {
                     cx.write_to_clipboard(ClipboardItem::new_string(value.format()));
-                    self.status = "Result copied — paste manually".into();
+                    self.status = copy_status("Result");
                 }
                 Err(error) => self.status = format!("Cannot calculate: {error}"),
             }
@@ -480,7 +547,7 @@ impl Launcher {
                 );
                 return;
             }
-            CommandKind::Quicklink { url } => ansa_platform_windows::open_url(&url),
+            CommandKind::Quicklink { url } => ansa_platform_api::open_url(&url),
             CommandKind::Builtin(BuiltinCommand::RefreshApplications) => {
                 self.refresh_catalog(cx);
                 return;
@@ -522,24 +589,35 @@ impl Launcher {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let outcome = ansa_platform_windows::launch_or_switch(&path);
+        #[cfg(not(windows))]
+        let entry = self
+            .native_entries
+            .iter()
+            .find(|entry| entry.id == id.as_str() && entry.path == path)
+            .cloned();
+        #[cfg(windows)]
+        let entry: Option<AppEntry> = None;
+        let outcome = self.application_launcher()(&path, id.as_str(), entry.as_ref());
         match &outcome {
-            ansa_platform_windows::LaunchOutcome::Launched => {
-                self.status = format!("Launched: {title}");
+            LaunchOutcome::Launched => {
+                self.status = format!("{}: {title}", daily::launch_handoff_label());
             }
-            ansa_platform_windows::LaunchOutcome::Switched { window: handle } => {
+            LaunchOutcome::Switched { window: handle } => {
                 self.status = format!("Switched to {title} (window 0x{handle:x})");
             }
-            ansa_platform_windows::LaunchOutcome::Denied { reason } => {
+            LaunchOutcome::SwitchedApplication { process_id } => {
+                self.status = format!("{title} is the foreground application (PID {process_id})");
+            }
+            LaunchOutcome::Denied { reason } => {
                 self.status = format!("Launch denied: {title} — {reason}");
             }
-            ansa_platform_windows::LaunchOutcome::Failed { reason } => {
+            LaunchOutcome::Failed { reason } => {
                 self.status = format!("Launch failed: {title} — {reason}");
             }
-            ansa_platform_windows::LaunchOutcome::Unverified { reason } => {
+            LaunchOutcome::Unverified { reason } => {
                 self.status = format!("Launch unverified: {title} — {reason}");
             }
-            ansa_platform_windows::LaunchOutcome::NoTarget { reason } => {
+            LaunchOutcome::NoTarget { reason } => {
                 self.status = format!("No launch target: {title} — {reason}");
             }
         }
@@ -549,6 +627,62 @@ impl Launcher {
         }
         compat::focus(window, &self.input.focus_handle(cx), cx);
         cx.notify();
+    }
+
+    #[cfg(not(windows))]
+    fn dismiss(&mut self, escape: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if self.is_composing(cx) {
+            return;
+        }
+        #[cfg(target_os = "macos")]
+        if self.hotkey_registered() && self.native_host.lifecycle.can_hide_retained() {
+            match self.native_host.set_macos_visible(window, false) {
+                Ok(()) => {
+                    self.visible = false;
+                    self.engine.hide_root();
+                    self.close_actions(window, cx);
+                    // AppKit decides what receives focus next. Hiding the
+                    // window does not establish a verified focus restoration.
+                    self.native_host.clear_focus();
+                }
+                Err(error) => self.status = format!("Cannot hide launcher: {error}"),
+            }
+            cx.notify();
+            return;
+        }
+        #[cfg(not(target_os = "macos"))]
+        let _ = window;
+        // Leave the current desktop window usable unless there is a verified
+        // hide/show route. A successful external handoff keeps its own status.
+        if escape {
+            self.status = self.native_host.dismiss_fallback().to_owned();
+            cx.notify();
+        }
+    }
+
+    fn application_launcher(
+        &self,
+    ) -> impl FnOnce(&str, &str, Option<&AppEntry>) -> LaunchOutcome + use<> {
+        #[cfg(windows)]
+        return |path: &str, id: &str, _entry: Option<&AppEntry>| {
+            ansa_platform_api::launch_or_switch_identified(path, id)
+        };
+        #[cfg(not(windows))]
+        {
+            let generation = self.displayed_catalog_generation;
+            move |_path: &str, _id: &str, entry: Option<&AppEntry>| {
+                // The retained entry, not the rediscovered path/ID, must match
+                // the native snapshot token under the rendered generation.
+                let Some(entry) = entry else {
+                    return LaunchOutcome::NoTarget {
+                        reason: "The selected application is not in the current native catalog. Refresh applications and try again.".into(),
+                    };
+                };
+                catalog_dispatch::NATIVE_CATALOG.launch(generation, || {
+                    ansa_platform_api::launch_or_switch_selected(entry)
+                })
+            }
+        }
     }
 
     fn copy_target(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -561,7 +695,7 @@ impl Launcher {
         }
         if let QueryRoute::Calculator(_) = route_query(self.engine.query()) {
             cx.write_to_clipboard(ClipboardItem::new_string(self.engine.query().to_string()));
-            self.status = "Expression copied — paste manually".into();
+            self.status = copy_status("Expression");
             self.close_actions(window, cx);
             return;
         }
@@ -572,7 +706,7 @@ impl Launcher {
                 _ => command.title.clone(),
             };
             cx.write_to_clipboard(ClipboardItem::new_string(text));
-            self.status = "Target copied — paste manually".into();
+            self.status = copy_status("Target");
         }
         self.close_actions(window, cx);
         cx.notify();
@@ -607,14 +741,21 @@ impl Launcher {
             return;
         };
         cx.write_to_clipboard(ClipboardItem::new_string(hit.grapheme.clone()));
-        self.status = format!(
-            "Copied {} ({}) — paste manually",
-            hit.grapheme, hit.accessible_name
-        );
+        self.status = if cfg!(windows) {
+            format!(
+                "Copied {} ({}) — paste manually",
+                hit.grapheme, hit.accessible_name
+            )
+        } else {
+            copy_status(&format!("{} ({})", hit.grapheme, hit.accessible_name))
+        };
         #[cfg(feature = "upstream-candidate")]
         {
-            self.selection_announcement =
-                Some(format!("Copied {}. Paste manually.", hit.accessible_name));
+            self.selection_announcement = Some(if cfg!(windows) {
+                format!("Copied {}. Paste manually.", hit.accessible_name)
+            } else {
+                self.status.clone()
+            });
         }
         cx.notify();
     }
@@ -640,8 +781,41 @@ impl Launcher {
             || "Persisted preferences: not loaded yet.".to_owned(),
             |settings| format!("Persisted preferences: {}", settings.summary()),
         );
+        #[cfg(windows)]
+        let applications = "Windows Start Menu shortcuts and packaged apps (launched by AUMID). Enter launches or switches; a switch is reported only when the target window is observed as foreground, otherwise the outcome is denied, failed or unverified. Broken shortcuts stay visible with a refresh hint.".to_owned();
+        #[cfg(not(windows))]
+        let applications = match &self.host_capabilities {
+            Some(host) => format!(
+                "{} · catalog: {} · launch: {} · HTTP(S) opener: {}. Enter hands the application to the desktop. A handoff does not verify the foreground window.",
+                host.adapter, host.application_catalog, host.application_launch, host.url_open,
+            ),
+            None => "Catalog and opener capabilities have not been probed yet.".to_owned(),
+        };
+        #[cfg(windows)]
+        let summon = "Ctrl+Space when registration succeeds. Shortcut editing is not implemented. Dismissal attempts checked, best-effort focus return only if Ansa still owns the foreground. Windows can deny activation.".to_owned();
+        #[cfg(not(windows))]
+        let summon = self.native_host.summon_detail();
+        let appearance = self.appearance_notice.as_deref().unwrap_or(
+            if cfg!(target_os = "macos") {
+                "GPUI can request native macOS vibrancy but cannot verify the compositor effect."
+            } else {
+                "Glass and theme are session-only."
+            },
+        );
         format!(
-            "Integration status\n\nApplications: Windows Start Menu shortcuts and packaged apps (launched by AUMID). Enter launches or switches; a switch is reported only when the target window is observed as foreground, otherwise the outcome is denied, failed or unverified. Broken shortcuts stay visible with a refresh hint.\n\nSetup: run Start Setup for the real onboarding flow. Tab/Shift+Tab move between controls, Enter or Space activates, and Escape closes. The shortcut is probed against this session's live Ctrl+Space registration even when an older saved choice exists. A launch is recorded only after the real launch-or-switch probe reports a positive outcome. Skipping records a warning when the step had no result.\n\nSummon: Ctrl+Space when registration succeeds. Shortcut editing is not implemented. Dismissal attempts checked, best-effort focus return only if Ansa still owns the foreground. Windows can deny activation.\n\nActions: Ctrl+K, type to filter, arrows to select, Enter to act. Pins and usage signals last only for this process; ranking signals are not yet persisted. Tab reaches the footer control.\n\nQuicklinks: Ansa holds the exclusive storage lock while it runs, so Refresh re-reads only in-process persisted state and cannot pick up an external CLI import live. To import, close Ansa, run `ansa quicklink import <file> --data-dir <data-dir>`, then start Ansa. Enabled static HTTP(S) quicklinks are composed into search results. Required-argument, local-path, unsupported-opener and unresolved-template entries are omitted and reported; their raw templates are never launched. A corrupt record is reported as a warning instead of a silent empty library. Desktop authoring, preview, import and export are not implemented.\n\nEmoji: type emoji followed by a query (for example, emoji smile), then use Up/Down and Enter. Enter copies the selected grapheme and reports paste manually; insertion and automatic paste are not implemented.\n\nCalculator: bounded arithmetic and approximate f64 results; Enter copies. Start with = to request arithmetic, units or constants. Bounded length, mass, time and temperature units are supported. Currencies, dates and time zones are not. Bounded arithmetic also accepts ^ and % without the = prefix.\n\n{persisted}\n\nPersisted preference note: this build still uses CLI flags for appearance and the live Ctrl+Space registration for summon. Persisted theme, launch_mode, maximum_results and alias_prefix are shown but not applied; ranking signals are session-only.\n\nClipboard history, file indexing, extensions, AI and sync are not enabled. No account or network service is required.\n\n{storage}\n\n{catalog_warning}\n\n{omitted}\n\nAccessibility: no screen-reader run exists for this build. The default GPUI pin has no accessibility bridge; candidate-only roles have not been validated. Keyboard-only setup and emoji navigation are covered by component and synthetic smoke tests, not by NVDA/Narrator.",
+            "Integration status\n\nApplications: {applications}\n\n\
+             Setup: run Start Setup. Tab/Shift+Tab move between controls, Enter or Space activates, and Escape closes. The shortcut is checked against this session's live registration even when an older saved choice exists. Setup records a successful desktop launch handoff or verified switch, not merely a request in progress. Skipping an unverified step records a warning.\n\n\
+             Summon: {summon}\n\n\
+             Appearance: {appearance}\n\n\
+             Actions: Ctrl+K, type to filter, arrows to select, Enter to act. Pins and usage signals last only for this process. Tab reaches the footer control.\n\n\
+             Quicklinks: enabled static HTTP(S) links use the desktop's URL handler. Required-argument, local-path, unsupported-opener and unresolved-template entries are omitted and reported; raw templates are never launched. To import, close Ansa (it holds the exclusive storage lock), run `ansa quicklink import <file> --data-dir <data-dir>`, then start Ansa. Refresh re-reads in-process persisted state only. Desktop authoring, preview, file reveal, import and export are not implemented.\n\n\
+             Emoji: type emoji followed by a query (for example, emoji smile), then use Up/Down and Enter. Paste manually; insertion and automatic paste are not implemented.\n\n\
+             Calculator: start with = to request arithmetic, units or constants. Bounded length, mass, time and temperature units are supported. Currencies, dates and time zones are not. Enter copies the result.\n\n\
+             {persisted}\n\n\
+             Persisted preference note: CLI flags control starting appearance. The live shortcut is separate from stored settings. Persisted theme, launch_mode, maximum_results and alias_prefix are shown but not applied; ranking signals are session-only.\n\n\
+             Clipboard history, file indexing, extensions, AI and sync are not enabled. No account or network service is required.\n\n\
+             {storage}\n\n{catalog_warning}\n\n{omitted}\n\n\
+             Accessibility: the default GPUI pin has no accessibility bridge. Keyboard-only setup and emoji navigation are covered by synthetic interaction tests, not screen-reader validation.",
         )
     }
 
@@ -685,12 +859,22 @@ impl Launcher {
     }
 
     fn setup_hotkey_probe(&self) -> daily::HotkeyProbe {
-        daily::HotkeyProbe::new(
-            self.hotkey.is_some(),
+        #[cfg(windows)]
+        return daily::HotkeyProbe::new(
+            self.hotkey_registered(),
             self.hotkey_notice
                 .clone()
                 .unwrap_or_else(|| "Ctrl+Space registration did not succeed".into()),
-        )
+        );
+        #[cfg(not(windows))]
+        daily::HotkeyProbe::from_outcome(self.native_host.shortcut_probe())
+    }
+
+    fn hotkey_registered(&self) -> bool {
+        #[cfg(windows)]
+        return self.hotkey.is_some();
+        #[cfg(not(windows))]
+        self.native_host.hotkey_registered()
     }
 
     fn setup_move_focus(&mut self, forward: bool, window: &mut Window, cx: &mut Context<Self>) {
@@ -775,11 +959,25 @@ impl Launcher {
             let title_for_task = title.clone();
             let generation = self.setup_generation.wrapping_add(1);
             self.setup_generation = generation;
+            let launch = self.application_launcher();
+            let id_for_launch = id.clone();
+            #[cfg(not(windows))]
+            let launch_entry = self
+                .native_entries
+                .iter()
+                .find(|entry| entry.id == id.as_str() && entry.path == path)
+                .cloned();
+            #[cfg(windows)]
+            let launch_entry: Option<AppEntry> = None;
             cx.spawn(async move |this, cx| {
                 let (outcome, detail) = cx
                     .background_executor()
                     .spawn(async move {
-                        daily::map_launch_outcome(ansa_platform_windows::launch_or_switch(&path))
+                        daily::map_launch_outcome(launch(
+                            &path,
+                            id_for_launch.as_str(),
+                            launch_entry.as_ref(),
+                        ))
                     })
                     .await;
                 let _ = this.update(cx, |this, cx| {
@@ -852,10 +1050,15 @@ impl Launcher {
             return;
         };
         self.status = "Refreshing application catalog…".into();
+        #[cfg(not(windows))]
+        {
+            self.catalog_generation = None;
+            self.displayed_catalog_generation = None;
+        }
         let data_dir = self.data_dir.clone();
         let driver = self.driver.take();
         cx.spawn(async move |this, cx| {
-            let (driver, open_error, settings, result) = cx
+            let (driver, open_error, settings, result, _native_snapshot, _retained_entries) = cx
                 .background_executor()
                 .spawn(async move {
                     let (mut driver, open_error) = match driver {
@@ -865,28 +1068,41 @@ impl Launcher {
                             Err(error) => (None, Some(error.to_string())),
                         },
                     };
-                    let settings = driver
-                        .as_ref()
-                        .map(daily::read_persisted_settings);
-                    let result = match driver.as_mut() {
-                        Some(driver) => match ansa_platform_windows::discover_applications() {
-                            Ok(apps) => {
-                                daily::reload_and_compose(driver, &apps).or_else(|error| {
-                                    daily::legacy_catalog().map(|mut load| {
-                                        load.warning = Some(format!(
-                                            "Quicklink composition failed; using built-ins and applications only: {error}"
-                                        ));
-                                        load
-                                    })
-                                })
-                            }
-                            Err(error) => {
-                                Err(format!("application discovery failed: {error}"))
-                            }
-                        },
-                        None => daily::legacy_catalog(),
+                    let settings = driver.as_ref().map(daily::read_persisted_settings);
+                    #[cfg(windows)]
+                    let (result, native_snapshot, retained_entries) = (
+                        daily::refresh_catalog(
+                            driver.as_mut(),
+                            ansa_platform_api::discover_applications(),
+                        ),
+                        (),
+                        Vec::<AppEntry>::new(),
+                    );
+                    #[cfg(not(windows))]
+                    let (result, native_snapshot, retained_entries) = {
+                        let (generation, (discovery, capabilities)) =
+                            catalog_dispatch::NATIVE_CATALOG.refresh(|| {
+                                let capabilities = ansa_platform_api::host_capabilities();
+                                (ansa_platform_api::discover_applications(), capabilities)
+                            });
+                        // Retain the exact entries whose selection tokens were
+                        // discovered for this generation. Composition consumes
+                        // the discovery result, so clone before it moves.
+                        let retained = discovery.as_ref().ok().cloned().unwrap_or_default();
+                        (
+                            daily::refresh_catalog(driver.as_mut(), discovery),
+                            (generation, capabilities),
+                            retained,
+                        )
                     };
-                    (driver, open_error, settings, result)
+                    (
+                        driver,
+                        open_error,
+                        settings,
+                        result,
+                        native_snapshot,
+                        retained_entries,
+                    )
                 })
                 .await;
             let _ = this.update(cx, |this, cx| {
@@ -894,6 +1110,12 @@ impl Launcher {
                     return;
                 }
                 this.driver = driver;
+                #[cfg(not(windows))]
+                {
+                    this.host_capabilities = Some(_native_snapshot.1);
+                    this.catalog_generation = Some(_native_snapshot.0);
+                    this.native_entries = _retained_entries;
+                }
                 this.storage_error = open_error.clone();
                 this.persisted_settings = settings;
                 match result {
@@ -904,22 +1126,26 @@ impl Launcher {
                         this.catalog_warning = warning.clone();
                         this.engine.replace_catalog(load.commands);
                         this.status = match (&open_error, &warning) {
-                            (Some(error), _) => format!(
-                                "{summary} · {}",
-                                daily::storage_recovery(&this.data_dir, error)
-                            ),
+                            (Some(error), warning) => {
+                                let mut status = format!(
+                                    "{summary} · {}",
+                                    daily::storage_recovery(&this.data_dir, error)
+                                );
+                                if let Some(warning) = warning {
+                                    status.push_str(&format!(" · {warning}"));
+                                }
+                                status
+                            }
                             (None, Some(warning)) => format!("{summary} · {warning}"),
                             (None, None) => summary,
                         };
                     }
                     Err(error) => {
                         this.status = match &open_error {
-                            Some(open_error) => {
-                                daily::storage_recovery(&this.data_dir, open_error)
+                            Some(open_error) => daily::storage_recovery(&this.data_dir, open_error),
+                            None => {
+                                format!("Catalog refresh failed (previous catalog kept): {error}")
                             }
-                            None => format!(
-                                "Catalog refresh failed (previous catalog kept): {error}"
-                            ),
                         };
                     }
                 }
@@ -1083,13 +1309,89 @@ impl Launcher {
     }
 }
 
-fn initial_window_background(glass: bool) -> WindowBackgroundAppearance {
-    if cfg!(target_os = "windows") {
-        WindowBackgroundAppearance::Opaque
-    } else if cfg!(target_os = "macos") && glass {
-        WindowBackgroundAppearance::Blurred
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct InitialAppearance {
+    background: WindowBackgroundAppearance,
+    unavailable: Option<&'static str>,
+    /// What the user asked for, before an OS accessibility fallback.
+    /// MacGlassRequest consumes this on macOS; tests also inspect it.
+    #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
+    requested: bool,
+}
+
+impl InitialAppearance {
+    fn new(platform: Platform, glass: bool, reduce_transparency: bool) -> Self {
+        use WindowBackgroundAppearance::{Blurred, Opaque, Transparent};
+        let (background, unavailable) = match platform {
+            // Reduce Transparency only makes a requested effect unavailable.
+            // A user who chose opaque keeps the ordinary Off state.
+            Platform::MacOs if glass && reduce_transparency => {
+                (Opaque, Some("macOS Reduce Transparency is enabled"))
+            }
+            Platform::MacOs if glass => (Blurred, None),
+            // Only rounded panel corners are clear, not the opaque themed surface.
+            Platform::MacOs => (Transparent, None),
+            // The Win32 composition layer may attach later.
+            Platform::Windows => (Opaque, None),
+            // GPUI's X11 and Wayland backends do not attach compositor blur.
+            Platform::Linux => (
+                Opaque,
+                Some("No native Linux compositor blur is implemented"),
+            ),
+            Platform::Other => (Opaque, Some("No native blur backend is implemented")),
+        };
+        Self {
+            background,
+            unavailable,
+            requested: glass,
+        }
+    }
+}
+
+/// The user's requested glass preference, independent of the native effect.
+/// GPUI has no macOS accessibility display-option observer, so this state is
+/// re-evaluated when the window is activated or the user toggles glass.
+#[cfg(any(target_os = "macos", test))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct MacGlassRequest {
+    requested: bool,
+}
+
+#[cfg(any(target_os = "macos", test))]
+impl MacGlassRequest {
+    const fn new(requested: bool) -> Self {
+        Self { requested }
+    }
+
+    const fn toggled(self) -> Self {
+        Self {
+            requested: !self.requested,
+        }
+    }
+
+    fn evaluate(self, reduce_transparency: bool) -> InitialAppearance {
+        InitialAppearance::new(Platform::MacOs, self.requested, reduce_transparency)
+    }
+}
+
+fn macos_reduce_transparency() -> bool {
+    #[cfg(target_os = "macos")]
+    return objc2_app_kit::NSWorkspace::sharedWorkspace()
+        .accessibilityDisplayShouldReduceTransparency();
+    #[cfg(not(target_os = "macos"))]
+    false
+}
+
+fn glass_label(platform: Platform, glass: bool, unavailable: bool) -> &'static str {
+    if unavailable {
+        "Glass: Unavailable"
+    } else if !glass {
+        "Glass: Off"
+    } else if platform == Platform::MacOs {
+        // GPUI can request native vibrancy but does not verify the result.
+        "Glass: Requested"
     } else {
-        WindowBackgroundAppearance::Transparent
+        "Glass: On"
     }
 }
 
@@ -1106,6 +1408,10 @@ fn launcher_shape(window: &Window) -> (i32, i32, i32) {
 
 impl Render for Launcher {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        #[cfg(not(windows))]
+        {
+            self.displayed_catalog_generation = self.catalog_generation;
+        }
         #[cfg(target_os = "windows")]
         if let Some(hwnd) = self.native_handle {
             let shape @ (width, height, radius) = launcher_shape(window);
@@ -1145,7 +1451,7 @@ impl Render for Launcher {
         let setup_view = self
             .setup
             .as_ref()
-            .map(|setup| setup.view(self.hotkey.is_some()));
+            .map(|setup| setup.view(self.hotkey_registered()));
         let setup_message = self
             .setup
             .as_ref()
@@ -1187,7 +1493,13 @@ impl Render for Launcher {
                     .or_else(|| Some(id.to_string()))
             })
         });
-        let status_text = match &self.hotkey_notice {
+        #[cfg(windows)]
+        let hotkey_notice = self.hotkey_notice.as_deref();
+        #[cfg(not(windows))]
+        let native_notice = self.native_host.hotkey_notice();
+        #[cfg(not(windows))]
+        let hotkey_notice = native_notice.as_deref();
+        let status_text = match hotkey_notice {
             Some(notice) => format!("{notice} · {}", self.status),
             None => self.status.clone(),
         };
@@ -1262,13 +1574,11 @@ impl Render for Launcher {
             .cursor_pointer()
             .text_color(theme.accent)
             .on_click(cx.listener(|this, _, window, cx| this.toggle_glass(window, cx)))
-            .child(if self.appearance_notice.is_some() {
-                "Glass: Unavailable"
-            } else if self.glass {
-                "Glass: On"
-            } else {
-                "Glass: Off"
-            });
+            .child(glass_label(
+                Platform::current(),
+                self.glass,
+                self.appearance_notice.is_some(),
+            ));
         #[cfg(feature = "upstream-candidate")]
         let appearance_button = appearance_button
             .role(Role::Button)
@@ -2055,6 +2365,7 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
     } else {
         daily::default_data_dir()
     };
+    #[cfg(windows)]
     let initial_target = if a11y_fixture {
         None
     } else {
@@ -2066,6 +2377,17 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
         // frame callback on stdout.
         eprintln!("Ansa native startup smoke: starting GPUI application.");
     }
+    #[cfg(target_os = "macos")]
+    let reopen_handle = {
+        let handle = std::rc::Rc::new(std::cell::Cell::new(None));
+        let for_reopen = handle.clone();
+        application.on_reopen(move |cx| {
+            if let Some(handle) = for_reopen.get() {
+                native_host::open_from_desktop(cx, handle);
+            }
+        });
+        handle
+    };
     application.run(move |cx: &mut App| {
         compat::quit_when_last_window_closes(cx).detach();
         install_keybindings(cx);
@@ -2087,16 +2409,22 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             KeyBinding::new("space", SetupActivate, Some("Setup")),
         ]);
         let bounds = Bounds::centered(None, size(px(760.), px(500.)), cx);
+        let appearance = InitialAppearance::new(Platform::current(), glass, macos_reduce_transparency());
         let Ok(handle) = cx.open_window(WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
             window_min_size: Some(size(px(600.), px(360.))),
             titlebar: None,
-            kind: WindowKind::PopUp,
+            #[cfg(target_os = "linux")]
+            window_decorations: Some(gpui::WindowDecorations::Client),
+            // On X11 the pinned GPUI treats PopUp as a notification window.
+            // Use a regular frameless desktop window on macOS/Linux so it
+            // can be selected again even if global registration fails.
+            kind: if cfg!(windows) { WindowKind::PopUp } else { WindowKind::Normal },
             is_resizable: false,
             is_minimizable: false,
             // Windows needs its custom composition layer; macOS uses GPUI's
             // native vibrancy. Both disable GPUI's legacy accent.
-            window_background: initial_window_background(glass),
+            window_background: appearance.background,
             app_id: Some("dev.ansa.launcher".into()),
             ..Default::default()
         }, |window, cx| {
@@ -2105,7 +2433,7 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                     window,
                     cx,
                     a11y_fixture,
-                    glass,
+                    appearance,
                     light,
                     data_dir.clone(),
                     interaction_smoke,
@@ -2134,11 +2462,6 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             }
             cx.notify();
         });
-        #[cfg(not(target_os = "windows"))]
-        let _ = handle.update(cx, |this, _, cx| {
-            this.glass = glass;
-            cx.notify();
-        });
         if a11y_fixture {
             // Built-ins only, no discovery, account state, clipboard writes or
             // external actions. The probe starts this process and talks to it.
@@ -2157,6 +2480,8 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                 });
             });
         } else {
+            #[cfg(windows)]
+            {
             let hwnd = handle.update(cx, |this, _, _| {
                 this.previous_target = initial_target;
                 this.native_handle
@@ -2170,12 +2495,6 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                 match hotkey {
                     Ok(hotkey) => { this.hotkey = Some(hotkey); this.status.push_str(" · Ctrl+Space to summon"); }
                     Err(error) => this.hotkey_notice = Some(format!("Ctrl+Space unavailable: {error}")),
-                }
-                // Native smoke is a window-creation check. Opening storage would
-                // leave nothing usable behind and can migrate a developer's real
-                // profile, so it only runs when ANSA_DATA_DIR is explicit.
-                if !interaction_smoke && (!native_smoke || explicit_data_dir) {
-                    this.refresh_catalog(cx);
                 }
                 cx.notify();
             });
@@ -2203,8 +2522,33 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                     }).is_err() { break; }
                 }
             }).detach();
+            }
+            #[cfg(not(windows))]
+            if !fixture_run {
+                native_host::install_summon(cx, handle);
+            }
+
+            // Native smoke is a window-creation check. Opening storage would
+            // leave nothing usable behind and can migrate a developer's real
+            // profile, so it only runs when ANSA_DATA_DIR is explicit.
+            if !interaction_smoke && (!native_smoke || explicit_data_dir) {
+                let _ = handle.update(cx, |this, _, cx| this.refresh_catalog(cx));
+            }
         }
+        #[cfg(target_os = "macos")]
+        reopen_handle.set(Some(handle));
+        #[cfg(not(windows))]
+        let _ = handle.update(cx, |_, window, _| window.set_window_title("Ansa"));
+        #[cfg(windows)]
         cx.activate(true);
+        #[cfg(target_os = "macos")]
+        if fixture_run {
+            cx.activate(true);
+        }
+        #[cfg(not(windows))]
+        if !fixture_run {
+            native_host::open_from_desktop(cx, handle);
+        }
         #[cfg(debug_assertions)]
         if interaction_smoke {
             let _ = handle.update(cx, |_, window, cx| smoke::start(cx.entity(), window));
@@ -2220,21 +2564,14 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
                         cx.quit();
                     });
                 });
-                // GPUI 0.2.2 starts a window's X11 periodic frame loop only
-                // when it processes MapNotify/VisibilityNotify. The map
-                // request is checked synchronously, so those events can be read
-                // into x11rb's private queue while the socket is left empty;
-                // the calloop watcher then never wakes and the callbacks above
-                // are never requested. Activating the window issues
-                // SetInputFocus, whose FocusIn makes the connection readable
-                // again, draining the queued mapping events and starting frame
-                // delivery. This is the same activation a real launcher summon
-                // performs, not a smoke-only shortcut.
-                #[cfg(target_os = "linux")]
-                if gpui::guess_compositor() == "X11" {
-                    window.activate_window();
-                }
             });
+        }
+        // GPUI's synchronous X11 MapWindow check can leave mapping events
+        // queued without waking calloop. Activation wakes delivery; fixtures
+        // otherwise skip normal summon setup.
+        #[cfg(target_os = "linux")]
+        if (startup_smoke || interaction_smoke) && gpui::guess_compositor() == "X11" {
+            let _ = handle.update(cx, |_, window, _| window.activate_window());
         }
     });
     let error = startup_error.borrow_mut().take();
@@ -2256,4 +2593,117 @@ fn native_handle(_window: &Window) -> Option<isize> {
     // GPUI 0.2.2's X11 HasWindowHandle implementation panics rather than
     // returning an unsupported-handle error. Never call it on other targets.
     None
+}
+
+#[cfg(test)]
+mod platform_appearance_tests {
+    use super::*;
+
+    #[test]
+    fn linux_never_requests_transparency_without_native_blur() {
+        for requested in [false, true] {
+            let appearance = InitialAppearance::new(Platform::Linux, requested, false);
+            assert_eq!(appearance.background, WindowBackgroundAppearance::Opaque);
+            assert_eq!(
+                glass_label(
+                    Platform::Linux,
+                    appearance.background == WindowBackgroundAppearance::Blurred,
+                    appearance.unavailable.is_some(),
+                ),
+                "Glass: Unavailable"
+            );
+        }
+    }
+
+    #[test]
+    fn macos_reports_requested_vibrancy_and_honors_reduce_transparency() {
+        let requested = InitialAppearance::new(Platform::MacOs, true, false);
+        assert_eq!(requested.background, WindowBackgroundAppearance::Blurred);
+        assert_eq!(requested.unavailable, None);
+        assert_eq!(
+            glass_label(
+                Platform::MacOs,
+                requested.background == WindowBackgroundAppearance::Blurred,
+                requested.unavailable.is_some(),
+            ),
+            "Glass: Requested"
+        );
+        let fallback = InitialAppearance::new(Platform::MacOs, true, true);
+        assert_eq!(fallback.background, WindowBackgroundAppearance::Opaque);
+        assert!(fallback.unavailable.is_some());
+        assert_eq!(
+            glass_label(
+                Platform::MacOs,
+                fallback.background == WindowBackgroundAppearance::Blurred,
+                fallback.unavailable.is_some(),
+            ),
+            "Glass: Unavailable"
+        );
+        let disabled = InitialAppearance::new(Platform::MacOs, false, false);
+        assert_ne!(disabled.background, WindowBackgroundAppearance::Blurred);
+        assert_eq!(glass_label(Platform::MacOs, false, false), "Glass: Off");
+        // A user who chose Off is not Unavailable, even while the OS Reduce
+        // Transparency setting is enabled.
+        let disabled = InitialAppearance::new(Platform::MacOs, false, true);
+        assert_eq!(disabled.background, WindowBackgroundAppearance::Transparent);
+        assert!(disabled.unavailable.is_none());
+        assert_eq!(glass_label(Platform::MacOs, false, false), "Glass: Off");
+    }
+
+    #[test]
+    fn macos_reduce_transparency_re_evaluation_preserves_the_requested_glass() {
+        // Requested -> OS forces an opaque fallback -> OS setting cleared.
+        // The saved request, not the effective background, drives the restore.
+        let request = MacGlassRequest::new(true);
+        let unavailable = request.evaluate(true);
+        assert_eq!(unavailable.background, WindowBackgroundAppearance::Opaque);
+        assert!(unavailable.requested);
+        assert!(unavailable.unavailable.is_some());
+        assert_eq!(
+            glass_label(Platform::MacOs, false, true),
+            "Glass: Unavailable"
+        );
+
+        let restored = request.evaluate(false);
+        assert_eq!(restored.background, WindowBackgroundAppearance::Blurred);
+        assert!(restored.requested);
+        assert!(restored.unavailable.is_none());
+        assert_eq!(
+            glass_label(Platform::MacOs, true, false),
+            "Glass: Requested"
+        );
+
+        // The same re-evaluation after an explicit Off must stay off.
+        let off = request.toggled();
+        assert_eq!(
+            off.evaluate(true).background,
+            WindowBackgroundAppearance::Transparent
+        );
+        assert!(off.evaluate(true).unavailable.is_none());
+        let still_off = off.evaluate(false);
+        assert_eq!(
+            still_off.background,
+            WindowBackgroundAppearance::Transparent
+        );
+        assert!(still_off.unavailable.is_none());
+        assert_eq!(glass_label(Platform::MacOs, false, false), "Glass: Off");
+    }
+
+    #[test]
+    fn unsupported_platforms_are_explicitly_opaque() {
+        let appearance = InitialAppearance::new(Platform::Other, true, false);
+        assert_eq!(appearance.background, WindowBackgroundAppearance::Opaque);
+        assert!(appearance.unavailable.is_some());
+        assert_eq!(
+            glass_label(Platform::Other, false, appearance.unavailable.is_some()),
+            "Glass: Unavailable"
+        );
+    }
+
+    #[test]
+    fn windows_starts_opaque_until_native_backdrop_attaches() {
+        let startup = InitialAppearance::new(Platform::Windows, true, false);
+        assert_eq!(startup.background, WindowBackgroundAppearance::Opaque);
+        assert!(startup.unavailable.is_none());
+    }
 }

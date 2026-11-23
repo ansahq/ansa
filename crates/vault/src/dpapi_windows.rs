@@ -7,6 +7,8 @@
 use core::ffi::c_void;
 use core::ptr;
 
+use zeroize::Zeroize;
+
 use crate::error::VaultError;
 use crate::{MAX_PLAINTEXT_BYTES, MAX_SEALED_FILE_BYTES};
 
@@ -90,7 +92,7 @@ pub(crate) fn protect(plaintext: &[u8], entropy: &[u8]) -> Result<Vec<u8>, Vault
     if succeeded == 0 {
         return Err(protect_error());
     }
-    take_output(output, MAX_SEALED_FILE_BYTES)
+    take_output(output, MAX_SEALED_FILE_BYTES, false)
 }
 
 /// Unseal a DPAPI-protected blob with the current Windows user, using the same
@@ -136,10 +138,10 @@ pub(crate) fn unprotect(ciphertext: &[u8], entropy: &[u8]) -> Result<Vec<u8>, Va
     if succeeded == 0 {
         return Err(unprotect_error());
     }
-    take_output(output, MAX_PLAINTEXT_BYTES)
+    take_output(output, MAX_PLAINTEXT_BYTES, true)
 }
 
-fn take_output(output: DataBlob, limit: usize) -> Result<Vec<u8>, VaultError> {
+fn take_output(output: DataBlob, limit: usize, sensitive: bool) -> Result<Vec<u8>, VaultError> {
     let length = output.cb_data as usize;
     if output.pb_data.is_null() {
         if length == 0 {
@@ -153,6 +155,9 @@ fn take_output(output: DataBlob, limit: usize) -> Result<Vec<u8>, VaultError> {
         // SAFETY: DPAPI returned this pointer and it must be released exactly
         // once with `LocalFree`, even on the rejection path.
         unsafe {
+            if sensitive {
+                core::slice::from_raw_parts_mut(output.pb_data, length).zeroize();
+            }
             LocalFree(output.pb_data.cast());
         }
         return Err(VaultError::LimitExceeded {
@@ -169,6 +174,9 @@ fn take_output(output: DataBlob, limit: usize) -> Result<Vec<u8>, VaultError> {
 
     // SAFETY: the allocation is owned by the caller and released exactly once.
     unsafe {
+        if sensitive {
+            core::slice::from_raw_parts_mut(output.pb_data, length).zeroize();
+        }
         LocalFree(output.pb_data.cast());
     }
     Ok(bytes)

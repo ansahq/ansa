@@ -1,14 +1,16 @@
 //! Integration tests for the Windows DPAPI vault.
 //!
-//! Windows tests exercise the real operating-system backend; non-Windows tests
-//! assert the explicit unsupported result and that no files are created.
+//! Windows tests exercise the real operating-system backend. Other native
+//! backends have separate, opt-in integration tests.
 
 #[cfg(windows)]
 use ansa_vault::{
     MAX_PLAINTEXT_BYTES, MAX_SEALED_FILE_BYTES, OpenPayload, PAYLOAD_VERSION, SealedPayload,
 };
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 use ansa_vault::{Vault, VaultError};
 
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 use std::fs;
 #[cfg(windows)]
 use std::path::{Path, PathBuf};
@@ -245,7 +247,6 @@ fn secrets_survive_process_independent_reopen() {
         .args(["--exact", "child_reads_secret_from_env"])
         .env("ANSA_VAULT_CHILD_DIR", directory.path())
         .env("ANSA_VAULT_CHILD_ALIAS", "cross-process")
-        .env("ANSA_VAULT_CHILD_EXPECT", "child-value")
         .status()
         .expect("spawn child test process");
     assert!(status.success(), "child process could not read the vault");
@@ -260,12 +261,8 @@ fn child_reads_secret_from_env() {
         return;
     };
     let alias = std::env::var("ANSA_VAULT_CHILD_ALIAS").unwrap();
-    let expected = std::env::var("ANSA_VAULT_CHILD_EXPECT").unwrap();
     let vault = Vault::open(directory).unwrap();
-    assert_eq!(
-        vault.get_secret(&alias).unwrap().as_slice(),
-        expected.as_bytes()
-    );
+    assert_eq!(vault.get_secret(&alias).unwrap().as_slice(), b"child-value");
 }
 
 #[test]
@@ -425,8 +422,43 @@ fn metadata_is_non_secret_and_newer_formats_are_rejected() {
 }
 
 #[test]
-#[cfg(not(windows))]
-fn non_windows_open_is_explicitly_unsupported_and_writes_nothing() {
+#[cfg(windows)]
+fn backup_verification_requires_intact_legacy_metadata() {
+    let directory = tempfile::tempdir().unwrap();
+    let vault = Vault::open(directory.path()).unwrap();
+    vault.put_secret("check", b"value").unwrap();
+    assert_eq!(vault.verify_backup().unwrap().secrets_verified, 1);
+
+    let metadata = directory.path().join("vault.json");
+    let original = fs::read(&metadata).unwrap();
+    fs::remove_file(&metadata).unwrap();
+    assert!(matches!(
+        vault.verify_backup(),
+        Err(VaultError::MetadataMissing)
+    ));
+
+    fs::write(&metadata, b"{not json").unwrap();
+    assert!(matches!(
+        vault.verify_backup(),
+        Err(VaultError::InvalidVault { .. })
+    ));
+
+    fs::write(&metadata, br#"{"format":99,"backend":"windows-dpapi-v1"}"#).unwrap();
+    assert!(matches!(
+        vault.verify_backup(),
+        Err(VaultError::UnsupportedVaultFormat {
+            found: 99,
+            supported: 1
+        })
+    ));
+
+    fs::write(&metadata, original).unwrap();
+    assert_eq!(vault.verify_backup().unwrap().secrets_verified, 1);
+}
+
+#[test]
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
+fn other_platform_open_is_explicitly_unsupported_and_writes_nothing() {
     let directory = tempfile::tempdir().unwrap();
     let result = Vault::open(directory.path());
     match result {

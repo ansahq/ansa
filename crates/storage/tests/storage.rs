@@ -25,7 +25,21 @@ fn config(dir: &TempDir) -> StorageConfig {
 }
 
 fn open(dir: &TempDir) -> Store {
-    Store::open(config(dir)).expect("store should open")
+    // Tests run in parallel, and the identity lock is keyed by the durable
+    // file's dev/inode rather than its path. A child/other test that is still
+    // tearing down a lock for a recycled identity can briefly collide with a
+    // fresh temporary database. Retry only that transient condition; a store
+    // that remains locked still fails the test after the short deadline.
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        match Store::open(config(dir)) {
+            Ok(store) => return store,
+            Err(StorageError::AlreadyLocked { .. }) if Instant::now() < deadline => {
+                thread::sleep(Duration::from_millis(10));
+            }
+            Err(error) => panic!("store should open: {error:?}"),
+        }
+    }
 }
 
 fn column_exists(connection: &Connection, table: &str, column: &str) -> bool {

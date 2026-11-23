@@ -382,7 +382,7 @@ pub fn compose_catalog(driver: &DailyDriver, apps: &[AppEntry]) -> Result<Catalo
         .compose_catalog(&[])
         .map_err(|error| error.to_string())?;
     #[cfg(not(windows))]
-    let commands = builtin_commands()
+    let commands: Vec<Command> = builtin_commands()
         .into_iter()
         .chain(app_commands(apps))
         .chain(

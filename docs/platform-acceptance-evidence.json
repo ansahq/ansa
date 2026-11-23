@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "candidate_commit": null,
+  "non_native_context": [
+    {
+      "kind": "ci-build-startup",
+      "reference": "https://github.com/ansahq/ansa/actions/runs/44879271767",
+      "finding": "At f1cb76f668dbeb86956881236d9b7ab63a7a15ce, macos-latest and ubuntu-latest passed native desktop build and startup smoke. Linux used Xvfb and software Vulkan. No AT speech or physical macOS visual acceptance was captured by those jobs."
+    },
+    {
+      "kind": "source-inspection",
+      "reference": "git show 9b58dc5:docs/adr/0004-framework-gate-decision.md",
+      "finding": "The earlier framework decision retains the Windows-only keyboard-first development pin and leaves the release accessibility gate open. An isolated upstream GPUI candidate is not a promoted build."
+    },
+    {
+      "kind": "structural-tree-probe",
+      "reference": "git show f1cb76f668dbeb86956881236d9b7ab63a7a15ce:docs/framework-gate.md",
+      "finding": "Automated Windows candidate UIA probes are structural only. They do not validate VoiceOver, Orca/AT-SPI, physical input, or user-perceived announcements."
+    },
+    {
+      "kind": "source-inspection",
+      "reference": "Source at f1cb76f668dbeb86956881236d9b7ab63a7a15ce: crates/ui-gpui/src/lib.rs, crates/ui-components/src/theme.rs, docs/validation-2026-11-18.md",
+      "finding": "macOS requests the native Blurred appearance below an 80% tint. The macOS toggle unconditionally records the requested glass state, clears the notice and has no observable error handler equivalent to the Windows backdrop setup failure path. This is a fallback/state gap to investigate, not an observed native failure."
+    },
+    {
+      "kind": "host-inventory",
+      "reference": "Local executable lookup, wsl --list --verbose, and GitHub Actions runner metadata",
+      "finding": "The local host is Windows 11 build 26200; no sw_vers, VoiceOver, Orca or Accerciser executable was found and WSL reports not installed. GitHub-hosted build/smoke jobs are visible; the self-hosted runner inventory returned HTTP 403. No qualifying physical interactive test host was verified."
+    }
+  ],
+  "tickets": {
+    "ANS-88": {
+      "macos-14": {
+        "blockers": ["No promoted native accessibility build and no independent physical VoiceOver J1-J10 runs on macOS 14."],
+        "runs": [],
+        "review": null
+      },
+      "macos-15": {
+        "blockers": ["No promoted native accessibility build and no independent physical VoiceOver J1-J10 runs on macOS 15."],
+        "runs": [],
+        "review": null
+      }
+    },
+    "ANS-87": {
+      "gnome-x11": {
+        "blockers": ["No promoted native accessibility build with verified AT-SPI adapter and no independent Orca runs on GNOME/X11."],
+        "runs": [],
+        "review": null
+      },
+      "gnome-wayland": {
+        "blockers": ["No verified AT-SPI adapter and no independent Orca runs on a native GNOME/Wayland session."],
+        "runs": [],
+        "review": null
+      },
+      "kde-x11": {
+        "blockers": ["No declared KDE/X11 distro and compositor versions, verified AT-SPI adapter, or independent Orca runs."],
+        "runs": [],
+        "review": null
+      },
+      "kde-wayland": {
+        "blockers": ["No declared KDE/Wayland distro and compositor versions, verified AT-SPI adapter, or independent Orca runs."],
+        "runs": [],
+        "review": null
+      }
+    },
+    "ANS-97": {
+      "macos-14": {
+        "blockers": ["No physical native frost, contrast, bounds or fallback observations on macOS 14; the macOS fallback state is unverified."],
+        "runs": [],
+        "review": null
+      },
+      "macos-15": {
+        "blockers": ["No physical native frost, contrast, bounds or fallback observations on macOS 15; the macOS fallback state is unverified."],
+        "runs": [],
+        "review": null
+      }
+    }
+  }
+}

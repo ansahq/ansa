@@ -64,8 +64,8 @@ LF-normalized identity hash.
   Cargo.lock files that contain the same name/version from multiple sources are
   not supported in this slice; the loader fails closed with a source-
   disambiguated-identity diagnostic instead of merging or misattributing them.
-  The current lock has 717 unique name/version pairs: 708 registry packages and
-  9 workspace/path packages. Expanding the identity model is a later change.
+  The current lock has 762 unique name/version pairs: 744 registry packages and
+  18 workspace/path packages. Expanding the identity model is a later change.
 - CI will not run without a current generated inventory; the job is blocking.
 
 ### Regenerate and check

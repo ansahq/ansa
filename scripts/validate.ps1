@@ -60,6 +60,8 @@ try {
     }
 
     Invoke-PythonCheck -Executable $python -PythonArguments @('-m', 'unittest', 'discover', '-s', 'scripts/build/tests', '-v')
+    Invoke-PythonCheck -Executable $python -PythonArguments @('scripts/platform_acceptance_gate.py', '--check')
+    Invoke-PythonCheck -Executable $python -PythonArguments @('-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_platform_acceptance_gate.py', '-v')
 
     if (-not $SkipDependencyInventory) {
         Invoke-PythonCheck -Executable $python -PythonArguments @('-m', 'unittest', 'discover', '-s', 'scripts/dependencies/tests', '-v')

@@ -149,6 +149,17 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("python scripts/reference/test_validate_reference.py", ci)
         self.assertIn("Reference ledger (${{ matrix.os }})", ci)
 
+    def test_native_acceptance_evidence_gate_is_in_ci_and_local_validation(self) -> None:
+        ci = self.read(".github/workflows/ci.yml")
+        self.assertIn("python scripts/platform_acceptance_gate.py --check", ci)
+        self.assertIn(
+            "python -m unittest discover -s scripts -p test_platform_acceptance_gate.py -v",
+            ci,
+        )
+        script = self.read("scripts/validate.ps1")
+        self.assertIn("'scripts/platform_acceptance_gate.py', '--check'", script)
+        self.assertIn("'test_platform_acceptance_gate.py'", script)
+
     def test_ci_runs_isolated_reuse_safety_tests(self) -> None:
         ci = self.read(".github/workflows/ci.yml")
         self.assertIn("pwsh -NoProfile -File scripts/reuse/tests/run-tests.ps1", ci)

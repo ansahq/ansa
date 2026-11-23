@@ -24,11 +24,19 @@ Started 2026-11-11. Updated 2026-11-19 with the Phase 1 daily-launcher implement
 | L09 | First-run onboarding model with recoverable shortcut conflicts, launch verification, permission explanations, JSON persistence and reset; keyboard-only `Start Setup` desktop surface | Full Welcome/Shortcut/TryLaunch/Integrations/Done screens, real hotkey rebinding probe and real launch verification remain L09a |
 | L10 | `ansa-alpha` composition root, CLI surfaces, desktop `DailyDriver` consumption and deterministic 1,000-cycle harness | Two-week human dogfooding, clean-machine install/uninstall, physical keyboard/screen-reader and crash/restart drill remain open |
 | L11 | Desktop consumes `DailyDriver` for catalog/onboarding/quicklinks; `emoji <query>` copy mode; keyboard-only setup; smoke isolation | Bounded first slice: no quicklink authoring, no full emoji variant picker, no full onboarding screens; F08/manual acceptance open |
-| P03 | Windows DPAPI vault with sealed payloads, secret aliases, locked/unlocked session gate, rotation, redacted errors and no plaintext fallback | DPAPI is user-bound, not passphrase-protected; no cross-user/machine backup; rotation isn't transactional; generic records/cache encryption integration remains |
-| P04 | Clipboard capture model/Windows text + file-list adapter with exclusion markers, sensitive filtering, quotas/pins, DPAPI-sealed history, cross-process store lock, legacy migration | No live clipboard listener/UI; image capture unsupported; heuristics are not proof; session-only pause/private policy |
+| P03 | Windows DPAPI plus macOS Keychain and Linux Secret Service vault backends, XChaCha20-Poly1305 sealed payloads, Argon2id passphrase and memory-only fallbacks, exact-byte header binding, secret aliases, rotation, redacted errors and no silent plaintext downgrade | Windows DPAPI is user-bound; macOS/Linux providers are compile-checked only; no cross-user/machine backup; rotation isn't transactional; generic records/cache encryption integration remains |
+| P04 | Clipboard capture model with Windows, macOS AppKit and Linux X11/Wayland text + file-list readers, privacy markers, sensitive filtering, quotas/pins, sealed history, crash-safe store locks and legacy migration | No live clipboard listener/UI; image capture unsupported; macOS/Linux readers have no native acceptance yet; heuristics are not proof; session-only pause/private policy |
 | P05 | Target-aware insertion transaction with copy-only default, identity/generation/permission/IME/secure-input checks, clipboard ownership, no restore-over-newer-copy | No Windows automatic insertion host; `Inserted` evidence path is fake-host tested only; real-app insertion matrix absent |
 
 These are implemented slices within the reviewed boundaries, not a claim that Phase 1 or the release gates are closed. L08, L09 and L10 still require host/UI/human evidence.
+
+### macOS/Linux follow-up batch (21 November)
+
+ANS-82 through ANS-99 are tracked in the
+[platform batch implementation record](platform-batch-implementation.md).
+The historical Windows slice descriptions above are not claims that the new
+platform adapters have native acceptance. Real macOS/Linux lifecycle,
+screen-reader and visual evidence remains required before a support claim.
 
 ### Foundation evidence/tooling follow-up (17 November)
 
@@ -46,8 +54,8 @@ record the bounded investigation's final decision and unresolved per-package
 licences. No candidate tests passed, no source was adopted, and no legal or
 runtime clearance is claimed.
 
-ANS-7 adds [build and inventory tooling](build/README.md). The lockfile contains
-717 packages, including 708 third-party packages whose review remains open.
+ANS-7 adds [build and inventory tooling](build/README.md). The lockfile currently
+contains 762 packages, including 744 third-party packages whose review remains open.
 The exact named Rust 1.99.1 toolchain subsequently passed local Windows validation:
 138 unit tests, one doctest, Clippy, desktop build, startup smoke and 30 synthetic
 interaction stages. One UI example doctest remains ignored. Post-merge main
@@ -77,6 +85,47 @@ The 2026-11-20 follow-up record is in [`validation-2026-11-20.md`](validation-20
 - Platform icon example: valid 32×32 ICO, 4,286 bytes from notepad.exe. Watch example: 6 bounded polls. Vault: DPAPI round-trip, tamper/wrong-context/lock tests. Clipboard: DPAPI-sealed history, exclusion markers, cross-process lock and legacy migration tests.
 - Independent Max-variant reviews are recorded in [`reviews/`](reviews/). The final scoped verdicts have no open BLOCKER/HIGH/MEDIUM on the accepted slices; residual risks and manual checks are documented in those reports and below.
 
+### macOS/Linux platform batch (23 November)
+
+The ANS-82–ANS-99 follow-up adds macOS/Linux catalog, opener, host, hotkey,
+Keychain/Secret Service vault, clipboard and desktop paths; see the
+[platform batch record](platform-batch-implementation.md). On Windows with Rust
+1.99.1 and the locked/offline resolution:
+
+- `cargo fmt --all -- --check` — clean.
+- `cargo test --workspace --locked --offline --no-fail-fast` — **786 passing
+  test events, 0 failed, 2 ignored** across 50 Cargo result lines (not 50
+  distinct test binaries). Two pass events are child-process relaunches used by
+  the process-boundary tests; ignored: the UI text-input doctest and the manual
+  real-Windows-clipboard probe.
+- `cargo clippy --workspace --all-targets --locked --offline -- -D warnings` —
+  exit 0; only the existing `proc-macro-error2` future-incompatibility note.
+- `cargo build -p ansa-desktop --locked --offline` — exit 0; default and
+  `--opaque --light` startup smokes exit 0; the **40-stage** interaction smoke
+  exits 0 in both appearances.
+- Focused package runs: platform-api **43**, vault **41**, clipboard **110**
+  passed plus one ignored, UI **30** passed.
+- Cross-target compile and Clippy checks passed for platform-api, vault and
+  clipboard on macOS/Linux. The desktop cross-target attempt stopped in `ring`
+  because this host lacks the Linux cross C compiler and Apple SDK; it is not
+  native evidence.
+- Independent GPT-6.2 Sol Max reviews recorded the original 4 HIGH/7 MEDIUM/LOW
+  findings, three fix-verification rounds and a final micro-confirmation under
+  [`reviews/`](reviews/). The
+  passphrase-header, selection-token, X11 owner/generation, Linux-opener,
+  Carbon-ABI and transactional-eviction defects are closed in the reviewed
+  paths; Xauthority blocking I/O, Linux provider-prompt consent and live macOS
+  Reduce Transparency notification remain documented residuals, not native
+  evidence.
+- Native acceptance remains **0/8** in the gate ledger. VoiceOver, Orca/AT-SPI,
+  macOS visual glass, Linux blur, real X11/Wayland and macOS host lifecycle,
+  real Keychain/Secret Service and real clipboard/browser/file-manager checks
+  are still blocked on hardware and human testers.
+
+Linux blur remains unimplemented: the desktop uses an opaque surface with
+`Glass: Unavailable`. No native platform support claim is made from the
+Windows-hosted results above.
+
 CI configuration is not evidence of a completed remote CI run. Physical-input, screen-reader, lifecycle, accessibility and cross-platform gates remain open.
 
 ## Required next acceptance work
@@ -103,7 +152,7 @@ do not verify the current blur. See the [ANS-75 validation notes](validation-202
 - Packaged enumeration uses a compile-time constant `Get-StartApps` command, an absolute PowerShell path, strict size/time limits, strict JSON and a strict AUMID allowlist.
 - Quicklinks never invoke a shell. They resolve inert target data under an HTTP(S)/local-path policy; local paths are opt-in, executable/unknown extensions are denied by default for `DefaultApp`, and the caller must confirm replace imports.
 - Storage keeps only credential references; generic user records and cache values remain unencrypted and must not contain secrets. Logs and error messages do not include stored payloads.
-- P03 secrets and P04 clipboard payloads are sealed with Windows DPAPI (user-bound, not passphrase-bound). Vault/clipboard files contain hex ciphertext plus non-sensitive metadata; no plaintext fallback exists, non-Windows is explicitly unsupported, and `lock()` is a session gate rather than cryptographic re-authentication. Same-user processes can decrypt DPAPI data.
+- P03 secrets and P04 clipboard payloads are sealed with Windows DPAPI on Windows and with a 32-byte OS-keyring key plus XChaCha20-Poly1305 on macOS Keychain and Linux Secret Service. Explicit passphrase (Argon2id-wrapped data key) and memory-only modes are available; there is no plaintext fallback. Vault/clipboard files contain only ciphertext plus non-sensitive metadata. `lock()` is a session gate rather than cryptographic re-authentication, and same-user processes allowed by the OS provider can access the key or decrypt DPAPI data.
 - P05 defaults to copy-only. Automatic insertion has no Windows host in this slice; it must not report `Inserted` without destination evidence, and it never restores an older clipboard value over a newer user copy.
 - The emoji dataset is embedded, offline and pinned by version and checksum. The checksum is an integrity pin, not a cryptographic signature.
 - `ansa doctor` probes capability only; it does not register a global hotkey. No account, network service, automatic paste, clipboard history or extension execution is enabled in this slice.

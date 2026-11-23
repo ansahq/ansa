@@ -6,14 +6,14 @@ This file is generated from `Cargo.lock`, `cargo metadata --locked --offline`
 and `scripts/dependencies/review-status.toml`. It is a build/tooling artifact,
 not a legal review or a claim that every locked package is used on every OS.
 
-- Cargo.lock SHA-256 (LF-normalized): `5d11fc48ee4ab46e6c96529814b164c072fef5b9c33cb878f7ec76761dac15bb`
+- Cargo.lock SHA-256 (LF-normalized): `344710e0f681c9562a857cf83aafb37b4ed92d3d6c101d3e5a54527f34802127`
 - Lock identity normalizes CRLF pairs to LF only; lone CR, UTF-8 and all
   other bytes are preserved. Registry artifact checksums below are raw.
 - Lockfile format: v3
-- Packages: **732** (18 first-party workspace, 714 third-party)
-- License declared: **732**; license unknown: **0**
-- SPDX expression emitted: **683**; `NOASSERTION`: **49** (allowlist/legacy limitation, not an invalid-license judgment)
-- Review status: **18 reviewed, 714 unreviewed**
+- Packages: **762** (18 first-party workspace, 744 third-party)
+- License declared: **762**; license unknown: **0**
+- SPDX expression emitted: **713**; `NOASSERTION`: **49** (allowlist/legacy limitation, not an invalid-license judgment)
+- Review status: **18 reviewed, 744 unreviewed**
 - Review policy: first-party workspace members with a declared license are
   marked reviewed for that manifest declaration; this is not a legal review.
   Third-party packages remain unreviewed unless explicitly recorded in
@@ -32,17 +32,17 @@ libraries, Rust toolchain components, GitHub Actions, and the excluded
 
 | Filter | Packages observed |
 |---|---:|
-| linux | 572 |
-| macos | 513 |
-| windows | 501 |
+| linux | 602 |
+| macos | 536 |
+| windows | 524 |
 
 ## License expressions
 
 | Declared license | Packages |
 |---|---:|
-| MIT OR Apache-2.0 | 322 |
-| MIT | 153 |
-| Apache-2.0 OR MIT | 71 |
+| MIT OR Apache-2.0 | 343 |
+| MIT | 156 |
+| Apache-2.0 OR MIT | 77 |
 | Apache-2.0 | 39 |
 | MIT/Apache-2.0 | 37 |
 | Unicode-3.0 | 18 |
@@ -84,7 +84,9 @@ legacy forms are not normalised into a different SPDX expression.
 | Package | Version | Platforms | Source | SHA-256 | License | Review |
 |---|---|---|---|---|---|---|
 | adler2 | 2.0.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa | 0BSD OR MIT OR Apache-2.0 | unreviewed |
+| aead | 0.5.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | d122413f284cf2d62fb1b7db97e02edb8cda96d769b16e443a4f6195e35662b0 | MIT OR Apache-2.0 | unreviewed |
 | aes | 0.8.4 | linux | registry+https://github.com/rust-lang/crates.io-index | b169f7a6d4742236a0a00c541b845991d0ac43e546831af1249753ab4c3aa3a0 | MIT OR Apache-2.0 | unreviewed |
+| aes | 0.9.4 | linux | registry+https://github.com/rust-lang/crates.io-index | fc0fc36d7440d015b45468ba08a21e80e056ebbd014c611c6298bb7503e04bd1 | MIT OR Apache-2.0 | unreviewed |
 | ahash | 0.8.12 | linux | registry+https://github.com/rust-lang/crates.io-index | 5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75 | MIT OR Apache-2.0 | unreviewed |
 | aho-corasick | 1.1.5 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | c982642fa9e8606056828ee9a8505737230110bb1099153c79efe865c59d12ba | Unlicense OR MIT | unreviewed |
 | aligned | 0.4.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ee4508988c62edf04abd8d92897fca0c2995d907ce1dfeaf369dac3716a40685 | MIT OR Apache-2.0 | unreviewed |
@@ -111,6 +113,7 @@ legacy forms are not normalised into a different SPDX expression.
 | ar_archive_writer | 0.5.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 73cd58deff2140a0a8eae87e417bd01db68a33e148aa93d1e8cd837e55e312b6 | Apache-2.0 WITH LLVM-exception | unreviewed |
 | arbitrary | 1.5.0 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | 3bc62ac97cc33321f50863d514c3bc38a453947a8f9e781137e47c7401020aed | MIT OR Apache-2.0 | unreviewed |
 | arg_enum_proc_macro | 0.3.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 0ae92a5119aa49cdbcf6b9f893fe4e1d98b04ccbf82ee0584ad948a44a734dea | MIT | unreviewed |
+| argon2 | 0.5.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 3c3610892ee6e0cbce8ae2700349fcf8f98adb0dbfbee85aec3c9179d29cc072 | MIT OR Apache-2.0 | unreviewed |
 | arrayref | 0.3.9 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb | BSD-2-Clause | unreviewed |
 | arrayvec | 0.7.8 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56 | MIT OR Apache-2.0 | unreviewed |
 | as-raw-xcb-connection | 1.0.1 | linux | registry+https://github.com/rust-lang/crates.io-index | 175571dd1d178ced59193a6fc02dde1b972eb0bc56c892cde9beeceac5bf0f6b | MIT OR Apache-2.0 | unreviewed |
@@ -143,6 +146,8 @@ legacy forms are not normalised into a different SPDX expression.
 | av1-grain | 0.2.5 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 8cfddb07216410377231960af4fcab838eaa12e013417781b78bd95ee22077f8 | BSD-2-Clause | unreviewed |
 | avif-serialize | 0.8.9 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | e7178fe5f7d460b13895ebb9dcb28a3a6216d2df2574a0806cb51b555d297f38 | BSD-3-Clause | unreviewed |
 | base64 | 0.22.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6 | MIT OR Apache-2.0 | unreviewed |
+| base64 | 0.23.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5 | MIT OR Apache-2.0 | unreviewed |
+| base64ct | 1.8.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06 | Apache-2.0 OR MIT | unreviewed |
 | bindgen | 0.71.1 | macos | registry+https://github.com/rust-lang/crates.io-index | 5f58bf3d7db68cfbac37cfc485a8d711e87e064c3d0fe0435b92f7a407f9d6b3 | BSD-3-Clause | unreviewed |
 | bit-set | 0.8.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 08807e080ed7f9d5433fa9b275196cfc35414f66a0c79d864dc51a0d825231a3 | Apache-2.0 OR MIT | unreviewed |
 | bit-vec | 0.8.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 5e764a1d40d510daf35e07be9eb06e75770908c27d411ee6c92109c9840eaaf7 | Apache-2.0 OR MIT | unreviewed |
@@ -153,10 +158,12 @@ legacy forms are not normalised into a different SPDX expression.
 | blade-graphics | 0.7.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | e71cfb73b98eb9f58ee84048aa1bdf4e7497fd20c141b57523499fa066b48fed | MIT | unreviewed |
 | blade-macros | 0.3.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 27142319e2f4c264581067eaccb9f80acccdde60d8b4bf57cc50cd3152f109ca | MIT | unreviewed |
 | blade-util | 0.3.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 3a6be3a82c001ba7a17b6f8e413ede5d1004e6047213f8efaf0ffc15b5c4904c | MIT | unreviewed |
+| blake2 | 0.10.6 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe | MIT OR Apache-2.0 | unreviewed |
 | block | 0.1.6 | macos | registry+https://github.com/rust-lang/crates.io-index | 0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a | MIT | unreviewed |
 | block-buffer | 0.10.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71 | MIT OR Apache-2.0 | unreviewed |
 | block-buffer | 0.12.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa | MIT OR Apache-2.0 | unreviewed |
-| block-padding | 0.3.3 | linux | registry+https://github.com/rust-lang/crates.io-index | a8894febbff9f758034a5b8e12d87918f56dfc64a8e1fe757d65e29041538d93 | MIT OR Apache-2.0 | unreviewed |
+| block-padding | 0.3.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | a8894febbff9f758034a5b8e12d87918f56dfc64a8e1fe757d65e29041538d93 | MIT OR Apache-2.0 | unreviewed |
+| block-padding | 0.4.2 | linux | registry+https://github.com/rust-lang/crates.io-index | 710f1dd022ef4e93f8a438b4ba958de7f64308434fa6a87104481645cc30068b | MIT OR Apache-2.0 | unreviewed |
 | block2 | 0.6.2 | macos | registry+https://github.com/rust-lang/crates.io-index | cdeb9d870516001442e364c5220d3574d2da8dc765554b4a617230d33fa58ef5 | MIT | unreviewed |
 | blocking | 1.7.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | a70e4329df6cb94385eed412ec92375c3cdd8a6e502493d1229b6414e4036dfa | Apache-2.0 OR MIT | unreviewed |
 | bstr | 1.13.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 6bb31b46c14244e20ee9984b11bf5c992b91fb6939fea616e3512c8baecdbe5f | MIT OR Apache-2.0 | unreviewed |
@@ -170,6 +177,7 @@ legacy forms are not normalised into a different SPDX expression.
 | calloop | 0.13.0 | linux | registry+https://github.com/rust-lang/crates.io-index | b99da2f8558ca23c71f4fd15dc57c906239752dd27ff3c00a1d56b685b7cbfec | MIT | unreviewed |
 | calloop-wayland-source | 0.3.0 | linux | registry+https://github.com/rust-lang/crates.io-index | 95a66a987056935f7efce4ab5668920b5d0dac4a7c99991a67395f13702ddd20 | MIT | unreviewed |
 | cbc | 0.1.2 | linux | registry+https://github.com/rust-lang/crates.io-index | 26b52a9543ae338f279b96b0b9fed9c8093744685043739079ce85cd58f289a6 | MIT OR Apache-2.0 | unreviewed |
+| cbc | 0.2.1 | linux | registry+https://github.com/rust-lang/crates.io-index | ce2dc9ee5f88d11e0beb842c88b33c8a5cf0d1329c4b19494af42b07dbfe8896 | MIT OR Apache-2.0 | unreviewed |
 | cbindgen | 0.28.0 | macos | registry+https://github.com/rust-lang/crates.io-index | eadd868a2ce9ca38de7eeafdcec9c7065ef89b42b32f0839278d55f35c54d1ff | MPL-2.0 | unreviewed |
 | cc | 1.11.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 4ff2a8126fff0f8c839080d619675a585e61720bb12d2baceae45769fd66f155 | MIT OR Apache-2.0 | unreviewed |
 | cexpr | 0.6.0 | macos | registry+https://github.com/rust-lang/crates.io-index | 6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766 | Apache-2.0/MIT | unreviewed |
@@ -177,8 +185,12 @@ legacy forms are not normalised into a different SPDX expression.
 | cfg_aliases | 0.2.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527 | MIT | unreviewed |
 | cgl | 0.3.2 | macos | registry+https://github.com/rust-lang/crates.io-index | 0ced0551234e87afee12411d535648dd89d2e7f34c78b753395567aff3d447ff | MIT / Apache-2.0 | unreviewed |
 | chacha20 | 0.10.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 65c35e4b699c7e15ccbe7ee35c005e4fc0a278d22238a2857e6ce2dadeda1b06 | MIT OR Apache-2.0 | unreviewed |
-| cipher | 0.4.4 | linux | registry+https://github.com/rust-lang/crates.io-index | 773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad | MIT OR Apache-2.0 | unreviewed |
+| chacha20 | 0.9.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818 | Apache-2.0 OR MIT | unreviewed |
+| chacha20poly1305 | 0.10.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 10cd79432192d1c0f4e1a0fef9527696cc039165d729fb41b3f4f4f354c2dc35 | Apache-2.0 OR MIT | unreviewed |
+| cipher | 0.4.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad | MIT OR Apache-2.0 | unreviewed |
+| cipher | 0.5.2 | linux | registry+https://github.com/rust-lang/crates.io-index | e8cf2a2c93cd704877c0858356ed03480ff301ee950b43f1cbe4573b088bfa6c | MIT OR Apache-2.0 | unreviewed |
 | clang-sys | 1.9.1 | macos | registry+https://github.com/rust-lang/crates.io-index | 157a8ba7b480713b56f4c09fd13fc3e0a22a5dfab8097ba61cbc5feef950788a | Apache-2.0 | unreviewed |
+| cmov | 0.5.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a | Apache-2.0 OR MIT | unreviewed |
 | cocoa | 0.25.0 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | f6140449f97a6e97f9511815c5632d84c8aacf8ac271ad77c559218161a1373c | MIT OR Apache-2.0 | unreviewed |
 | cocoa | 0.26.0 | macos | registry+https://github.com/rust-lang/crates.io-index | f79398230a6e2c08f5c9760610eb6924b52aa9e7950a619602baba59dcbbdbb2 | MIT OR Apache-2.0 | unreviewed |
 | cocoa-foundation | 0.1.2 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | 8c6234cbb2e4c785b456c0644748b1ac416dd045799740356f8363dfe00c93f7 | MIT OR Apache-2.0 | unreviewed |
@@ -207,6 +219,7 @@ legacy forms are not normalised into a different SPDX expression.
 | core_detect | 1.0.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 7f8f80099a98041a3d1622845c271458a2d73e688351bf3cb999266764b81d48 | MIT/Apache-2.0 | unreviewed |
 | core_maths | 0.1.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 77745e017f5edba1a9c1d854f6f3a52dac8a12dd5af5d2f54aecf61e43d80d30 | MIT | unreviewed |
 | cosmic-text | 0.14.2 | linux | registry+https://github.com/rust-lang/crates.io-index | da46a9d5a8905cc538a4a5bceb6a4510de7a51049c5588c0114efce102bcbbe8 | MIT OR Apache-2.0 | unreviewed |
+| cpubits | 0.1.1 | linux | registry+https://github.com/rust-lang/crates.io-index | 15b85f9c39137c3a891689859392b1bd49812121d0d61c9caf00d46ed5ce06ae | MIT OR Apache-2.0 | unreviewed |
 | cpufeatures | 0.2.17 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280 | MIT OR Apache-2.0 | unreviewed |
 | cpufeatures | 0.3.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566 | MIT OR Apache-2.0 | unreviewed |
 | crc32fast | 1.5.5 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64 | MIT OR Apache-2.0 | unreviewed |
@@ -219,8 +232,10 @@ legacy forms are not normalised into a different SPDX expression.
 | crypto-common | 0.2.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453 | MIT OR Apache-2.0 | unreviewed |
 | ctor | 0.4.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ec09e802f5081de6157da9a75701d6c713d8dc3ba52571fd4bd25f412644e8a6 | Apache-2.0 OR MIT | unreviewed |
 | ctor-proc-macro | 0.0.6 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | e2931af7e13dc045d8e9d26afccc6fa115d64e115c9c84b1166288b46f6782c2 | Apache-2.0 OR MIT | unreviewed |
+| ctutils | 0.4.8 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 261af4dc7a06ea8a527a8717d8cbba3417530d6ea14e1edb3de6b67806be474f | Apache-2.0 OR MIT | unreviewed |
 | data-url | 0.3.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376 | MIT OR Apache-2.0 | unreviewed |
 | deflate64 | 0.1.12 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ac6b926516df9c60bfa16e107b21086399f8285a44ca9711344b9e553c5146e2 | MIT | unreviewed |
+| deranged | 0.5.9 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e | MIT OR Apache-2.0 | unreviewed |
 | derive_more | 0.99.20 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 6edb4b64a43d977b8e99788fe3a04d483834fba1215a7e02caa415b626497f7f | MIT | unreviewed |
 | digest | 0.10.7 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292 | MIT OR Apache-2.0 | unreviewed |
 | digest | 0.11.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2 | MIT OR Apache-2.0 | unreviewed |
@@ -332,7 +347,9 @@ legacy forms are not normalised into a different SPDX expression.
 | hexf-parse | 0.2.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df | CC0-1.0 | unreviewed |
 | hidden-trait | 0.1.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 68ed9e850438ac849bec07e7d09fbe9309cbd396a5988c30b010580ce08860df | MIT | unreviewed |
 | hkdf | 0.12.4 | linux | registry+https://github.com/rust-lang/crates.io-index | 7b5f8eb2ad728638ea2c7d47a21db23b7b58a72ed6a38256b8a1849f15fbbdf7 | MIT OR Apache-2.0 | unreviewed |
+| hkdf | 0.13.0 | linux | registry+https://github.com/rust-lang/crates.io-index | 4aaa26c720c68b866f2c96ef5c1264b3e6f473fe5d4ce61cd44bbe913e553018 | MIT OR Apache-2.0 | unreviewed |
 | hmac | 0.12.1 | linux | registry+https://github.com/rust-lang/crates.io-index | 6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e | MIT OR Apache-2.0 | unreviewed |
+| hmac | 0.13.0 | linux | registry+https://github.com/rust-lang/crates.io-index | 6303bc9732ae41b04cb554b844a762b4115a61bfaa81e3e83050991eeb56863f | MIT OR Apache-2.0 | unreviewed |
 | home | 0.5.12 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | cc627f471c528ff0c4a49e1d5e60450c8f6461dd6d10ba9dcd3a61d3dff7728d | MIT OR Apache-2.0 | unreviewed |
 | http | 1.5.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 918d3568bebf352712bc2ef3d46a8bcf1a75b373be6539de198e9105cbbf9ce0 | MIT OR Apache-2.0 | unreviewed |
 | http-body | 1.1.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ca2a8f2913ee65f60facd6a5905613afaa448497a0230cc41ce022d93290bc2c | MIT | unreviewed |
@@ -356,7 +373,8 @@ legacy forms are not normalised into a different SPDX expression.
 | imagesize | 0.13.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | edcd27d72f2f071c64249075f42e205ff93c9a4c5f6c6da53e79ed9f9832c285 | MIT | unreviewed |
 | imgref | 1.12.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 6e44b0a4eaa4c82f441d50a963f2d5f05a787240aeee097597033e72accfd22f | CC0-1.0 OR Apache-2.0 | unreviewed |
 | indexmap | 2.14.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855 | Apache-2.0 OR MIT | unreviewed |
-| inout | 0.1.4 | linux | registry+https://github.com/rust-lang/crates.io-index | 879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01 | MIT OR Apache-2.0 | unreviewed |
+| inout | 0.1.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01 | MIT OR Apache-2.0 | unreviewed |
+| inout | 0.2.6 | linux | registry+https://github.com/rust-lang/crates.io-index | 3a580c13f0ffc335ef42dd3f6b1a41b726051c5e1656d9a3aa6fddb3c5dfbbf9 | MIT OR Apache-2.0 | unreviewed |
 | instant | 0.1.13 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | e0242819d153cba4b4b05a5a8f2a7e9bbf97b6055b2a002b395c96b5ff3c0222 | BSD-3-Clause | unreviewed |
 | interpolate_name | 0.2.4 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | c34819042dc3d3971c46c2190835914dfbe0c3c13f61449b2997f4e9722dfa60 | MIT | unreviewed |
 | inventory | 0.3.25 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 6928282826c822ad91bf1c9a1cb90a30ba1c26770749929b4656cd6be829cd7c | MIT OR Apache-2.0 | unreviewed |
@@ -427,6 +445,7 @@ legacy forms are not normalised into a different SPDX expression.
 | num-bigint | 0.4.8 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | c89e69e7e0f03bea5ef08013795c25018e101932225a656383bd384495ecc367 | MIT OR Apache-2.0 | unreviewed |
 | num-bigint-dig | 0.8.6 | linux | registry+https://github.com/rust-lang/crates.io-index | e661dda6640fad38e827a6d4a310ff4763082116fe217f279885c97f511bb0b7 | MIT/Apache-2.0 | unreviewed |
 | num-complex | 0.4.6 | linux | registry+https://github.com/rust-lang/crates.io-index | 73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495 | MIT OR Apache-2.0 | unreviewed |
+| num-conv | 0.2.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 521739c6d2bac4aa25192232afe6841231376b2b26d4d9fae5ecf8ca5772e441 | MIT OR Apache-2.0 | unreviewed |
 | num-derive | 0.4.2 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202 | MIT OR Apache-2.0 | unreviewed |
 | num-integer | 0.1.47 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 7ce2d95d4b3734dc35aa2f45e1aa22cd416814592a4f9d9205e11affd5b8e10b | MIT OR Apache-2.0 | unreviewed |
 | num-iter | 0.1.46 | linux | registry+https://github.com/rust-lang/crates.io-index | c92800bd69a1eac91786bcfe9da64a897eb72911b8dc3095decbd07429e8048b | MIT OR Apache-2.0 | unreviewed |
@@ -448,6 +467,7 @@ legacy forms are not normalised into a different SPDX expression.
 | object | 0.39.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 2e5a6c098c7a3b6547378093f5cc30bc54fd361ce711e05293a5cc589562739b | Apache-2.0 OR MIT | unreviewed |
 | once_cell | 1.21.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50 | MIT OR Apache-2.0 | unreviewed |
 | oo7 | 0.5.0 | linux | registry+https://github.com/rust-lang/crates.io-index | e3299dd401feaf1d45afd8fd1c0586f10fcfb22f244bb9afa942cec73503b89d | MIT | unreviewed |
+| opaque-debug | 0.3.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381 | MIT OR Apache-2.0 | unreviewed |
 | open | 5.4.5 | linux | registry+https://github.com/rust-lang/crates.io-index | 8d8c8b8e725ad26404d6896eb2f064294a0a7b4f1d9120210d85544684c4ca95 | MIT | unreviewed |
 | openssl-probe | 0.2.2 | linux | registry+https://github.com/rust-lang/crates.io-index | 7e036b411754132fd6b74e94b74e9a13c5cf606fa93d1885c35860d3060820b1 | MIT OR Apache-2.0 | unreviewed |
 | option-ext | 0.2.0 | macos, linux | registry+https://github.com/rust-lang/crates.io-index | 04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d | MPL-2.0 | unreviewed |
@@ -468,12 +488,15 @@ legacy forms are not normalised into a different SPDX expression.
 | pin-utils | 0.1.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 13bee6c73da26345c729282832b60b0363cf3dd9f4bfd81d8551b7a1c889a113 | MIT OR Apache-2.0 | unreviewed |
 | piper | 0.2.5 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | c835479a4443ded371d6c535cbfd8d31ad92c5d23ae9770a61bc155e4992a3c1 | MIT OR Apache-2.0 | unreviewed |
 | pkg-config | 0.3.34 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548 | MIT OR Apache-2.0 | unreviewed |
+| plist | 1.10.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | d86a77b7d9cdebd9643c180c158748db7d894b24a3935ed4b5843e698ae086eb | MIT | unreviewed |
 | png | 0.17.16 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 82151a2fc869e011c153adc57cf2789ccb8d9906ce52c0b39a6b5697749d7526 | MIT OR Apache-2.0 | unreviewed |
 | png | 0.18.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61 | MIT OR Apache-2.0 | unreviewed |
 | polling | 3.11.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 5d0e4f59085d47d8241c88ead0f274e8a0cb551f3625263c05eb8dd897c34218 | Apache-2.0 OR MIT | unreviewed |
 | pollster | 0.2.5 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 5da3b0203fd7ee5720aa0b5e790b591aa5d3f41c3ed2c34a3a393382198af2f7 | Apache-2.0/MIT | unreviewed |
+| poly1305 | 0.8.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 8159bd90725d2df49889a078b54f4f79e87f1f8a8444194cdca81d38f5393abf | Apache-2.0 OR MIT | unreviewed |
 | postage | 0.5.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | af3fb618632874fb76937c2361a7f22afd393c982a2165595407edc75b06d3c1 | MIT | unreviewed |
 | potential_utf | 0.1.6 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | d83eb9bc6d8e5cf568e7a1101d60ee05e81ed50ea106026f3d18deeb046d7661 | Unicode-3.0 | unreviewed |
+| powerfmt | 0.2.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958 | MIT OR Apache-2.0 | unreviewed |
 | ppv-lite86 | 0.2.21 | windows, linux | registry+https://github.com/rust-lang/crates.io-index | 85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9 | MIT OR Apache-2.0 | unreviewed |
 | prettyplease | 0.2.37 | macos | registry+https://github.com/rust-lang/crates.io-index | 479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b | MIT OR Apache-2.0 | unreviewed |
 | proc-macro-crate | 3.5.0 | linux | registry+https://github.com/rust-lang/crates.io-index | e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f | MIT OR Apache-2.0 | unreviewed |
@@ -487,6 +510,7 @@ legacy forms are not normalised into a different SPDX expression.
 | qoi | 0.4.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 7f6d64c71eb498fe9eae14ce4ec935c555749aef511cca85b5568910d6e48001 | MIT/Apache-2.0 | unreviewed |
 | quick-error | 2.0.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3 | MIT/Apache-2.0 | unreviewed |
 | quick-xml | 0.41.0 | linux | registry+https://github.com/rust-lang/crates.io-index | e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1 | MIT | unreviewed |
+| quick-xml | 0.42.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b | MIT | unreviewed |
 | quinn | 0.11.12 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 4051e23e9185c255a7e33ef59cdbca87a22d359052eecd22fc6b901fb37d9d11 | MIT OR Apache-2.0 | unreviewed |
 | quinn-proto | 0.11.19 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 0e750cca55fe4f0439a15d0bb529da9651e79993e8e72c61a899a36d462befbe | MIT OR Apache-2.0 | unreviewed |
 | quinn-udp | 0.5.16 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | af66907df18639dcf4db56ca65490cabc4b27a97dbadd96f2926cca73298f016 | MIT OR Apache-2.0 | unreviewed |
@@ -549,6 +573,7 @@ legacy forms are not normalised into a different SPDX expression.
 | screencapturekit | 0.2.8 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | 1a5eeeb57ac94960cfe5ff4c402be6585ae4c8d29a2cf41b276048c2e849d64e | MIT OR Apache-2.0 | unreviewed |
 | screencapturekit-sys | 0.2.8 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | 22411b57f7d49e7fe08025198813ee6fd65e1ee5eff4ebc7880c12c82bde4c60 | MIT OR Apache-2.0 | unreviewed |
 | seahash | 4.1.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b | MIT | unreviewed |
+| secret-service | 5.2.0 | linux | registry+https://github.com/rust-lang/crates.io-index | 5107b24b91445dd2aa449a258a1807b63240942157292354dc5bfdbeb8bc6db8 | MIT OR Apache-2.0 | unreviewed |
 | security-framework | 3.7.0 | macos | registry+https://github.com/rust-lang/crates.io-index | b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d | MIT OR Apache-2.0 | unreviewed |
 | security-framework-sys | 2.17.0 | macos | registry+https://github.com/rust-lang/crates.io-index | 6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3 | MIT OR Apache-2.0 | unreviewed |
 | self_cell | 1.3.0 | linux | registry+https://github.com/rust-lang/crates.io-index | 2ab42ca02749e120097e328d91d415325bdf43b1c72c4c8badf37375fe40a813 | Apache-2.0 OR GPL-2.0-only | unreviewed |
@@ -627,6 +652,9 @@ legacy forms are not normalised into a different SPDX expression.
 | thiserror-impl | 1.0.69 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1 | MIT OR Apache-2.0 | unreviewed |
 | thiserror-impl | 2.0.21 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524 | MIT OR Apache-2.0 | unreviewed |
 | tiff | 0.11.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | b63feaf3343d35b6ca4d50483f94843803b0f51634937cc2ec519fc32232bc52 | MIT | unreviewed |
+| time | 0.3.55 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134 | MIT OR Apache-2.0 | unreviewed |
+| time-core | 0.1.9 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109 | MIT OR Apache-2.0 | unreviewed |
+| time-macros | 0.2.32 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85 | MIT OR Apache-2.0 | unreviewed |
 | tiny-keccak | 2.0.2 | linux | registry+https://github.com/rust-lang/crates.io-index | 2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237 | CC0-1.0 | unreviewed |
 | tiny-skia | 0.11.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 83d13394d44dae3207b52a326c0c85a8bf87f1541f23b0d143811088497b09ab | BSD-3-Clause | unreviewed |
 | tiny-skia-path | 0.11.4 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 9c9e7fc0c2e86a30b117d0462aa261b72b7a99b7ebd7deb3a14ceda95c5bdc93 | BSD-3-Clause | unreviewed |
@@ -671,6 +699,7 @@ legacy forms are not normalised into a different SPDX expression.
 | unicode-segmentation | 1.13.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8 | MIT OR Apache-2.0 | unreviewed |
 | unicode-vo | 0.1.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | b1d386ff53b415b7fe27b50bb44679e2cc4660272694b7b6f3326d8480823a94 | MIT/Apache-2.0 | unreviewed |
 | unicode-width | 0.2.3 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ca718471876992059f251e33aafc334346ada08042b7661dd1fe313a9bced557 | MIT OR Apache-2.0 | unreviewed |
+| universal-hash | 0.5.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea | MIT OR Apache-2.0 | unreviewed |
 | untrusted | 0.9.0 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1 | ISC | unreviewed |
 | url | 2.5.8 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | ff67a8a4397373c3ef660812acab3268222035010ab8680ec4215f38ba3d0eed | MIT OR Apache-2.0 | unreviewed |
 | usvg | 0.45.1 | windows, macos, linux | registry+https://github.com/rust-lang/crates.io-index | 80be9b06fbae3b8b303400ab20778c80bbaf338f563afe567cf3c9eea17b47ef | Apache-2.0 OR MIT | unreviewed |
@@ -703,6 +732,7 @@ legacy forms are not normalised into a different SPDX expression.
 | wayland-protocols | 0.31.2 | linux | registry+https://github.com/rust-lang/crates.io-index | 8f81f365b8b4a97f422ac0e8737c438024b5951734506b0e1d775c73030561f4 | MIT | unreviewed |
 | wayland-protocols | 0.32.13 | linux | registry+https://github.com/rust-lang/crates.io-index | 23d0c813de3daa2ed6520af85a3bd49b0e722a3078506899aa9686fea58dc4b6 | MIT | unreviewed |
 | wayland-protocols-plasma | 0.2.0 | linux | registry+https://github.com/rust-lang/crates.io-index | 23803551115ff9ea9bce586860c5c5a971e360825a0309264102a9495a5ff479 | MIT | unreviewed |
+| wayland-protocols-wlr | 0.3.12 | linux | registry+https://github.com/rust-lang/crates.io-index | eb04e52f7836d7c7976c78ca0250d61e33873c34156a2a1fc9474828ec268234 | MIT | unreviewed |
 | wayland-scanner | 0.31.11 | linux | registry+https://github.com/rust-lang/crates.io-index | 338e30461b3a2b67d70eb30a6d89f8e0c93a833e07d2ae89085cd070c4a00ac0 | MIT | unreviewed |
 | wayland-sys | 0.31.11 | linux | registry+https://github.com/rust-lang/crates.io-index | d8eab23fefc9e41f8e841df4a9c707e8a8c4ed26e944ef69297184de2785e3be | MIT | unreviewed |
 | web-sys | 0.3.107 | none (locked only) | registry+https://github.com/rust-lang/crates.io-index | d7d179596ff5ec0f6de4db64d54011bde6289cc49603d3a6e4ce3f329207ab88 | MIT OR Apache-2.0 | unreviewed |

@@ -39,6 +39,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-aead-0.5.2-ff46bc8fec",
+      "name": "aead",
+      "versionInfo": "0.5.2",
+      "downloadLocation": "https://crates.io/api/v1/crates/aead/0.5.2/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d122413f284cf2d62fb1b7db97e02edb8cda96d769b16e443a4f6195e35662b0"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/aead@0.5.2"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-aes-0.8.4-1e029b60f0",
       "name": "aes",
       "versionInfo": "0.8.4",
@@ -61,6 +87,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/aes@0.8.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-aes-0.9.4-d0b014a519",
+      "name": "aes",
+      "versionInfo": "0.9.4",
+      "downloadLocation": "https://crates.io/api/v1/crates/aes/0.9.4/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fc0fc36d7440d015b45468ba08a21e80e056ebbd014c611c6298bb7503e04bd1"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/aes@0.9.4"
         }
       ]
     },
@@ -629,6 +681,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/arg_enum_proc_macro@0.3.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-argon2-0.5.3-7206243495",
+      "name": "argon2",
+      "versionInfo": "0.5.3",
+      "downloadLocation": "https://crates.io/api/v1/crates/argon2/0.5.3/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3c3610892ee6e0cbce8ae2700349fcf8f98adb0dbfbee85aec3c9179d29cc072"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/argon2@0.5.3"
         }
       ]
     },
@@ -1465,6 +1543,58 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-base64-0.23.1-76b75c0719",
+      "name": "base64",
+      "versionInfo": "0.23.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/base64/0.23.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/base64@0.23.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-base64ct-1.8.3-a268e2b736",
+      "name": "base64ct",
+      "versionInfo": "1.8.3",
+      "downloadLocation": "https://crates.io/api/v1/crates/base64ct/1.8.3/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: Apache-2.0 OR MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/base64ct@1.8.3"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-bindgen-0.71.1-534127dce4",
       "name": "bindgen",
       "versionInfo": "0.71.1",
@@ -1725,6 +1855,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-blake2-0.10.6-bf6864f1d5",
+      "name": "blake2",
+      "versionInfo": "0.10.6",
+      "downloadLocation": "https://crates.io/api/v1/crates/blake2/0.10.6/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/blake2@0.10.6"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-block-0.1.6-18f3d4a4fb",
       "name": "block",
       "versionInfo": "0.1.6",
@@ -1812,7 +1968,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT OR Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
       "comment": "Review status: unreviewed; platform scope: declared-ci-target",
       "checksums": [
         {
@@ -1825,6 +1981,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/block-padding@0.3.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-block-padding-0.4.2-25789521be",
+      "name": "block-padding",
+      "versionInfo": "0.4.2",
+      "downloadLocation": "https://crates.io/api/v1/crates/block-padding/0.4.2/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "710f1dd022ef4e93f8a438b4ba958de7f64308434fa6a87104481645cc30068b"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/block-padding@0.4.2"
         }
       ]
     },
@@ -2167,6 +2349,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-cbc-0.2.1-c3fa271663",
+      "name": "cbc",
+      "versionInfo": "0.2.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/cbc/0.2.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ce2dc9ee5f88d11e0beb842c88b33c8a5cf0d1329c4b19494af42b07dbfe8896"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/cbc@0.2.1"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-cbindgen-0.28.0-0ea941fc93",
       "name": "cbindgen",
       "versionInfo": "0.28.0",
@@ -2349,6 +2557,58 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-chacha20-0.9.1-5bfcea5139",
+      "name": "chacha20",
+      "versionInfo": "0.9.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/chacha20/0.9.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: Apache-2.0 OR MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/chacha20@0.9.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502",
+      "name": "chacha20poly1305",
+      "versionInfo": "0.10.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/chacha20poly1305/0.10.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: Apache-2.0 OR MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "10cd79432192d1c0f4e1a0fef9527696cc039165d729fb41b3f4f4f354c2dc35"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/chacha20poly1305@0.10.1"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-cipher-0.4.4-49336b4b67",
       "name": "cipher",
       "versionInfo": "0.4.4",
@@ -2358,7 +2618,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT OR Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
       "comment": "Review status: unreviewed; platform scope: declared-ci-target",
       "checksums": [
         {
@@ -2371,6 +2631,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/cipher@0.4.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cipher-0.5.2-cdd6760716",
+      "name": "cipher",
+      "versionInfo": "0.5.2",
+      "downloadLocation": "https://crates.io/api/v1/crates/cipher/0.5.2/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e8cf2a2c93cd704877c0858356ed03480ff301ee950b43f1cbe4573b088bfa6c"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/cipher@0.5.2"
         }
       ]
     },
@@ -2397,6 +2683,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/clang-sys@1.9.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cmov-0.5.4-89ab5304e0",
+      "name": "cmov",
+      "versionInfo": "0.5.4",
+      "downloadLocation": "https://crates.io/api/v1/crates/cmov/0.5.4/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: Apache-2.0 OR MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/cmov@0.5.4"
         }
       ]
     },
@@ -3129,6 +3441,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-cpubits-0.1.1-ae249cd6b6",
+      "name": "cpubits",
+      "versionInfo": "0.1.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/cpubits/0.1.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "15b85f9c39137c3a891689859392b1bd49812121d0d61c9caf00d46ed5ce06ae"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/cpubits@0.1.1"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-cpufeatures-0.2.17-bf36f51b70",
       "name": "cpufeatures",
       "versionInfo": "0.2.17",
@@ -3441,6 +3779,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-ctutils-0.4.8-09470e1e06",
+      "name": "ctutils",
+      "versionInfo": "0.4.8",
+      "downloadLocation": "https://crates.io/api/v1/crates/ctutils/0.4.8/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: Apache-2.0 OR MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "261af4dc7a06ea8a527a8717d8cbba3417530d6ea14e1edb3de6b67806be474f"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ctutils@0.4.8"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-data-url-0.3.2-f1bd603849",
       "name": "data-url",
       "versionInfo": "0.3.2",
@@ -3489,6 +3853,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/deflate64@0.1.12"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-deranged-0.5.9-d9c5ce58e3",
+      "name": "deranged",
+      "versionInfo": "0.5.9",
+      "downloadLocation": "https://crates.io/api/v1/crates/deranged/0.5.9/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/deranged@0.5.9"
         }
       ]
     },
@@ -6379,6 +6769,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-hkdf-0.13.0-d6da9aecf6",
+      "name": "hkdf",
+      "versionInfo": "0.13.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/hkdf/0.13.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4aaa26c720c68b866f2c96ef5c1264b3e6f473fe5d4ce61cd44bbe913e553018"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/hkdf@0.13.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-hmac-0.12.1-665efe0c6e",
       "name": "hmac",
       "versionInfo": "0.12.1",
@@ -6401,6 +6817,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/hmac@0.12.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-hmac-0.13.0-061449853b",
+      "name": "hmac",
+      "versionInfo": "0.13.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/hmac/0.13.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6303bc9732ae41b04cb554b844a762b4115a61bfaa81e3e83050991eeb56863f"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/hmac@0.13.0"
         }
       ]
     },
@@ -7012,7 +7454,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT OR Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
       "comment": "Review status: unreviewed; platform scope: declared-ci-target",
       "checksums": [
         {
@@ -7025,6 +7467,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/inout@0.1.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-inout-0.2.6-85b7d7690e",
+      "name": "inout",
+      "versionInfo": "0.2.6",
+      "downloadLocation": "https://crates.io/api/v1/crates/inout/0.2.6/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3a580c13f0ffc335ef42dd3f6b1a41b726051c5e1656d9a3aa6fddb3c5dfbbf9"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/inout@0.2.6"
         }
       ]
     },
@@ -8849,6 +9317,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-num-conv-0.2.2-f71347e40c",
+      "name": "num-conv",
+      "versionInfo": "0.2.2",
+      "downloadLocation": "https://crates.io/api/v1/crates/num-conv/0.2.2/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "521739c6d2bac4aa25192232afe6841231376b2b26d4d9fae5ecf8ca5772e441"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/num-conv@0.2.2"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-num-derive-0.4.2-295babe1e5",
       "name": "num-derive",
       "versionInfo": "0.4.2",
@@ -9395,6 +9889,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-opaque-debug-0.3.1-371e128cd6",
+      "name": "opaque-debug",
+      "versionInfo": "0.3.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/opaque-debug/0.3.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/opaque-debug@0.3.1"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-open-5.4.5-284bfe4403",
       "name": "open",
       "versionInfo": "5.4.5",
@@ -9915,6 +10435,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5",
+      "name": "plist",
+      "versionInfo": "1.10.4",
+      "downloadLocation": "https://crates.io/api/v1/crates/plist/1.10.4/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d86a77b7d9cdebd9643c180c158748db7d894b24a3935ed4b5843e698ae086eb"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/plist@1.10.4"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-png-0.17.16-038e083ec2",
       "name": "png",
       "versionInfo": "0.17.16",
@@ -10019,6 +10565,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-poly1305-0.8.0-6e35435600",
+      "name": "poly1305",
+      "versionInfo": "0.8.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/poly1305/0.8.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: Apache-2.0 OR MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8159bd90725d2df49889a078b54f4f79e87f1f8a8444194cdca81d38f5393abf"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/poly1305@0.8.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-postage-0.5.0-9fc27c0ead",
       "name": "postage",
       "versionInfo": "0.5.0",
@@ -10067,6 +10639,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/potential_utf@0.1.6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-powerfmt-0.2.1-1315e4e6cd",
+      "name": "powerfmt",
+      "versionInfo": "0.2.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/powerfmt/0.2.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/powerfmt@0.2.1"
         }
       ]
     },
@@ -10405,6 +11003,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/quick-xml@0.41.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-quick-xml-0.42.0-04bbf2d62d",
+      "name": "quick-xml",
+      "versionInfo": "0.42.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/quick-xml/0.42.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/quick-xml@0.42.0"
         }
       ]
     },
@@ -12017,6 +12641,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/seahash@4.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "name": "secret-service",
+      "versionInfo": "5.2.0",
+      "downloadLocation": "https://crates.io/api/v1/crates/secret-service/5.2.0/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5107b24b91445dd2aa449a258a1807b63240942157292354dc5bfdbeb8bc6db8"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/secret-service@5.2.0"
         }
       ]
     },
@@ -14049,6 +14699,84 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "name": "time",
+      "versionInfo": "0.3.55",
+      "downloadLocation": "https://crates.io/api/v1/crates/time/0.3.55/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/time@0.3.55"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-time-core-0.1.9-42765f2c5f",
+      "name": "time-core",
+      "versionInfo": "0.1.9",
+      "downloadLocation": "https://crates.io/api/v1/crates/time-core/0.1.9/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/time-core@0.1.9"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-time-macros-0.2.32-bc56005c6d",
+      "name": "time-macros",
+      "versionInfo": "0.2.32",
+      "downloadLocation": "https://crates.io/api/v1/crates/time-macros/0.2.32/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/time-macros@0.2.32"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-tiny-keccak-2.0.2-3e4a7fc4cd",
       "name": "tiny-keccak",
       "versionInfo": "2.0.2",
@@ -15193,6 +15921,32 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-universal-hash-0.5.1-4259f2e182",
+      "name": "universal-hash",
+      "versionInfo": "0.5.1",
+      "downloadLocation": "https://crates.io/api/v1/crates/universal-hash/0.5.1/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT OR Apache-2.0",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/universal-hash@0.5.1"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-untrusted-0.9.0-004635812a",
       "name": "untrusted",
       "versionInfo": "0.9.0",
@@ -16021,6 +16775,32 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:cargo/wayland-protocols-plasma@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d",
+      "name": "wayland-protocols-wlr",
+      "versionInfo": "0.3.12",
+      "downloadLocation": "https://crates.io/api/v1/crates/wayland-protocols-wlr/0.3.12/download",
+      "sourceInfo": "registry+https://github.com/rust-lang/crates.io-index",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: unreviewed; no entry in scripts/dependencies/review-status.toml; Platform scope: declared-ci-target; Platforms: linux; Cargo source: registry+https://github.com/rust-lang/crates.io-index; License verbatim: MIT",
+      "comment": "Review status: unreviewed; platform scope: declared-ci-target",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "eb04e52f7836d7c7976c78ca0250d61e33873c34156a2a1fc9474828ec268234"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/wayland-protocols-wlr@0.3.12"
         }
       ]
     },
@@ -18946,7 +19726,17 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-aead-0.5.2-ff46bc8fec"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-aes-0.8.4-1e029b60f0"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-aes-0.9.4-d0b014a519"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -19077,6 +19867,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-arg-enum-proc-macro-0.3.4-a217e7e7d4"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-argon2-0.5.3-7206243495"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -19241,6 +20036,16 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-base64-0.23.1-76b75c0719"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-base64ct-1.8.3-a268e2b736"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-bindgen-0.71.1-534127dce4"
     },
     {
@@ -19291,6 +20096,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-blake2-0.10.6-bf6864f1d5"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-block-0.1.6-18f3d4a4fb"
     },
     {
@@ -19307,6 +20117,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-block-padding-0.3.3-a33199dfcb"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-block-padding-0.4.2-25789521be"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -19376,6 +20191,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-cbc-0.2.1-c3fa271663"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-cbindgen-0.28.0-0ea941fc93"
     },
     {
@@ -19411,12 +20231,32 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-chacha20-0.9.1-5bfcea5139"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-cipher-0.4.4-49336b4b67"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-cipher-0.5.2-cdd6760716"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-clang-sys-1.9.1-dc7bfec79a"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-cmov-0.5.4-89ab5304e0"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -19561,6 +20401,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-cpubits-0.1.1-ae249cd6b6"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-cpufeatures-0.2.17-bf36f51b70"
     },
     {
@@ -19621,12 +20466,22 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ctutils-0.4.8-09470e1e06"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-data-url-0.3.2-f1bd603849"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-deflate64-0.1.12-8d4ecbcb09"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-deranged-0.5.9-d9c5ce58e3"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -20186,7 +21041,17 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-hkdf-0.13.0-d6da9aecf6"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-hmac-0.12.1-665efe0c6e"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-hmac-0.13.0-061449853b"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -20307,6 +21172,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-inout-0.1.4-ca5352fc76"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-inout-0.2.6-85b7d7690e"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -20661,6 +21531,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-num-conv-0.2.2-f71347e40c"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-num-derive-0.4.2-295babe1e5"
     },
     {
@@ -20766,6 +21641,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-opaque-debug-0.3.1-371e128cd6"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-open-5.4.5-284bfe4403"
     },
     {
@@ -20866,6 +21746,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-png-0.17.16-038e083ec2"
     },
     {
@@ -20886,12 +21771,22 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-poly1305-0.8.0-6e35435600"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-postage-0.5.0-9fc27c0ead"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-potential-utf-0.1.6-f199c6764f"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-powerfmt-0.2.1-1315e4e6cd"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -20957,6 +21852,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-quick-xml-0.41.0-31f0c13e18"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-quick-xml-0.42.0-04bbf2d62d"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -21267,6 +22167,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-seahash-4.1.0-853bfa0df4"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -21661,6 +22566,21 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-time-0.3.55-d7b0ee57a6"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-time-core-0.1.9-42765f2c5f"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-time-macros-0.2.32-bc56005c6d"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-tiny-keccak-2.0.2-3e4a7fc4cd"
     },
     {
@@ -21881,6 +22801,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-universal-hash-0.5.1-4259f2e182"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-untrusted-0.9.0-004635812a"
     },
     {
@@ -22037,6 +22962,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-wayland-protocols-plasma-0.2.0-11b9bcdbb7"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d"
     },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
@@ -22599,6 +23529,16 @@
       "relatedSpdxElement": "SPDXRef-Package-zvariant-utils-4.2.0-b3473b23e1"
     },
     {
+      "spdxElementId": "SPDXRef-Package-aead-0.5.2-ff46bc8fec",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-crypto-common-0.1.7-07f028cdd7"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-aead-0.5.2-ff46bc8fec",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-generic-array-0.14.7-d72eaf5d87"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-aes-0.8.4-1e029b60f0",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-cfg-if-1.0.5-736df012c8"
@@ -22617,6 +23557,21 @@
       "spdxElementId": "SPDXRef-Package-aes-0.8.4-1e029b60f0",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-zeroize-1.9.1-b32e8e5da2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-aes-0.9.4-d0b014a519",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cipher-0.5.2-cdd6760716"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-aes-0.9.4-d0b014a519",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cpubits-0.1.1-ae249cd6b6"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-aes-0.9.4-d0b014a519",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cpufeatures-0.3.1-195fefdb5d"
     },
     {
       "spdxElementId": "SPDXRef-Package-ahash-0.8.12-6bb03ca4f8",
@@ -22766,6 +23721,26 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-0.6.5-bed3e32158"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-app-kit-0.3.2-22af0579ce"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-foundation-0.3.2-1f43dfc729"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-rustix-1.1.6-7eb5c9f283"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
     },
     {
@@ -22777,6 +23752,31 @@
       "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-client-0.31.15-34dba2eb1a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-protocols-0.32.13-737934ed55"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-x11rb-0.13.2-436185cc81"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-clipboard-0.1.0-62bdb4df59",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-x11rb-protocol-0.13.2-87eea0cf01"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-coordinator-0.1.0-3e74f326a8",
@@ -22847,6 +23847,61 @@
       "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-quicklinks-0.1.0-d554b80913"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-libc-0.2.189-01d23b1294"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-0.6.5-bed3e32158"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-app-kit-0.3.2-22af0579ce"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-foundation-0.3.2-1f43dfc729"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-raw-window-handle-0.6.2-f01b69beae"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-rustix-1.1.6-7eb5c9f283"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-x11rb-0.13.2-436185cc81"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-x11rb-protocol-0.13.2-87eea0cf01"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf",
@@ -22951,6 +24006,11 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-platform-api-0.1.0-217b8f54b1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-ansa-platform-windows-0.1.0-bf982a08cf"
     },
     {
@@ -22981,12 +24041,57 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-objc2-app-kit-0.3.2-22af0579ce"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-raw-window-handle-0.6.2-f01b69beae"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-gpui-0.1.0-36350ca26f",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-argon2-0.5.3-7206243495"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-async-io-2.6.0-ee29e133a5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-core-foundation-0.10.0-95ac96a36c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-futures-lite-2.6.1-c8677f8dda"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-getrandom-0.4.3-98938cad7c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-security-framework-sys-2.17.0-707417502a"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
@@ -23002,6 +24107,16 @@
       "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-tempfile-3.27.0-fad2b121c1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-zbus-5.19.0-15b60b7e47"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-zeroize-1.9.1-b32e8e5da2"
     },
     {
       "spdxElementId": "SPDXRef-Package-ar-archive-writer-0.5.3-8eaaaefc7e",
@@ -23022,6 +24137,26 @@
       "spdxElementId": "SPDXRef-Package-arg-enum-proc-macro-0.3.4-a217e7e7d4",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-syn-2.0.119-b0ab2828e5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-argon2-0.5.3-7206243495",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-base64ct-1.8.3-a268e2b736"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-argon2-0.5.3-7206243495",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-blake2-0.10.6-bf6864f1d5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-argon2-0.5.3-7206243495",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cpufeatures-0.2.17-bf36f51b70"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-argon2-0.5.3-7206243495",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-zeroize-1.9.1-b32e8e5da2"
     },
     {
       "spdxElementId": "SPDXRef-Package-as-slice-0.2.1-0c82de496d",
@@ -23984,6 +25119,11 @@
       "relatedSpdxElement": "SPDXRef-Package-profiling-1.0.18-71bd3ef2dd"
     },
     {
+      "spdxElementId": "SPDXRef-Package-blake2-0.10.6-bf6864f1d5",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-digest-0.10.7-fef5cdd19e"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-block-buffer-0.10.4-49ad097003",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-generic-array-0.14.7-d72eaf5d87"
@@ -23997,6 +25137,11 @@
       "spdxElementId": "SPDXRef-Package-block-padding-0.3.3-a33199dfcb",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-generic-array-0.14.7-d72eaf5d87"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-block-padding-0.4.2-25789521be",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hybrid-array-0.4.15-5035fded8f"
     },
     {
       "spdxElementId": "SPDXRef-Package-block2-0.6.2-d62b9e0ba4",
@@ -24114,6 +25259,11 @@
       "relatedSpdxElement": "SPDXRef-Package-cipher-0.4.4-49336b4b67"
     },
     {
+      "spdxElementId": "SPDXRef-Package-cbc-0.2.1-c3fa271663",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cipher-0.5.2-cdd6760716"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-cbindgen-0.28.0-0ea941fc93",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-heck-0.4.1-d2bf64fd3d"
@@ -24209,6 +25359,46 @@
       "relatedSpdxElement": "SPDXRef-Package-rand-core-0.10.1-241fd9d8b5"
     },
     {
+      "spdxElementId": "SPDXRef-Package-chacha20-0.9.1-5bfcea5139",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cfg-if-1.0.5-736df012c8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20-0.9.1-5bfcea5139",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cipher-0.4.4-49336b4b67"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20-0.9.1-5bfcea5139",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cpufeatures-0.2.17-bf36f51b70"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-aead-0.5.2-ff46bc8fec"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-chacha20-0.9.1-5bfcea5139"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cipher-0.4.4-49336b4b67"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-poly1305-0.8.0-6e35435600"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-chacha20poly1305-0.10.1-1f8a700502",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-zeroize-1.9.1-b32e8e5da2"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-cipher-0.4.4-49336b4b67",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-crypto-common-0.1.7-07f028cdd7"
@@ -24222,6 +25412,16 @@
       "spdxElementId": "SPDXRef-Package-cipher-0.4.4-49336b4b67",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-zeroize-1.9.1-b32e8e5da2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-cipher-0.5.2-cdd6760716",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-crypto-common-0.2.2-c235cb9aa7"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-cipher-0.5.2-cdd6760716",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-inout-0.2.6-85b7d7690e"
     },
     {
       "spdxElementId": "SPDXRef-Package-clang-sys-1.9.1-dc7bfec79a",
@@ -24794,6 +25994,11 @@
       "relatedSpdxElement": "SPDXRef-Package-dtor-0.0.6-914d63abad"
     },
     {
+      "spdxElementId": "SPDXRef-Package-ctutils-0.4.8-09470e1e06",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cmov-0.5.4-89ab5304e0"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-derive-more-0.99.20-ba26050a3e",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-convert-case-0.4.0-1a565954b8"
@@ -24847,6 +26052,11 @@
       "spdxElementId": "SPDXRef-Package-digest-0.11.3-b7ba2369a3",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-crypto-common-0.2.2-c235cb9aa7"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-digest-0.11.3-b7ba2369a3",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ctutils-0.4.8-09470e1e06"
     },
     {
       "spdxElementId": "SPDXRef-Package-dirs-4.0.0-2b9ef5639b",
@@ -26649,9 +27859,19 @@
       "relatedSpdxElement": "SPDXRef-Package-hmac-0.12.1-665efe0c6e"
     },
     {
+      "spdxElementId": "SPDXRef-Package-hkdf-0.13.0-d6da9aecf6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hmac-0.13.0-061449853b"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-hmac-0.12.1-665efe0c6e",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-digest-0.10.7-fef5cdd19e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-hmac-0.13.0-061449853b",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-digest-0.11.3-b7ba2369a3"
     },
     {
       "spdxElementId": "SPDXRef-Package-home-0.5.12-22a2754708",
@@ -27177,6 +28397,16 @@
       "spdxElementId": "SPDXRef-Package-inout-0.1.4-ca5352fc76",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-generic-array-0.14.7-d72eaf5d87"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-inout-0.2.6-85b7d7690e",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-block-padding-0.4.2-25789521be"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-inout-0.2.6-85b7d7690e",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hybrid-array-0.4.15-5035fded8f"
     },
     {
       "spdxElementId": "SPDXRef-Package-instant-0.1.13-2b9ec75da4",
@@ -27936,6 +29166,11 @@
     {
       "spdxElementId": "SPDXRef-Package-objc2-app-kit-0.3.2-22af0579ce",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-libc-0.2.189-01d23b1294"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-objc2-app-kit-0.3.2-22af0579ce",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-objc2-0.6.5-bed3e32158"
     },
     {
@@ -28319,6 +29554,26 @@
       "relatedSpdxElement": "SPDXRef-Package-futures-io-0.3.34-030328a8c3"
     },
     {
+      "spdxElementId": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-base64-0.23.1-76b75c0719"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-indexmap-2.14.2-05218566f8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-quick-xml-0.42.0-04bbf2d62d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-plist-1.10.4-9c1dc97ac5",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-time-0.3.55-d7b0ee57a6"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-png-0.17.16-038e083ec2",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-bitflags-1.3.2-978bf80944"
@@ -28397,6 +29652,21 @@
       "spdxElementId": "SPDXRef-Package-polling-3.11.0-a907cf2beb",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-windows-sys-0.61.2-0d89cb277c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-poly1305-0.8.0-6e35435600",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cpufeatures-0.2.17-bf36f51b70"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-poly1305-0.8.0-6e35435600",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-opaque-debug-0.3.1-371e128cd6"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-poly1305-0.8.0-6e35435600",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-universal-hash-0.5.1-4259f2e182"
     },
     {
       "spdxElementId": "SPDXRef-Package-postage-0.5.0-9fc27c0ead",
@@ -28535,6 +29805,11 @@
     },
     {
       "spdxElementId": "SPDXRef-Package-quick-xml-0.41.0-31f0c13e18",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-memchr-2.8.3-93761cd586"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-quick-xml-0.42.0-04bbf2d62d",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-memchr-2.8.3-93761cd586"
     },
@@ -29564,6 +30839,61 @@
       "relatedSpdxElement": "SPDXRef-Package-once-cell-1.21.4-57d1597076"
     },
     {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-aes-0.9.4-d0b014a519"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-cbc-0.2.1-c3fa271663"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-futures-util-0.3.34-73dd629bd9"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-getrandom-0.4.3-98938cad7c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hkdf-0.13.0-d6da9aecf6"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-hybrid-array-0.4.15-5035fded8f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-num-0.4.3-5a2ee92cb1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-once-cell-1.21.4-57d1597076"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-1.0.229-952e547b0a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-sha2-0.11.1-b66a3523d5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-secret-service-5.2.0-86fe52a42d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-zbus-5.19.0-15b60b7e47"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-security-framework-3.7.0-0e22f0717e",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-bitflags-2.13.2-7d2573190d"
@@ -30384,6 +31714,46 @@
       "relatedSpdxElement": "SPDXRef-Package-zune-jpeg-0.5.15-969a185b11"
     },
     {
+      "spdxElementId": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-deranged-0.5.9-d9c5ce58e3"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-num-conv-0.2.2-f71347e40c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-powerfmt-0.2.1-1315e4e6cd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-core-1.0.229-5e8ee54a23"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-time-core-0.1.9-42765f2c5f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-0.3.55-d7b0ee57a6",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-time-macros-0.2.32-bc56005c6d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-macros-0.2.32-bc56005c6d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-num-conv-0.2.2-f71347e40c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-time-macros-0.2.32-bc56005c6d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-time-core-0.1.9-42765f2c5f"
+    },
+    {
       "spdxElementId": "SPDXRef-Package-tiny-keccak-2.0.2-3e4a7fc4cd",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-crunchy-0.2.4-bdcca5c38f"
@@ -30747,6 +32117,16 @@
       "spdxElementId": "SPDXRef-Package-uds-windows-1.2.1-64aa1c754d",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-windows-sys-0.61.2-0d89cb277c"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-universal-hash-0.5.1-4259f2e182",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-crypto-common-0.1.7-07f028cdd7"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-universal-hash-0.5.1-4259f2e182",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-subtle-2.6.1-64811af8fc"
     },
     {
       "spdxElementId": "SPDXRef-Package-url-2.5.8-2496a653a7",
@@ -31240,6 +32620,31 @@
     },
     {
       "spdxElementId": "SPDXRef-Package-wayland-protocols-plasma-0.2.0-11b9bcdbb7",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-scanner-0.31.11-4a67065ef5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-bitflags-2.13.2-7d2573190d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-backend-0.3.17-cacfc62db2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-client-0.31.15-34dba2eb1a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-wayland-protocols-0.32.13-737934ed55"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-wayland-protocols-wlr-0.3.12-0b2814c29d",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-wayland-scanner-0.31.11-4a67065ef5"
     },
@@ -32737,6 +34142,6 @@
       "comment": "Review statuses are explicit per package. All third-party packages are unreviewed unless review-status.toml records evidence."
     }
   ],
-  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-5d11fc48ee4ab46e6c96529814b164c072fef5b9c33cb878f7ec76761dac15bb-f25e0577501f9b7670150e907c4136ef1b44f2fdb45db487a215b246af834305",
-  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): 5d11fc48ee4ab46e6c96529814b164c072fef5b9c33cb878f7ec76761dac15bb. SPDX content digest: f25e0577501f9b7670150e907c4136ef1b44f2fdb45db487a215b246af834305."
+  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-344710e0f681c9562a857cf83aafb37b4ed92d3d6c101d3e5a54527f34802127-49e234b726e01c8acf32881ca70a0b43e11749e521d1505360ad89be3357e0fd",
+  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): 344710e0f681c9562a857cf83aafb37b4ed92d3d6c101d3e5a54527f34802127. SPDX content digest: 49e234b726e01c8acf32881ca70a0b43e11749e521d1505360ad89be3357e0fd."
 }

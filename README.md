@@ -62,17 +62,18 @@ Arithmetic uses finite IEEE-754 `f64`, not exact decimal finance arithmetic. The
 ### Appearance
 
 The launcher is frameless: no native title bar, window border or minimize/maximize/close controls.
-It uses a rounded, monochrome surface with a soft shadow on all sides. Glass is the default;
+It uses rounded surfaces, Oxocarbon IBM Carbon palettes, and bundled Geist fonts. Glass is the default;
 the material fills the window with no invisible shadow gutter. On Windows, a native rounded
 region clips every child at the corners, and the compositor owns any available external shadow.
 Per-pixel DirectComposition alpha is enabled without GPUI's native gradient backdrop. Text stays opaque.
 On Windows 11, Glass uses a native compositor layer to blur the live scene behind the launcher.
-On macOS, Glass uses the window's native vibrancy view. GPUI paints an 80% opaque themed tint over
-the blur on both platforms. Desktop colors can show through, but text, menus and selected rows stay
-opaque. The launcher does not read wallpaper files or capture the screen.
+On macOS, Glass requests native vibrancy and respects Reduce Transparency. On Wayland, GPUI
+requests blur when the compositor exposes the KDE blur protocol and uses tinted translucency
+otherwise. X11 keeps an opaque fallback. The glass tint is 84% opaque and text, menus and selected
+rows stay opaque.
 
-- **Glass: On/Off** or **Ctrl+Shift+G** toggles translucency without resizing the window.
-- **Theme: Dark/Light** or **Ctrl+Shift+T** switches the entire palette, including both inputs,
+- The glass button or **Ctrl+Shift+G** toggles the backdrop without resizing the window.
+- The theme button or **Ctrl+Shift+T** switches the entire palette, including both inputs,
   selection, caret, menus and error states.
 - Dark is the default theme. Use `--light` to start light or `--opaque` to disable translucency.
 

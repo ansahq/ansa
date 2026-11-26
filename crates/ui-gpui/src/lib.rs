@@ -324,7 +324,13 @@ impl Launcher {
         }
         #[cfg(target_os = "macos")]
         self.set_glass(self.glass_request.toggled(), window);
-        #[cfg(not(any(windows, target_os = "macos")))]
+        #[cfg(target_os = "linux")]
+        if self.appearance_notice.is_none() {
+            let appearance = InitialAppearance::for_linux(!self.glass, linux_wayland());
+            window.set_background_appearance(appearance.background);
+            self.glass = appearance.background == WindowBackgroundAppearance::Blurred;
+        }
+        #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
         let _ = window;
         cx.notify();
     }
@@ -1334,6 +1340,22 @@ struct InitialAppearance {
 }
 
 impl InitialAppearance {
+    #[cfg(any(target_os = "linux", test))]
+    fn for_linux(glass: bool, wayland: bool) -> Self {
+        if !wayland {
+            return Self::new(Platform::Linux, glass, false);
+        }
+        Self {
+            background: if glass {
+                WindowBackgroundAppearance::Blurred
+            } else {
+                WindowBackgroundAppearance::Transparent
+            },
+            unavailable: None,
+            requested: glass,
+        }
+    }
+
     fn new(platform: Platform, glass: bool, reduce_transparency: bool) -> Self {
         use WindowBackgroundAppearance::{Blurred, Opaque, Transparent};
         let (background, unavailable) = match platform {
@@ -1347,11 +1369,7 @@ impl InitialAppearance {
             Platform::MacOs => (Transparent, None),
             // The Win32 composition layer may attach later.
             Platform::Windows => (Opaque, None),
-            // GPUI's X11 and Wayland backends do not attach compositor blur.
-            Platform::Linux => (
-                Opaque,
-                Some("No native Linux compositor blur is implemented"),
-            ),
+            Platform::Linux => (Opaque, Some("Linux glass requires Wayland")),
             Platform::Other => (Opaque, Some("No native blur backend is implemented")),
         };
         Self {
@@ -1388,6 +1406,7 @@ impl MacGlassRequest {
     }
 }
 
+#[cfg(not(target_os = "linux"))]
 fn macos_reduce_transparency() -> bool {
     #[cfg(target_os = "macos")]
     return objc2_app_kit::NSWorkspace::sharedWorkspace()
@@ -1396,13 +1415,18 @@ fn macos_reduce_transparency() -> bool {
     false
 }
 
+#[cfg(target_os = "linux")]
+fn linux_wayland() -> bool {
+    gpui::guess_compositor() == "Wayland"
+}
+
 fn glass_label(platform: Platform, glass: bool, unavailable: bool) -> &'static str {
     if unavailable {
         "Glass: Unavailable"
     } else if !glass {
         "Glass: Off"
-    } else if platform == Platform::MacOs {
-        // GPUI can request native vibrancy but does not verify the result.
+    } else if matches!(platform, Platform::MacOs | Platform::Linux) {
+        // GPUI accepts a blur request without confirming the result.
         "Glass: Requested"
     } else {
         "Glass: On"
@@ -2252,6 +2276,9 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             KeyBinding::new("space", SetupActivate, Some("Setup")),
         ]);
         let bounds = Bounds::centered(None, size(px(780.), px(552.)), cx);
+        #[cfg(target_os = "linux")]
+        let appearance = InitialAppearance::for_linux(glass, linux_wayland());
+        #[cfg(not(target_os = "linux"))]
         let appearance = InitialAppearance::new(Platform::current(), glass, macos_reduce_transparency());
         let Ok(handle) = cx.open_window(WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
@@ -2443,9 +2470,9 @@ mod platform_appearance_tests {
     use super::*;
 
     #[test]
-    fn linux_never_requests_transparency_without_native_blur() {
+    fn linux_x11_keeps_an_opaque_fallback() {
         for requested in [false, true] {
-            let appearance = InitialAppearance::new(Platform::Linux, requested, false);
+            let appearance = InitialAppearance::for_linux(requested, false);
             assert_eq!(appearance.background, WindowBackgroundAppearance::Opaque);
             assert_eq!(
                 glass_label(
@@ -2456,6 +2483,24 @@ mod platform_appearance_tests {
                 "Glass: Unavailable"
             );
         }
+    }
+
+    #[test]
+    fn linux_wayland_requests_compositor_blur_and_can_turn_it_off() {
+        let on = InitialAppearance::for_linux(true, true);
+        assert_eq!(on.background, WindowBackgroundAppearance::Blurred);
+        assert!(on.requested);
+        assert_eq!(on.unavailable, None);
+        assert_eq!(
+            glass_label(Platform::Linux, true, false),
+            "Glass: Requested"
+        );
+
+        let off = InitialAppearance::for_linux(false, true);
+        assert_eq!(off.background, WindowBackgroundAppearance::Transparent);
+        assert!(!off.requested);
+        assert_eq!(off.unavailable, None);
+        assert_eq!(glass_label(Platform::Linux, false, false), "Glass: Off");
     }
 
     #[test]

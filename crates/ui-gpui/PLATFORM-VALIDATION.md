@@ -1,7 +1,7 @@
 # Desktop composition validation
 
 Scope: ANS-98 (macOS desktop composition), ANS-94 (Linux desktop
-composition), and the opaque-fallback portion of ANS-93 (Linux glass). This is
+composition), and ANS-93 (Linux glass). This is
 the UI integration checklist for the shared worktree; it is **not** native
 macOS/Linux acceptance evidence.
 
@@ -53,15 +53,12 @@ targets and is listed under missing evidence.
   starts the request off. GPUI has no API to confirm the compositor produced
   vibrancy, so success is not claimed. The rendered states are explicit: `On`
   only for the Windows backdrop after native attachment, `Requested` for the
-  macOS GPUI request, `Off`, and `Unavailable` for Linux, unsupported hosts, or
-  a requested effect blocked by Reduce Transparency. No separate `Degraded`
-  glass state is claimed because no component reports a partial native effect.
-- Linux glass is always the opaque themed surface with
-  `Glass: Unavailable`, on X11 and Wayland and with or without `--opaque`.
-  There is no clear tint, wallpaper read, screenshot or other fake blur.
-  `Ctrl+Shift+G`, `Ctrl+Shift+T` and the footer buttons remain present; the
-  interaction smoke asserts the window bounds do not move during appearance
-  toggles.
+  macOS and Wayland GPUI requests, `Off`, and `Unavailable` on X11,
+  unsupported hosts, or when Reduce Transparency blocks vibrancy.
+- On Wayland, GPUI requests KDE blur when the compositor exposes that protocol.
+  Other Wayland compositors can show a tinted translucent panel. X11 keeps an
+  opaque fallback. `--opaque` and `Ctrl+Shift+G` control the request on Wayland.
+  The interaction smoke checks that appearance toggles preserve window bounds.
 - macOS attempts a real Control+Space registration. The retained launcher is
   hidden only while that registration is live and the retained hide/show route
   exists. If registration is unavailable or later degraded, the regular Ansa
@@ -134,9 +131,9 @@ toolchain build remains required.
 | macOS on real Apple hardware | Native Control+Space, conflict fallback, Dock reopen, AppKit ordering and observed focus | Vibrancy over real text/color, Reduce Transparency, `--opaque`, bounds after toggles | Not run |
 | GNOME X11 | Global grab, conflict fallback, observed X11 activation; desktop remains usable | Opaque, `Glass: Unavailable` | Not run |
 | KDE Plasma X11 | Same X11 checks | Opaque even when KWin blur is enabled | Not run |
-| GNOME Wayland | Unsupported summon; direct window selection; no XWayland grab | Opaque, `Glass: Unavailable` | Not run |
-| KDE Plasma Wayland | Same Wayland checks | Opaque even when KWin blur is enabled | Not run |
-| wlroots-based Wayland session | Unsupported summon and usable manual fallback | Opaque, `Glass: Unavailable` | Not run |
+| GNOME Wayland | Unsupported summon; direct window selection; no XWayland grab | Tinted translucency when the KDE blur protocol is absent | Not run |
+| KDE Plasma Wayland | Same Wayland checks | Blur with the KWin protocol and effect enabled | Not run |
+| wlroots-based Wayland session | Unsupported summon and usable manual fallback | Tinted translucency when the KDE blur protocol is absent | Not run |
 
 Record OS, desktop/compositor versions, session type, GPU, display scale and
 the exact executable for every row. Xvfb or a software compositor is

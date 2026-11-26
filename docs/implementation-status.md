@@ -122,9 +122,8 @@ Keychain/Secret Service vault, clipboard and desktop paths; see the
   real Keychain/Secret Service and real clipboard/browser/file-manager checks
   are still blocked on hardware and human testers.
 
-Linux blur remains unimplemented: the desktop uses an opaque surface with
-`Glass: Unavailable`. No native platform support claim is made from the
-Windows-hosted results above.
+The launcher requests compositor blur on Wayland through GPUI and keeps an
+opaque fallback on X11. The Wayland effect still needs testing on a native desktop.
 
 CI configuration is not evidence of a completed remote CI run. Physical-input, screen-reader, lifecycle, accessibility and cross-platform gates remain open.
 

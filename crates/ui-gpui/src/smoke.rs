@@ -36,7 +36,16 @@ fn step(
         );
     }
     match stage {
-        0 => key("ctrl-k", window, cx),
+        0 => {
+            let families = cx.text_system().all_font_names();
+            for expected in [visual::SANS, visual::MONO, visual::SERIF] {
+                assert!(
+                    families.iter().any(|family| family == expected),
+                    "bundled font family {expected} was not registered"
+                );
+            }
+            key("ctrl-k", window, cx);
+        }
         1 => {
             let this = view.read(cx);
             assert!(this.panel.is_some(), "Ctrl+K action must open the panel");

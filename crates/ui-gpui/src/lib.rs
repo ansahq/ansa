@@ -20,6 +20,11 @@ use std::path::PathBuf;
 mod catalog_dispatch;
 mod compat;
 mod daily;
+mod launcher_view;
+mod visual;
+
+use launcher_view::{Caption, control, empty_state, icon_control};
+use visual::{Icon, Palette, icon, keys};
 #[cfg(feature = "upstream-candidate")]
 mod live_status;
 #[cfg(not(windows))]
@@ -86,6 +91,7 @@ struct Launcher {
     storage_error: Option<String>,
     catalog_skipped: Vec<ansa_alpha::SkippedQuicklink>,
     catalog_warning: Option<String>,
+    icon_sources: std::collections::BTreeMap<CommandId, String>,
     #[cfg(not(windows))]
     host_capabilities: Option<ansa_platform_api::HostCapabilities>,
     #[cfg(not(windows))]
@@ -167,13 +173,19 @@ impl Launcher {
         data_dir: PathBuf,
         smoke_fixture: bool,
     ) -> Self {
-        let input = cx.new(TextInput::new);
+        let input = cx.new(|cx| {
+            let mut input = TextInput::new(cx);
+            input.set_placeholder("Search apps and commands…", cx);
+            input.set_typography(17., 26., cx);
+            input
+        });
         let action_input = cx.new(|cx| {
             let mut input = TextInput::new(cx);
             input.set_placeholder("Search actions…", cx);
+            input.set_typography(13., 20., cx);
             input
         });
-        let theme = if light { Theme::light() } else { Theme::dark() };
+        let theme = Palette::new(light).input_theme();
         input.update(cx, |input, cx| input.set_theme(theme, cx));
         action_input.update(cx, |input, cx| input.set_theme(theme, cx));
         #[cfg(feature = "upstream-candidate")]
@@ -277,6 +289,7 @@ impl Launcher {
             storage_error: None,
             catalog_skipped: Vec::new(),
             catalog_warning: None,
+            icon_sources: Default::default(),
             #[cfg(not(windows))]
             host_capabilities: None,
             #[cfg(not(windows))]
@@ -357,20 +370,12 @@ impl Launcher {
         self.appearance_notice = Some(error);
     }
 
-    fn theme(&self) -> Theme {
-        if self.light {
-            Theme::light()
-        } else {
-            Theme::dark()
-        }
-    }
-
     fn toggle_theme(&mut self, cx: &mut Context<Self>) {
         if self.is_composing(cx) {
             return;
         }
         self.light = !self.light;
-        let theme = self.theme();
+        let theme = Palette::new(self.light).input_theme();
         self.input
             .update(cx, |input, cx| input.set_theme(theme, cx));
         self.action_input
@@ -422,7 +427,8 @@ impl Launcher {
         #[cfg(feature = "upstream-candidate")]
         self.announce_selection();
         if let Some(index) = self.engine.selected_index() {
-            self.scroll.scroll_to_item(index, ScrollStrategy::Center);
+            self.scroll
+                .scroll_to_item(self.results_slot(index), ScrollStrategy::Center);
         }
         cx.notify();
     }
@@ -1070,14 +1076,15 @@ impl Launcher {
                     };
                     let settings = driver.as_ref().map(daily::read_persisted_settings);
                     #[cfg(windows)]
-                    let (result, native_snapshot, retained_entries) = (
-                        daily::refresh_catalog(
-                            driver.as_mut(),
-                            ansa_platform_api::discover_applications(),
-                        ),
-                        (),
-                        Vec::<AppEntry>::new(),
-                    );
+                    let (result, native_snapshot, retained_entries) = {
+                        let discovery = ansa_platform_api::discover_applications();
+                        let retained = discovery.as_ref().ok().cloned().unwrap_or_default();
+                        (
+                            daily::refresh_catalog(driver.as_mut(), discovery),
+                            (),
+                            retained,
+                        )
+                    };
                     #[cfg(not(windows))]
                     let (result, native_snapshot, retained_entries) = {
                         let (generation, (discovery, capabilities)) =
@@ -1110,6 +1117,12 @@ impl Launcher {
                     return;
                 }
                 this.driver = driver;
+                let icon_sources = _retained_entries
+                    .iter()
+                    .filter_map(|entry: &AppEntry| {
+                        Some((CommandId::new(&entry.id).ok()?, entry.icon_source.clone()?))
+                    })
+                    .collect();
                 #[cfg(not(windows))]
                 {
                     this.host_capabilities = Some(_native_snapshot.1);
@@ -1120,6 +1133,7 @@ impl Launcher {
                 this.persisted_settings = settings;
                 match result {
                     Ok(load) => {
+                        this.icon_sources = icon_sources;
                         let summary = load.summary();
                         let warning = load.warning.clone();
                         this.catalog_skipped = load.skipped;
@@ -1402,7 +1416,7 @@ fn launcher_shape(window: &Window) -> (i32, i32, i32) {
     (
         (f32::from(viewport.width) * scale).round() as i32,
         (f32::from(viewport.height) * scale).round() as i32,
-        (12.0 * scale).round().clamp(1.0, 256.0) as i32,
+        (visual::CORNER_RADIUS * scale).round().clamp(1.0, 256.0) as i32,
     )
 }
 
@@ -1428,13 +1442,8 @@ impl Render for Launcher {
                 }
             }
         }
-        let theme = self.theme();
-        // Keep invalidated menus visible: closing one here could turn a queued
-        // Enter into an unrelated root action. Execution revalidates the snapshot.
-        let panel_stale = self
-            .panel
-            .as_ref()
-            .is_some_and(|panel| !panel.target().is_current(&self.engine));
+        let palette = Palette::new(self.light);
+        let theme = palette.theme;
         let route = route_query(self.engine.query());
         let is_calculator = matches!(route, QueryRoute::Calculator(_));
         let calculation = match &route {
@@ -1518,21 +1527,72 @@ impl Render for Launcher {
         let status_node = live_status::LiveStatus::new(status_text, status_content);
         #[cfg(not(feature = "upstream-candidate"))]
         let status_node = status_content;
-        let actions_button = div()
-            .id("actions-button")
+        let back = self.detail.is_some() || self.setup.is_some();
+        let show_back = back || self.panel.is_some() || is_calculator || is_emoji;
+        let input_focused = self.input.focus_handle(cx).is_focused(window);
+        let show_hotkey = !show_back
+            && self.engine.query().is_empty()
+            && self.hotkey_registered()
+            && window.viewport_size().width >= px(640.);
+        let search_back = icon_control("search-back", Icon::Back, palette.subtle, palette)
+            .on_click(cx.listener(move |this, _, window, cx| {
+                if (is_calculator || is_emoji) && this.panel.is_none() && !back {
+                    if !this.is_composing(cx) {
+                        this.input.update(cx, |input, cx| input.clear(window, cx));
+                        compat::focus(window, &this.input.focus_handle(cx), cx);
+                    }
+                } else {
+                    window.dispatch_action(Box::new(Escape), cx);
+                }
+            }));
+        #[cfg(feature = "upstream-candidate")]
+        let search_back = search_back.role(Role::Button).aria_label("Back");
+        let primary = if back {
+            None
+        } else if let Some(panel) = &self.panel {
+            panel
+                .is_current(&self.engine)
+                .then(|| panel.selected())
+                .flatten()
+                .map(|entry| entry.title.clone())
+        } else if is_emoji {
+            (emoji_count > 0).then(|| "Copy Emoji".into())
+        } else if is_calculator {
+            calculation.as_ref().map(|_| "Copy Answer".into())
+        } else {
+            self.engine.selected().map(|command| match command.kind {
+                CommandKind::Builtin(BuiltinCommand::RefreshApplications) => "Run".into(),
+                _ => "Open".into(),
+            })
+        };
+        let primary_button = primary.map(|label| {
+            let button = control("launcher-primary", palette)
+                .on_click(cx.listener(|this, _, window, cx| {
+                    if this.panel.is_some() {
+                        this.execute_panel(None, window, cx);
+                    } else {
+                        this.execute_primary(window, cx);
+                    }
+                }))
+                .child(icon(Icon::Right, 14., palette.subtle))
+                .child(label.clone())
+                .child(keys(&["↵"], palette));
+            #[cfg(feature = "upstream-candidate")]
+            let button = button
+                .role(Role::Button)
+                .aria_label(label)
+                .aria_keyshortcuts("Enter");
+            button
+        });
+        let actions_button = control("actions-button", palette)
             .track_focus(&self.actions_focus)
-            .ml_3()
-            .cursor_pointer()
-            .text_color(theme.accent)
-            .px_2()
-            .py_1()
             .border_1()
-            .rounded_sm()
             .border_color(if self.actions_focus.is_focused(window) {
                 theme.accent
             } else {
-                theme.border
+                gpui::transparent_black()
             })
+            .when(self.panel.is_some(), |el| el.bg(theme.surface_raised))
             .on_click(cx.listener(|this, _, window, cx| {
                 if this.is_composing(cx) {
                     return;
@@ -1549,11 +1609,8 @@ impl Render for Launcher {
                     this.toggle_actions(window, cx);
                 }
             }))
-            .child(if self.detail.is_some() || self.setup.is_some() {
-                "Back  Esc"
-            } else {
-                "Actions  Ctrl K"
-            });
+            .child(if back { "Back" } else { "Actions" })
+            .child(keys(if back { &["Esc"] } else { &["Ctrl", "K"] }, palette));
         #[cfg(feature = "upstream-candidate")]
         let actions_button = actions_button
             .role(Role::Button)
@@ -1567,18 +1624,24 @@ impl Render for Launcher {
             } else {
                 "Control+K"
             });
-        let appearance_button = div()
-            .id("toggle-glass")
-            .px_2()
-            .py_1()
-            .cursor_pointer()
-            .text_color(theme.accent)
-            .on_click(cx.listener(|this, _, window, cx| this.toggle_glass(window, cx)))
-            .child(glass_label(
-                Platform::current(),
-                self.glass,
-                self.appearance_notice.is_some(),
-            ));
+        let glass_caption = glass_label(
+            Platform::current(),
+            self.glass,
+            self.appearance_notice.is_some(),
+        );
+        let appearance_button = icon_control(
+            "toggle-glass",
+            Icon::Glass,
+            if self.glass {
+                theme.accent
+            } else {
+                palette.subtle
+            },
+            palette,
+        )
+        .when(self.appearance_notice.is_some(), |el| el.opacity(0.45))
+        .tooltip(move |_, cx| cx.new(|_| Caption(glass_caption, theme)).into())
+        .on_click(cx.listener(|this, _, window, cx| this.toggle_glass(window, cx)));
         #[cfg(feature = "upstream-candidate")]
         let appearance_button = appearance_button
             .role(Role::Button)
@@ -1590,18 +1653,14 @@ impl Render for Launcher {
                 "Enable glass appearance"
             })
             .aria_keyshortcuts("Control+Shift+G");
-        let theme_button = div()
-            .id("toggle-theme")
-            .px_2()
-            .py_1()
-            .cursor_pointer()
-            .text_color(theme.accent)
-            .on_click(cx.listener(|this, _, _, cx| this.toggle_theme(cx)))
-            .child(if self.light {
-                "Theme: Light"
-            } else {
-                "Theme: Dark"
-            });
+        let theme_caption = if self.light {
+            "Switch to dark theme"
+        } else {
+            "Switch to light theme"
+        };
+        let theme_button = icon_control("toggle-theme", Icon::Theme, palette.subtle, palette)
+            .tooltip(move |_, cx| cx.new(|_| Caption(theme_caption, theme)).into())
+            .on_click(cx.listener(|this, _, _, cx| this.toggle_theme(cx)));
         #[cfg(feature = "upstream-candidate")]
         let theme_button = theme_button
             .role(Role::Button)
@@ -1618,13 +1677,14 @@ impl Render for Launcher {
             .flex_col()
             // No layout gutter: the native compositor owns the external shadow.
             .bg(theme.window_background(self.glass))
-            .rounded(px(12.))
+            .rounded(px(visual::CORNER_RADIUS))
             .overflow_hidden()
             .border_1()
             .border_color(theme.border)
             .text_color(theme.text)
-            .font_family("Segoe UI")
+            .font_family(visual::SANS)
             .text_size(px(14.))
+            .line_height(px(21.))
             .on_action(cx.listener(|this, _: &Next, _, cx| this.navigate(1, cx)))
             .on_action(cx.listener(|this, _: &Previous, _, cx| this.navigate(-1, cx)))
             .on_action(cx.listener(|this, _: &PageDown, _, cx| this.navigate(7, cx)))
@@ -1665,19 +1725,20 @@ impl Render for Launcher {
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
             .child(
                 div()
+                    .h(px(58.))
+                    .flex_none()
                     .flex()
                     .items_center()
-                    .gap_3()
-                    .px_5()
-                    .py_4()
+                    .gap(px(14.))
+                    .px(px(16.))
                     .border_b_1()
-                    .border_color(theme.border)
-                    .bg(if self.glass { theme.surface.opacity(0.35) } else { theme.background })
-                    .child(div().text_color(theme.accent).text_size(px(24.)).child("⌕"))
-                    .child(div().flex_1().min_w_0().child(self.input.clone()))
-                    .child(div().text_xs().text_color(theme.muted_text).child("ANSA")),
+                    .border_color(if input_focused { theme.accent.opacity(0.45) } else { palette.line })
+                    .when(show_back, |el| el.child(search_back))
+                    .when(!show_back, |el| el.child(icon(Icon::Search, 18., palette.subtle)))
+                    .child(div().flex_1().min_w_0().when(is_calculator, |el| el.font_family(visual::MONO)).child(self.input.clone()))
+                    .when(show_hotkey, |el| el.child(keys(&["Ctrl", "Space"], palette))),
             )
-            .child(
+            .when(self.setup.is_some() || self.detail.is_some() || is_emoji || is_calculator, |el| el.child(
                 div()
                     .px_5()
                     .py_3()
@@ -1712,7 +1773,7 @@ impl Render for Launcher {
                     } else {
                         format!("{count} results")
                     }),
-            )
+            ))
             .when(
                 self.setup.is_none()
                     && (!self.catalog_skipped.is_empty() || self.catalog_warning.is_some()),
@@ -1849,7 +1910,13 @@ impl Render for Launcher {
                             .px_6()
                             .py_3()
                             .line_height(px(26.))
-                            .child(detail);
+                            .child(
+                                div()
+                                    .font_family(visual::SERIF)
+                                    .text_size(px(22.))
+                                    .child(detail.lines().next().unwrap_or("Command details").to_owned()),
+                            )
+                            .child(detail.lines().skip(1).collect::<Vec<_>>().join("\n"));
                         #[cfg(feature = "upstream-candidate")]
                         let document = document.role(Role::Document).aria_label(heading);
                         el.child(document)
@@ -1862,6 +1929,7 @@ impl Render for Launcher {
                         |el| {
                         let value = calculation.unwrap_or_default();
                         let result = div()
+                            .font_family(visual::MONO)
                             .text_size(px(48.))
                             .text_color(theme.accent)
                             .child(value.clone());
@@ -1917,21 +1985,7 @@ impl Render for Launcher {
                             && !is_emoji
                             && !is_calculator
                             && count == 0,
-                        |el| {
-                            el.child(
-                                div()
-                                    .size_full()
-                                    .flex()
-                                    .flex_col()
-                                    .items_center()
-                                    .justify_center()
-                                    .gap_3()
-                                    .child(div().text_size(px(24.)).child("Nothing here yet"))
-                                    .child(div().text_color(theme.muted_text).child(
-                                        "Try another name, or type an expression like (24 + 8) / 2",
-                                    )),
-                            )
-                        },
+                        |el| el.child(empty_state(Icon::Empty, "No results found", "Try a different search or type an expression to calculate.", palette)),
                     )
                     .when(
                         self.detail.is_none()
@@ -1939,152 +1993,7 @@ impl Render for Launcher {
                             && !is_emoji
                             && !is_calculator
                             && count > 0,
-                        |el| {
-                            let list = uniform_list(
-                                "results",
-                                count,
-                                cx.processor(|this, range: std::ops::Range<usize>, _, cx| {
-                                    let theme = this.theme();
-                                    range
-                                        .map(|index| {
-                                            let command = &this.engine.results()[index];
-                                            let selected =
-                                                this.engine.selected_index() == Some(index);
-                                            let title = command.title.clone();
-                                            let subtitle =
-                                                command.subtitle.clone().unwrap_or_default();
-                                            let command_id = command.id.clone();
-                                            let command_id_text = command.id.as_str().to_owned();
-                                            let row_id = SharedString::from(format!(
-                                                "result-row:{command_id_text}"
-                                            ));
-                                            let body_id = SharedString::from(format!(
-                                                "result-body:{command_id_text}"
-                                            ));
-                                            #[cfg(feature = "upstream-candidate")]
-                                            let accessible_label = if subtitle.is_empty() {
-                                                title.clone()
-                                            } else {
-                                                format!("{title}. {subtitle}")
-                                            };
-                                            let token = this.engine.query_token();
-                                            let pinned =
-                                                this.engine.signals().is_favorite(&command.id);
-                                            let icon = match command.kind {
-                                                CommandKind::Application { .. } => "↗",
-                                                _ => "⌘",
-                                            };
-                                            let body = div()
-                                                .id(body_id)
-                                                .size_full()
-                                                .flex()
-                                                .items_center()
-                                                .gap_3()
-                                                .px_3()
-                                                .rounded_md()
-                                                .when(selected, |el| el.bg(theme.surface_raised))
-                                                .hover(|el| el.bg(theme.surface_raised))
-                                                .cursor_pointer()
-                                                .on_click(cx.listener(
-                                                    move |this, _, window, cx| {
-                                                        if this.panel.is_some()
-                                                            || this.is_composing(cx)
-                                                        {
-                                                            return;
-                                                        }
-                                                        if this.engine.query_token() != token {
-                                                            return;
-                                                        }
-                                                        if let Some(current) = this
-                                                            .engine
-                                                            .results()
-                                                            .iter()
-                                                            .position(|command| {
-                                                                command.id == command_id
-                                                            })
-                                                        {
-                                                            this.engine.select_index(current);
-                                                            // UIA SelectionItem.Select is delivered as Click.
-                                                            // Accessibility selection must never launch.
-                                                            #[cfg(feature = "upstream-candidate")]
-                                                            {
-                                                                this.announce_selection();
-                                                                compat::focus(
-                                                                    window,
-                                                                    &this.input.focus_handle(cx),
-                                                                    cx,
-                                                                );
-                                                                cx.notify();
-                                                            }
-                                                            #[cfg(not(feature = "upstream-candidate"))]
-                                                            this.execute_primary(window, cx);
-                                                        }
-                                                    },
-                                                ))
-                                                .child(
-                                                    div()
-                                                        .size(px(32.))
-                                                        .rounded_md()
-                                                        .bg(theme.surface)
-                                                        .flex()
-                                                        .items_center()
-                                                        .justify_center()
-                                                        .text_color(theme.accent)
-                                                        .child(icon),
-                                                )
-                                                .child(
-                                                    div()
-                                                        .flex_1()
-                                                        .min_w_0()
-                                                        .flex()
-                                                        .flex_col()
-                                                        .child(div().truncate().child(title))
-                                                        .child(
-                                                            div()
-                                                                .text_xs()
-                                                                .text_color(theme.muted_text)
-                                                                .truncate()
-                                                                .child(subtitle),
-                                                        ),
-                                                )
-                                                .when(pinned, |el| {
-                                                    el.child(
-                                                        div()
-                                                            .text_color(theme.accent)
-                                                            .child("★"),
-                                                    )
-                                                })
-                                                .when(selected, |el| {
-                                                    el.child(
-                                                        div().text_color(theme.muted_text).child("↵"),
-                                                    )
-                                                });
-                                            #[cfg(feature = "upstream-candidate")]
-                                            let body = body
-                                                .role(Role::ListItem)
-                                                .aria_label(accessible_label)
-                                                .aria_selected(selected)
-                                                // AccessKit positions are zero-based; the Windows
-                                                // adapter adds one and reads set size from the list.
-                                                .aria_position_in_set(index);
-                                            div().id(row_id).h(px(56.)).px_3().py_1().child(body)
-                                        })
-                                        .collect::<Vec<_>>()
-                                }),
-                            );
-                            #[cfg(feature = "upstream-candidate")]
-                            let list = list.track_scroll(&self.scroll);
-                            #[cfg(not(feature = "upstream-candidate"))]
-                            let list = list.track_scroll(self.scroll.clone());
-                            let list = list.size_full();
-                            let results = div().id("results-list").size_full();
-                            #[cfg(feature = "upstream-candidate")]
-                            let results = results
-                                .role(Role::List)
-                                .aria_label("Search results")
-                                .aria_size_of_set(count);
-                            el.child(results.child(list))
-                        },
+                        |el| el.child(self.render_results(palette, cx)),
                     )
                     .when(self.setup.is_none() && is_emoji, |el| {
                         if let Some(error) = &self.emoji_error {
@@ -2128,7 +2037,7 @@ impl Render for Launcher {
                                 "emoji-results",
                                 emoji_count,
                                 cx.processor(|this, range: std::ops::Range<usize>, _, cx| {
-                                    let theme = this.theme();
+                                    let theme = Palette::new(this.light).theme;
                                     range
                                         .map(|index| {
                                             let hit = &this.emoji_results[index];
@@ -2237,93 +2146,24 @@ impl Render for Launcher {
                             el.child(results.child(list))
                         }
                     })
-                    .when(self.panel.is_some(), |el| {
-                        let panel = self.panel.as_ref().expect("panel is present");
-                        let token = panel.target().token();
-                        let menu_id = SharedString::from(format!(
-                            "actions-menu:{}:{}",
-                            token.invocation(),
-                            token.revision()
-                        ));
-                        #[cfg(feature = "upstream-candidate")]
-                        let menu_count = panel.visible_entries().len();
-                        let menu = div()
-                            .id(menu_id)
-                            .absolute()
-                            .right_4()
-                            .bottom_3()
-                            .w(px(360.))
-                            .p_2()
-                            .rounded_lg()
-                            .bg(theme.surface)
-                            .border_1()
-                            .border_color(theme.border)
-                            .shadow_lg();
-                        #[cfg(feature = "upstream-candidate")]
-                        let menu = menu
-                            .role(Role::Menu)
-                            .aria_label("Actions")
-                            .aria_size_of_set(menu_count);
-                        el.child(
-                            menu
-                                .child(
-                                    div()
-                                        .px_3()
-                                        .py_2()
-                                        .text_xs()
-                                        .text_color(theme.muted_text)
-                                        .child(if panel_stale { "TARGET CHANGED · Esc to close" } else { "ACTIONS · ↑↓ to select · Esc to close" }),
-                                )
-                                .child(
-                                    div().px_3().py_2().border_b_1().border_color(theme.border).child(self.action_input.clone()),
-                                )
-                                .children(panel.visible_entries().iter().enumerate().map(|(index, entry)| {
-                                    let action = entry.id;
-                                    let target = panel.target().clone();
-                                    let selected = panel.selected_index() == Some(index);
-                                    let row_id = SharedString::from(format!(
-                                        "action:{}:{}:{}",
-                                        action_slug(action),
-                                        token.invocation(),
-                                        token.revision()
-                                    ));
-                                    let row = div().id(row_id).px_3().py_3().rounded_md().flex().items_center().justify_between().cursor_pointer()
-                                        .when(selected, |el| el.bg(theme.surface_raised))
-                                        .hover(|el| el.bg(theme.surface_raised))
-                                        .on_click(cx.listener(move |this, _, window, cx| {
-                                            if this.panel.as_ref().is_some_and(|panel| panel.target() == &target) {
-                                                this.execute_panel(Some(action), window, cx);
-                                            }
-                                        }))
-                                        .child(entry.title.clone())
-                                        .child(div().text_xs().text_color(theme.muted_text).child(entry.shortcut.clone().unwrap_or_default()));
-                                    #[cfg(feature = "upstream-candidate")]
-                                    let row = row
-                                        .role(Role::MenuItem)
-                                        .aria_label(entry.title.clone())
-                                        // Menu items are invocable commands. AccessKit's
-                                        // invocable check rejects any selected state, which
-                                        // would suppress UIA InvokePattern.
-                                        .aria_position_in_set(index);
-                                    row
-                                }))
-                                .when(panel.visible_entries().is_empty(), |el| el.child(
-                                    div().px_3().py_4().text_color(theme.muted_text).child("No matching actions"))),
-                        )
-                    }),
+                    .when_some(self.panel.as_ref(), |el, panel| el.child(self.actions_panel(panel, palette, window, cx))),
             )
             .child(
                 div()
-                    .h(px(44.))
-                    .px_5()
+                    .h(px(42.))
+                    .flex_none()
+                    .px_3()
+                    .bg(if self.glass { palette.footer.opacity(0.70) } else { palette.footer })
                     .border_t_1()
                     .border_color(theme.border)
                     .flex()
                     .items_center()
                     .justify_between()
                     .text_xs()
+                    .child(icon(Icon::Ansa, 16., palette.subtle))
+                    .gap_2()
                     .child(status_node)
-                    .child(div().flex().items_center().gap_1().child(theme_button).child(appearance_button).child(actions_button)),
+                    .child(div().flex().items_center().gap_1().child(theme_button).child(appearance_button).children(primary_button).child(actions_button)),
             )
     }
 }
@@ -2388,7 +2228,10 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
         });
         handle
     };
-    application.run(move |cx: &mut App| {
+    application.with_assets(visual::Icons).run(move |cx: &mut App| {
+        if let Err(error) = visual::register_fonts(cx) {
+            eprintln!("Could not load Geist fonts: {error}");
+        }
         compat::quit_when_last_window_closes(cx).detach();
         install_keybindings(cx);
         cx.bind_keys([
@@ -2408,7 +2251,7 @@ pub fn run_with_application(application: Application) -> Result<(), String> {
             KeyBinding::new("enter", SetupActivate, Some("Setup")),
             KeyBinding::new("space", SetupActivate, Some("Setup")),
         ]);
-        let bounds = Bounds::centered(None, size(px(760.), px(500.)), cx);
+        let bounds = Bounds::centered(None, size(px(780.), px(552.)), cx);
         let appearance = InitialAppearance::new(Platform::current(), glass, macos_reduce_transparency());
         let Ok(handle) = cx.open_window(WindowOptions {
             window_bounds: Some(WindowBounds::Windowed(bounds)),

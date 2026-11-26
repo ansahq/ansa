@@ -116,18 +116,6 @@ extern "system" {
 #[link(name = "dwmapi")]
 extern "system" {
     fn DwmExtendFrameIntoClientArea(hwnd: *mut c_void, margins: *const Margins) -> i32;
-    fn DwmSetWindowAttribute(
-        hwnd: *mut c_void,
-        attribute: u32,
-        value: *const c_void,
-        size: u32,
-    ) -> i32;
-    fn DwmGetWindowAttribute(
-        hwnd: *mut c_void,
-        attribute: u32,
-        value: *mut c_void,
-        size: u32,
-    ) -> i32;
 }
 
 fn owned_window(hwnd: isize) -> Result<*mut c_void, String> {
@@ -154,43 +142,11 @@ pub(super) fn composition_window(hwnd: isize) -> Result<*mut c_void, String> {
     Ok(window)
 }
 
-/// Ask DWM to round the window so the system backdrop and the app surface share
-/// the same corner shape. Falls back to a native region on older Windows.
+/// Clip the whole HWND to the panel radius even when DWM leaves a popup square.
 pub fn round_launcher_window(hwnd: isize, radius: i32) -> Result<(), String> {
     let window = owned_window(hwnd)?;
     if radius <= 0 || radius > 256 {
         return Err("Invalid launcher corner radius".into());
-    }
-
-    const DWMWA_WINDOW_CORNER_PREFERENCE: u32 = 33;
-    const DWMWCP_ROUND: i32 = 2;
-    let preference = DWMWCP_ROUND;
-    // SAFETY: validated own-thread window and a stack-sized attribute value.
-    let result = unsafe {
-        DwmSetWindowAttribute(
-            window,
-            DWMWA_WINDOW_CORNER_PREFERENCE,
-            (&preference as *const i32).cast(),
-            std::mem::size_of::<i32>() as u32,
-        )
-    };
-    let mut applied = 0i32;
-    // SAFETY: validated own-thread window and a stack-sized output value.
-    let read_back = unsafe {
-        DwmGetWindowAttribute(
-            window,
-            DWMWA_WINDOW_CORNER_PREFERENCE,
-            (&mut applied as *mut i32).cast(),
-            std::mem::size_of::<i32>() as u32,
-        )
-    };
-    if result >= 0 && read_back >= 0 && applied == DWMWCP_ROUND {
-        // DWM owns the outer shape; ask it to recompute the non-client frame.
-        // SAFETY: validated own-thread window; position and size are unchanged.
-        unsafe {
-            SetWindowPos(window, std::ptr::null_mut(), 0, 0, 0, 0, 0x0037);
-        }
-        return Ok(());
     }
 
     // SAFETY: validated own-thread window and checked dimensions; Windows owns
@@ -240,14 +196,14 @@ pub fn make_launcher_frameless(hwnd: isize) -> Result<(), String> {
         if SetWindowPos(window, std::ptr::null_mut(), 0, 0, 0, 0, 0x37) == 0 {
             return Err("Windows could not refresh the launcher frame".into());
         }
-        // Leave any available shadow to DWM; it never adds a GPUI hitbox gutter.
+        // A nonzero DWM glass margin can draw a square frame behind the rounded panel.
         let _ = DwmExtendFrameIntoClientArea(
             window,
             &Margins {
-                left: 1,
-                right: 1,
-                top: 1,
-                bottom: 1,
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
             },
         );
     }
@@ -413,44 +369,26 @@ mod tests {
             assert_ne!(GetClientRect(window.0, &mut client), 0);
             assert_eq!(bounds.right - bounds.left, client.right);
             assert_eq!(bounds.bottom - bounds.top, client.bottom);
-            let mut preference = 0i32;
-            let dwm = DwmGetWindowAttribute(
-                window.0,
-                33,
-                (&mut preference as *mut i32).cast(),
-                std::mem::size_of::<i32>() as u32,
+            let region = CreateRectRgn(0, 0, 0, 0);
+            assert!(!region.is_null());
+            let kind = GetWindowRgn(window.0, region);
+            let samples = [
+                (0, 0),
+                (199, 0),
+                (0, 119),
+                (199, 119),
+                (100, 0),
+                (0, 60),
+                (199, 60),
+                (100, 119),
+            ]
+            .map(|(x, y)| PtInRegion(region, x, y) != 0);
+            assert_ne!(DeleteObject(region), 0);
+            assert_eq!(kind, 3);
+            assert_eq!(
+                samples,
+                [false, false, false, false, true, true, true, true]
             );
-            if dwm >= 0 {
-                // Windows 11: DWM owns the rounded outer shape.
-                assert_eq!(preference, 2);
-                let region = CreateRectRgn(0, 0, 0, 0);
-                assert!(!region.is_null());
-                let kind = GetWindowRgn(window.0, region);
-                assert_ne!(DeleteObject(region), 0);
-                assert_eq!(kind, 0);
-            } else {
-                // Older Windows: the native rounded region is the fallback.
-                let region = CreateRectRgn(0, 0, 0, 0);
-                assert!(!region.is_null());
-                let kind = GetWindowRgn(window.0, region);
-                let samples = [
-                    (0, 0),
-                    (199, 0),
-                    (0, 119),
-                    (199, 119),
-                    (100, 0),
-                    (0, 60),
-                    (199, 60),
-                    (100, 119),
-                ]
-                .map(|(x, y)| PtInRegion(region, x, y) != 0);
-                assert_ne!(DeleteObject(region), 0);
-                assert_eq!(kind, 3);
-                assert_eq!(
-                    samples,
-                    [false, false, false, false, true, true, true, true]
-                );
-            }
         }
         assert!(round_launcher_window(window.0 as isize, 0).is_err());
         assert!(round_launcher_window(window.0 as isize, 257).is_err());

@@ -1,8 +1,6 @@
-//! Neutral light and dark palettes shared by the launcher and its inputs.
+//! Oxocarbon IBM Carbon palettes shared by the launcher and its inputs.
 
 use gpui::{Background, Hsla, rgb, rgba, solid_background};
-
-const GLASS_BACKGROUND_ALPHA: f32 = 0.80;
 
 /// Colors used by Ansa widgets.
 ///
@@ -33,51 +31,49 @@ pub struct Theme {
 }
 
 impl Theme {
-    /// The translucent base tint. Text, menus and selected rows retain their
-    /// own opaque palette colors. The 20% see-through tint is the readability
-    /// floor for secondary text at 4.5:1 over black and white desktop extremes.
+    /// Only the background is translucent; text, menus and selected rows
+    /// retain their own opaque palette colors.
     pub fn glass_tint(&self) -> Hsla {
-        self.background.opacity(GLASS_BACKGROUND_ALPHA)
+        self.background.opacity(0.84)
     }
 
-    /// The launcher surface: a themed translucent tint over the native frosted
-    /// backdrop when glass is on, or the opaque palette background when it is off.
+    /// Paint the base tint over the compositor backdrop when glass is enabled.
     pub fn window_background(&self, glass: bool) -> Background {
-        if glass {
-            solid_background(self.glass_tint())
+        solid_background(if glass {
+            self.glass_tint()
         } else {
-            solid_background(self.background)
-        }
+            self.background
+        })
     }
 
     /// The default Ansa dark theme.
     pub fn dark() -> Self {
         Self {
-            background: rgb(0x181818).into(),
-            surface: rgb(0x232323).into(),
-            surface_raised: rgb(0x383838).into(),
-            text: rgb(0xf5f5f5).into(),
-            muted_text: rgb(0xd6d6d6).into(),
-            accent: rgb(0xf0f0f0).into(),
-            accent_strong: rgb(0xffffff).into(),
-            selection: rgba(0x00000040).into(),
-            border: rgb(0x484848).into(),
-            danger: rgb(0xf5f5f5).into(),
+            background: rgb(0x161616).into(),
+            surface: rgb(0x262626).into(),
+            surface_raised: rgb(0x393939).into(),
+            text: rgb(0xf4f4f4).into(),
+            muted_text: rgb(0xc6c6c6).into(),
+            accent: rgb(0x4589ff).into(),
+            accent_strong: rgb(0x0f62fe).into(),
+            selection: rgba(0x4589ff40).into(),
+            border: rgb(0x393939).into(),
+            danger: rgb(0xff8389).into(),
         }
     }
 
     pub fn light() -> Self {
         Self {
-            background: rgb(0xf5f5f5).into(),
-            surface: rgb(0xffffff).into(),
-            surface_raised: rgb(0xdcdcdc).into(),
-            text: rgb(0x181818).into(),
-            muted_text: rgb(0x404040).into(),
-            accent: rgb(0x202020).into(),
-            accent_strong: rgb(0x000000).into(),
-            selection: rgba(0x00000025).into(),
-            border: rgb(0xbcbcbc).into(),
-            danger: rgb(0x181818).into(),
+            background: rgb(0xffffff).into(),
+            surface: rgb(0xf4f4f4).into(),
+            surface_raised: rgb(0xe0e0e0).into(),
+            text: rgb(0x161616).into(),
+            muted_text: rgb(0x525252).into(),
+            accent: rgb(0x0f62fe).into(),
+            accent_strong: rgb(0x0f62fe).into(),
+            selection: rgba(0x0f62fe40).into(),
+            border: rgb(0xe0e0e0).into(),
+            danger: rgb(0xda1e28).into(),
         }
     }
 }
@@ -92,15 +88,34 @@ impl Default for Theme {
 mod tests {
     use super::*;
 
-    fn luminance(gray: f32) -> f32 {
-        if gray <= 0.04045 {
-            gray / 12.92
-        } else {
-            ((gray + 0.055) / 1.055).powf(2.4)
-        }
+    fn channels(color: Hsla) -> [f32; 3] {
+        let color: gpui::Rgba = color.into();
+        [color.r, color.g, color.b]
     }
 
-    fn contrast(first: f32, second: f32) -> f32 {
+    fn composite(color: Hsla, background: [f32; 3]) -> [f32; 3] {
+        let foreground = channels(color);
+        std::array::from_fn(|index| {
+            foreground[index] * color.a + background[index] * (1.0 - color.a)
+        })
+    }
+
+    fn luminance(color: [f32; 3]) -> f32 {
+        color
+            .into_iter()
+            .zip([0.2126, 0.7152, 0.0722])
+            .map(|(channel, weight)| {
+                let linear = if channel <= 0.04045 {
+                    channel / 12.92
+                } else {
+                    ((channel + 0.055) / 1.055).powf(2.4)
+                };
+                linear * weight
+            })
+            .sum()
+    }
+
+    fn contrast(first: [f32; 3], second: [f32; 3]) -> f32 {
         let first = luminance(first);
         let second = luminance(second);
         (first.max(second) + 0.05) / (first.min(second) + 0.05)
@@ -110,41 +125,26 @@ mod tests {
     fn glass_keeps_text_and_caret_contrast_over_extreme_backdrops() {
         for theme in [Theme::dark(), Theme::light()] {
             let glass = theme.glass_tint();
-            assert!((glass.a - GLASS_BACKGROUND_ALPHA).abs() < 0.0001);
-            assert!(glass.a > 0.0 && glass.a < 1.0);
+            assert!((glass.a - 0.84).abs() < 0.0001);
             for backdrop in [0.0, 1.0] {
-                // Neutral sRGB source-over compositing, before luminance conversion.
-                let background = glass.l * glass.a + backdrop * (1.0 - glass.a);
-                for text in [theme.text, theme.muted_text, theme.accent] {
+                let background = composite(glass, [backdrop; 3]);
+                for text in [theme.text, theme.muted_text] {
                     assert_eq!(text.a, 1.0);
-                    assert!(contrast(text.l, background) >= 4.5);
+                    assert!(contrast(channels(text), background) >= 4.5);
                 }
-                let selection = theme.selection;
-                let selected_background =
-                    selection.l * selection.a + background * (1.0 - selection.a);
-                assert!(contrast(theme.text.l, selected_background) >= 4.5);
+                assert!(contrast(channels(theme.accent), background) >= 3.0);
+                let selected_background = composite(theme.selection, background);
+                assert!(contrast(channels(theme.text), selected_background) >= 4.5);
             }
         }
     }
 
     #[test]
-    fn both_palettes_are_entirely_neutral() {
-        for theme in [Theme::dark(), Theme::light()] {
-            for color in [
-                theme.background,
-                theme.surface,
-                theme.surface_raised,
-                theme.text,
-                theme.muted_text,
-                theme.accent,
-                theme.accent_strong,
-                theme.selection,
-                theme.border,
-                theme.danger,
-            ] {
-                assert!(color.s.abs() < 0.0001);
-            }
-        }
+    fn uses_the_oxocarbon_ibm_carbon_backgrounds_and_accents() {
+        assert_eq!(Theme::dark().background, rgb(0x161616).into());
+        assert_eq!(Theme::dark().accent, rgb(0x4589ff).into());
+        assert_eq!(Theme::light().background, rgb(0xffffff).into());
+        assert_eq!(Theme::light().accent, rgb(0x0f62fe).into());
     }
 
     #[test]
@@ -152,7 +152,7 @@ mod tests {
         for theme in [Theme::dark(), Theme::light()] {
             for text in [theme.text, theme.muted_text] {
                 for surface in [theme.background, theme.surface, theme.surface_raised] {
-                    let ratio = contrast(text.l, surface.l);
+                    let ratio = contrast(channels(text), channels(surface));
                     assert!(ratio >= 4.5, "text contrast {ratio}");
                 }
             }

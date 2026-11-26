@@ -122,6 +122,8 @@ pub struct TextInput {
     model: TextModel,
     placeholder: SharedString,
     theme: crate::Theme,
+    text_size: f32,
+    line_height: f32,
     last_layout: Option<ShapedLine>,
     last_bounds: Option<Bounds<Pixels>>,
     is_selecting: bool,
@@ -140,6 +142,8 @@ impl TextInput {
             model: TextModel::default(),
             placeholder: DEFAULT_PLACEHOLDER.into(),
             theme: crate::Theme::dark(),
+            text_size: TEXT_SIZE,
+            line_height: 32.,
             last_layout: None,
             last_bounds: None,
             is_selecting: false,
@@ -162,6 +166,14 @@ impl TextInput {
         cx: &mut Context<Self>,
     ) {
         self.placeholder = placeholder.into();
+        cx.notify();
+    }
+
+    /// Set the field's font size and line box, in logical pixels.
+    pub fn set_typography(&mut self, text_size: f32, line_height: f32, cx: &mut Context<Self>) {
+        self.text_size = text_size;
+        self.line_height = line_height;
+        self.last_layout = None;
         cx.notify();
     }
 
@@ -348,11 +360,13 @@ impl TextInput {
             strikethrough: None,
         };
         // `render` runs before this field's `text_size` style is applied to the
-        // window, so use the same constant the renderer paints with.
-        let line =
-            window
-                .text_system()
-                .shape_line(content.to_owned().into(), px(TEXT_SIZE), &[run], None);
+        // window, so use the same size the renderer paints with.
+        let line = window.text_system().shape_line(
+            content.to_owned().into(),
+            px(self.text_size),
+            &[run],
+            None,
+        );
 
         Some((line, bounds, scale_factor))
     }
@@ -955,9 +969,9 @@ impl Render for TextInput {
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
             .w_full()
-            .h(px(32.0))
-            .line_height(px(32.0))
-            .text_size(px(TEXT_SIZE))
+            .h(px(self.line_height))
+            .line_height(px(self.line_height))
+            .text_size(px(self.text_size))
             .text_color(self.theme.text)
             .overflow_hidden();
 

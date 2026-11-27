@@ -522,6 +522,62 @@ fn denied_or_fallback(issue: TargetIssue, sequence: u64) -> InsertionOutcome {
     }
 }
 
+/// A reusable text-paste entry point for features such as snippets.
+///
+/// The launcher's clipboard path and a snippet picker must not implement
+/// separate paste rules. Implementations of this trait delegate to
+/// [`execute_insertion`] so every caller gets the same copy-first behaviour,
+/// target verification and truthful outcomes.
+pub trait PasteTarget {
+    /// Copies `text` first and, subject to `policy` and `config`, attempts a
+    /// checked insertion into the target captured by the implementation.
+    fn paste_text(
+        &mut self,
+        text: &str,
+        policy: InsertionPolicy,
+        config: InsertionConfig,
+    ) -> InsertionOutcome;
+}
+
+/// Borrowed clipboard insertion target shared by the launcher and snippets.
+pub struct TransactionPaste<'a> {
+    host: &'a mut dyn InsertionHost,
+    target: &'a InsertionTarget,
+}
+
+impl<'a> TransactionPaste<'a> {
+    /// Wraps a host and the target captured at invocation time.
+    pub fn new(host: &'a mut dyn InsertionHost, target: &'a InsertionTarget) -> Self {
+        Self { host, target }
+    }
+}
+
+impl fmt::Debug for TransactionPaste<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("TransactionPaste")
+            .field("target", self.target)
+            .finish_non_exhaustive()
+    }
+}
+
+impl PasteTarget for TransactionPaste<'_> {
+    fn paste_text(
+        &mut self,
+        text: &str,
+        policy: InsertionPolicy,
+        config: InsertionConfig,
+    ) -> InsertionOutcome {
+        execute_insertion(
+            self.host,
+            self.target,
+            &ClipboardContent::text(text),
+            policy,
+            config,
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -937,6 +993,24 @@ mod tests {
         host.paste = PasteAttempt::Failed;
         let outcome = run(&mut host, InsertionPolicy::Automatic, enabled());
         assert!(matches!(outcome, InsertionOutcome::CopyFallback { .. }));
+    }
+
+    #[test]
+    fn snippets_share_the_checked_paste_entry_point() {
+        let mut host = FakeHost::new();
+        let insertion_target = target();
+        let mut paste = TransactionPaste::new(&mut host, &insertion_target);
+        let outcome = paste.paste_text("snippet text", InsertionPolicy::CopyOnly, enabled());
+        assert!(outcome.copied());
+        assert_eq!(host.writes, 1);
+        assert_eq!(host.paste_attempts, 0);
+
+        let mut host = FakeHost::new();
+        let insertion_target = target();
+        let mut paste = TransactionPaste::new(&mut host, &insertion_target);
+        let outcome = paste.paste_text("snippet text", InsertionPolicy::Automatic, enabled());
+        assert!(outcome.claims_inserted());
+        assert_eq!(host.paste_attempts, 1);
     }
 
     #[test]

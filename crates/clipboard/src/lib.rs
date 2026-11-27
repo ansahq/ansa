@@ -91,8 +91,8 @@ pub use filter::{
 };
 pub use insertion::{
     ClipboardOwner, FocusOutcome, HostFailure, InsertionConfig, InsertionEvidence, InsertionHost,
-    InsertionOutcome, InsertionPolicy, InsertionTarget, ObservedTarget, PasteAttempt, TargetIssue,
-    TargetPermission, execute_insertion,
+    InsertionOutcome, InsertionPolicy, InsertionTarget, ObservedTarget, PasteAttempt, PasteTarget,
+    TargetIssue, TargetPermission, TransactionPaste, execute_insertion,
 };
 pub use model::{
     ABSOLUTE_MAX_BYTES, ABSOLUTE_MAX_ITEM_BYTES, ABSOLUTE_MAX_ITEMS, CapturePolicy,

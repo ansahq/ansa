@@ -3,6 +3,9 @@
 This directory records the Phase 1 daily-launcher alpha for ANS-23. It is an
 integration and dogfooding track, not a release announcement.
 
+The Phase 0 integration scaffold and the frozen provider/handler/tool/paste
+interfaces are documented in [phase-0-scaffold.md](phase-0-scaffold.md).
+
 ## What this alpha actually is
 
 The alpha is a **Windows-only, local-only launcher slice** composed from the

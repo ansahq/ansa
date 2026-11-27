@@ -13,13 +13,15 @@ use ansa_quicklinks::{
 };
 use ansa_storage::{
     BackupSummary, PragmaReport, RestoreSummary, SettingKey, SettingSnapshot, SettingValue,
-    StorageConfig, Store,
+    StorageConfig, Store, UserRecord,
 };
+use ansa_vault::{SealedPayload, SecretBytes, Vault, VaultStatus};
 
 use crate::catalog::{
     CatalogComposition, EmojiHit, SearchOutcome, compose_catalog, search_catalog,
 };
 use crate::error::AlphaError;
+use crate::records::{FeatureRecordKind, ensure_kind};
 
 /// Durable record identity of the versioned quicklink library.
 pub const QUICKLINK_RECORD_ID: &str = "quicklink-library";
@@ -33,6 +35,8 @@ pub const CACHE_DATABASE_FILE: &str = "cache.sqlite";
 pub const BACKUP_DATABASE_FILE: &str = "backup.sqlite";
 /// Onboarding JSON state file inside the data directory.
 pub const ONBOARDING_FILE: &str = "onboarding.json";
+/// Native or passphrase vault directory inside the data directory.
+pub const VAULT_DIR: &str = "vault";
 
 /// The single composition root used by the CLI and the alpha harness.
 ///
@@ -48,15 +52,19 @@ pub struct DailyDriver {
     quicklink_warning: Option<String>,
     onboarding_path: PathBuf,
     backup_path: PathBuf,
+    vault_dir: PathBuf,
+    vault: Option<Vault>,
+    vault_error: Option<String>,
 }
 
 impl DailyDriver {
-    /// Opens (or creates) storage in `data_dir` and loads the persisted
-    /// quicklink library.
+    /// Opens (or creates) storage in `data_dir`, loads the persisted quicklink
+    /// library and opens the native vault when the platform provides one.
     ///
     /// A corrupt quicklink record does not prevent startup. It is reported by
     /// [`DailyDriver::quicklink_warning`] and an empty in-memory library is used
-    /// until an explicit save replaces the record.
+    /// until an explicit save replaces the record. Vault failure is reported by
+    /// [`DailyDriver::vault_error`] and never falls back to plaintext.
     pub fn open(data_dir: impl Into<PathBuf>) -> Result<Self, AlphaError> {
         let data_dir = data_dir.into();
         std::fs::create_dir_all(&data_dir)?;
@@ -65,6 +73,15 @@ impl DailyDriver {
             data_dir.join(CACHE_DATABASE_FILE),
         );
         let store = Store::open(config)?;
+        let vault_dir = data_dir.join(VAULT_DIR);
+        // Native secure storage is optional at the composition root. Clipboard,
+        // MCP and agent features can still start and report the typed reason
+        // when the keyring is locked, missing or unsupported. No plaintext
+        // fallback is selected here.
+        let (vault, vault_error) = match Vault::open(&vault_dir) {
+            Ok(vault) => (Some(vault), None),
+            Err(error) => (None, Some(error.to_string())),
+        };
         let mut driver = Self {
             onboarding_path: data_dir.join(ONBOARDING_FILE),
             backup_path: data_dir.join(BACKUP_DATABASE_FILE),
@@ -73,6 +90,9 @@ impl DailyDriver {
             quicklinks: Library::new(),
             quicklink_record_revision: None,
             quicklink_warning: None,
+            vault_dir,
+            vault,
+            vault_error,
         };
         driver.reload_quicklinks()?;
         Ok(driver)
@@ -96,6 +116,77 @@ impl DailyDriver {
     /// Onboarding state path inside the data directory.
     pub fn onboarding_path(&self) -> &Path {
         &self.onboarding_path
+    }
+
+    /// Directory reserved for the native or passphrase vault.
+    pub fn vault_path(&self) -> &Path {
+        &self.vault_dir
+    }
+
+    /// Opened vault, when native secure storage was available at startup.
+    ///
+    /// Clipboard history, MCP credentials and agent state should go through
+    /// this handle instead of inventing parallel secret storage. Sealed values
+    /// are bound to the returned handle's profile; if the vault directory is
+    /// replaced, reopen the driver instead of mixing profiles.
+    pub fn vault(&self) -> Option<&Vault> {
+        self.vault.as_ref()
+    }
+
+    /// Last-known vault capability and access status.
+    pub fn vault_status(&self) -> Option<VaultStatus> {
+        self.vault.as_ref().map(Vault::status)
+    }
+
+    /// Typed reason the vault could not be opened, if it is unavailable.
+    pub fn vault_error(&self) -> Option<&str> {
+        self.vault_error.as_deref()
+    }
+
+    /// Stores a secret in the vault under `alias`.
+    pub fn put_vault_secret(&self, alias: &str, secret: &[u8]) -> Result<(), AlphaError> {
+        self.require_vault()?
+            .put_secret(alias, secret)
+            .map_err(|error| AlphaError::Vault(error.to_string()))
+    }
+
+    /// Reads a vault secret, wiping the returned buffer on drop.
+    pub fn get_vault_secret(&self, alias: &str) -> Result<SecretBytes, AlphaError> {
+        self.require_vault()?
+            .get_secret_zeroizing(alias)
+            .map_err(|error| AlphaError::Vault(error.to_string()))
+    }
+
+    /// Seals an opaque payload for storage in a record or cache entry.
+    pub fn seal_payload(
+        &self,
+        plaintext: &[u8],
+        context: &str,
+    ) -> Result<SealedPayload, AlphaError> {
+        self.require_vault()?
+            .seal(plaintext, context)
+            .map_err(|error| AlphaError::Vault(error.to_string()))
+    }
+
+    /// Opens a sealed payload with the context it was sealed with.
+    pub fn open_sealed_payload(
+        &self,
+        payload: &SealedPayload,
+        context: &str,
+    ) -> Result<SecretBytes, AlphaError> {
+        self.require_vault()?
+            .open_payload_zeroizing(payload, context)
+            .map_err(|error| AlphaError::Vault(error.to_string()))
+    }
+
+    fn require_vault(&self) -> Result<&Vault, AlphaError> {
+        self.vault.as_ref().ok_or_else(|| {
+            AlphaError::Vault(
+                self.vault_error
+                    .clone()
+                    .unwrap_or_else(|| "secure storage is unavailable in this session".to_owned()),
+            )
+        })
     }
 
     /// Current schema version.
@@ -151,6 +242,88 @@ impl DailyDriver {
         expected_revision: Option<u64>,
     ) -> Result<u64, AlphaError> {
         Ok(self.store.set_setting(key, value, expected_revision)?)
+    }
+
+    /// Creates a generic durable record for a feature.
+    ///
+    /// The payload is opaque JSON. See the `records` module for the kind
+    /// namespaces and the unencrypted-payload boundary. No feature-specific
+    /// schema migration is involved.
+    pub fn create_feature_record(
+        &self,
+        kind: FeatureRecordKind,
+        local_id: &str,
+        payload_json: &str,
+    ) -> Result<UserRecord, AlphaError> {
+        let id = kind.record_id(local_id)?;
+        Ok(self.store.create_record(&id, kind.as_str(), payload_json)?)
+    }
+
+    /// Reads one generic feature record, rejecting a kind mismatch.
+    pub fn get_feature_record(
+        &self,
+        kind: FeatureRecordKind,
+        local_id: &str,
+    ) -> Result<Option<UserRecord>, AlphaError> {
+        let id = kind.record_id(local_id)?;
+        let record = self.store.get_record(&id)?;
+        if let Some(record) = &record {
+            ensure_kind(record, kind)?;
+        }
+        Ok(record)
+    }
+
+    /// Lists generic records of one feature kind.
+    pub fn list_feature_records(
+        &self,
+        kind: FeatureRecordKind,
+    ) -> Result<Vec<UserRecord>, AlphaError> {
+        let records = self.store.list_records(Some(kind.as_str()))?;
+        for record in &records {
+            ensure_kind(record, kind)?;
+        }
+        Ok(records)
+    }
+
+    /// Replaces a feature record's JSON payload with compare-and-swap.
+    pub fn update_feature_record(
+        &self,
+        kind: FeatureRecordKind,
+        local_id: &str,
+        payload_json: &str,
+        expected_revision: u64,
+    ) -> Result<UserRecord, AlphaError> {
+        let id = kind.record_id(local_id)?;
+        let existing = self
+            .store
+            .get_record(&id)?
+            .ok_or_else(|| AlphaError::Record {
+                id: id.clone(),
+                reason: "record does not exist".to_owned(),
+            })?;
+        ensure_kind(&existing, kind)?;
+        Ok(self
+            .store
+            .update_record(&id, payload_json, expected_revision)?)
+    }
+
+    /// Deletes a feature record, optionally with a revision expectation.
+    pub fn delete_feature_record(
+        &self,
+        kind: FeatureRecordKind,
+        local_id: &str,
+        expected_revision: Option<u64>,
+    ) -> Result<bool, AlphaError> {
+        let id = kind.record_id(local_id)?;
+        let existing = self
+            .store
+            .get_record(&id)?
+            .ok_or_else(|| AlphaError::Record {
+                id: id.clone(),
+                reason: "record does not exist".to_owned(),
+            })?;
+        ensure_kind(&existing, kind)?;
+        Ok(self.store.delete_record(&id, expected_revision)?)
     }
 
     /// Backs up the durable database and verifies the copy.
@@ -357,6 +530,9 @@ impl fmt::Debug for DailyDriver {
             .field("quicklinks", &self.quicklinks)
             .field("quicklink_record_revision", &self.quicklink_record_revision)
             .field("quicklink_warning", &self.quicklink_warning)
+            .field("vault_dir", &self.vault_dir)
+            .field("vault_status", &self.vault_status())
+            .field("vault_error", &self.vault_error)
             .finish_non_exhaustive()
     }
 }

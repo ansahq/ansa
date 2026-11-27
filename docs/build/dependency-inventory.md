@@ -6,14 +6,14 @@ This file is generated from `Cargo.lock`, `cargo metadata --locked --offline`
 and `scripts/dependencies/review-status.toml`. It is a build/tooling artifact,
 not a legal review or a claim that every locked package is used on every OS.
 
-- Cargo.lock SHA-256 (LF-normalized): `344710e0f681c9562a857cf83aafb37b4ed92d3d6c101d3e5a54527f34802127`
+- Cargo.lock SHA-256 (LF-normalized): `37e3ef6a33d2be3067863adaa1d1746b2bdd7eab51eecbfe2283a1e8d2724eda`
 - Lock identity normalizes CRLF pairs to LF only; lone CR, UTF-8 and all
   other bytes are preserved. Registry artifact checksums below are raw.
 - Lockfile format: v3
-- Packages: **762** (18 first-party workspace, 744 third-party)
-- License declared: **762**; license unknown: **0**
-- SPDX expression emitted: **713**; `NOASSERTION`: **49** (allowlist/legacy limitation, not an invalid-license judgment)
-- Review status: **18 reviewed, 744 unreviewed**
+- Packages: **763** (19 first-party workspace, 744 third-party)
+- License declared: **763**; license unknown: **0**
+- SPDX expression emitted: **714**; `NOASSERTION`: **49** (allowlist/legacy limitation, not an invalid-license judgment)
+- Review status: **19 reviewed, 744 unreviewed**
 - Review policy: first-party workspace members with a declared license are
   marked reviewed for that manifest declaration; this is not a legal review.
   Third-party packages remain unreviewed unless explicitly recorded in
@@ -32,9 +32,9 @@ libraries, Rust toolchain components, GitHub Actions, and the excluded
 
 | Filter | Packages observed |
 |---|---:|
-| linux | 602 |
-| macos | 536 |
-| windows | 524 |
+| linux | 603 |
+| macos | 537 |
+| windows | 525 |
 
 ## License expressions
 
@@ -43,7 +43,7 @@ libraries, Rust toolchain components, GitHub Actions, and the excluded
 | MIT OR Apache-2.0 | 343 |
 | MIT | 156 |
 | Apache-2.0 OR MIT | 77 |
-| Apache-2.0 | 39 |
+| Apache-2.0 | 40 |
 | MIT/Apache-2.0 | 37 |
 | Unicode-3.0 | 18 |
 | BSD-3-Clause | 10 |
@@ -106,6 +106,7 @@ legacy forms are not normalised into a different SPDX expression.
 | ansa-registry | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |
 | ansa-search | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |
 | ansa-storage | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |
+| ansa-tools | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |
 | ansa-ui-components | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |
 | ansa-ui-gpui | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |
 | ansa-vault | 0.1.0 | windows, macos, linux | workspace path | none | Apache-2.0 | reviewed |

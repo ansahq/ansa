@@ -21,6 +21,8 @@ pub enum AlphaError {
     Onboarding(String),
     /// A saved user record payload could not be interpreted.
     Record { id: String, reason: String },
+    /// The vault could not be opened or a sealed value could not be read.
+    Vault(String),
 }
 
 impl fmt::Display for AlphaError {
@@ -38,6 +40,7 @@ impl fmt::Display for AlphaError {
             Self::Record { id, reason } => {
                 write!(formatter, "record {id} is unusable: {reason}")
             }
+            Self::Vault(message) => write!(formatter, "vault operation failed: {message}"),
         }
     }
 }

@@ -6,12 +6,13 @@ members = [
     "crates/platform-api", "crates/platform-windows", "crates/ui-components", "crates/ui-gpui",
     "crates/registry", "crates/coordinator", "crates/storage", "crates/quicklinks",
     "crates/emoji", "crates/onboarding", "crates/alpha", "crates/vault", "crates/clipboard",
+    "crates/tools",
 ]
 default-members = [
     "apps/cli", "crates/domain", "crates/search", "crates/core", "crates/platform-api",
     "crates/platform-windows", "crates/registry", "crates/coordinator", "crates/storage",
     "crates/quicklinks", "crates/emoji", "crates/onboarding", "crates/alpha", "crates/vault",
-    "crates/clipboard",
+    "crates/clipboard", "crates/tools",
 ]
 
 [workspace.package]

@@ -21,6 +21,8 @@ ansa-quicklinks = { path = "../quicklinks", version = "0.1.0" }
 ansa-emoji = { path = "../emoji", version = "0.1.0" }
 ansa-onboarding = { path = "../onboarding", version = "0.1.0" }
 ansa-platform-windows = { path = "../platform-windows", version = "0.1.0" }
+ansa-tools = { path = "../tools", version = "0.1.0" }
+ansa-vault = { path = "../vault", version = "0.1.0" }
 
 [dev-dependencies]
 tempfile = "3"

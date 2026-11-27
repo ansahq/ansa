@@ -30,7 +30,9 @@ mod catalog;
 mod coordinator;
 mod daily_driver;
 mod error;
+mod feature_registry;
 mod harness;
+mod records;
 
 pub use catalog::{
     CatalogComposition, EmojiHit, QueryKind, QuicklinkSkipReason, SearchOutcome, SkippedQuicklink,
@@ -39,11 +41,19 @@ pub use catalog::{
 pub use coordinator::{LOCAL_RANK_PROVIDER, build_coordinator};
 pub use daily_driver::{
     BACKUP_DATABASE_FILE, CACHE_DATABASE_FILE, DailyDriver, MAIN_DATABASE_FILE, ONBOARDING_FILE,
-    OnboardingInfo, QUICKLINK_RECORD_ID, QUICKLINK_RECORD_KIND, emoji_info,
+    OnboardingInfo, QUICKLINK_RECORD_ID, QUICKLINK_RECORD_KIND, VAULT_DIR, emoji_info,
 };
 pub use error::AlphaError;
+pub use feature_registry::{
+    CommandHandler, CommandPreview, FeatureError, FeatureRegistry, HandlerOutcome, SearchProvider,
+    SearchQuery, SearchResult, build_registry,
+};
 pub use harness::{
     AlphaSmokeReport, DEFAULT_SMOKE_CYCLES, HarnessError, STABLE_COMMAND_ID, alpha_smoke,
+};
+pub use records::{
+    AGENT_CONVERSATION_RECORD_KIND, FeatureRecordKind, MCP_SERVER_RECORD_KIND, SCRIPT_RECORD_KIND,
+    SNIPPET_RECORD_KIND,
 };
 
 /// Version of the alpha composition crate.

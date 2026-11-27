@@ -95,6 +95,8 @@ dependencies = [
  "ansa-registry",
  "ansa-search",
  "ansa-storage",
+ "ansa-tools",
+ "ansa-vault",
  "serde_json",
  "tempfile",
 ]
@@ -239,6 +241,13 @@ dependencies = [
  "serde_json",
  "tempfile",
  "winapi-util",
+]
+
+[[package]]
+name = "ansa-tools"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]

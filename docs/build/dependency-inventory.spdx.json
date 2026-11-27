@@ -521,6 +521,26 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-Package-ansa-tools-0.1.0-8ce03c905b",
+      "name": "ansa-tools",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "path",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "licenseComments": "Review status: reviewed; first-party workspace member; declared license: Apache-2.0; manifest declaration, not a legal review; Platform scope: declared-ci-target; Platforms: windows, macos, linux; Cargo source: path; License verbatim: Apache-2.0",
+      "comment": "Review status: reviewed; platform scope: declared-ci-target",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:cargo/ansa-tools@0.1.0"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-Package-ansa-ui-components-0.1.0-a6db75b955",
       "name": "ansa-ui-components",
       "versionInfo": "0.1.0",
@@ -19836,6 +19856,11 @@
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-tools-0.1.0-8ce03c905b"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
       "relatedSpdxElement": "SPDXRef-Package-ansa-ui-components-0.1.0-a6db75b955"
     },
     {
@@ -23666,6 +23691,16 @@
     {
       "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
       "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-tools-0.1.0-8ce03c905b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-ansa-vault-0.1.0-eb90cb3a05"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-alpha-0.1.0-68e63e7d76",
+      "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
     },
     {
@@ -23972,6 +24007,11 @@
       "spdxElementId": "SPDXRef-Package-ansa-storage-0.1.0-e12f1c14fd",
       "relationshipType": "DEPENDS_ON",
       "relatedSpdxElement": "SPDXRef-Package-winapi-util-0.1.11-86b6f42c81"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-ansa-tools-0.1.0-8ce03c905b",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-serde-json-1.0.154-60c4594312"
     },
     {
       "spdxElementId": "SPDXRef-Package-ansa-ui-components-0.1.0-a6db75b955",
@@ -34142,6 +34182,6 @@
       "comment": "Review statuses are explicit per package. All third-party packages are unreviewed unless review-status.toml records evidence."
     }
   ],
-  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-344710e0f681c9562a857cf83aafb37b4ed92d3d6c101d3e5a54527f34802127-49e234b726e01c8acf32881ca70a0b43e11749e521d1505360ad89be3357e0fd",
-  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): 344710e0f681c9562a857cf83aafb37b4ed92d3d6c101d3e5a54527f34802127. SPDX content digest: 49e234b726e01c8acf32881ca70a0b43e11749e521d1505360ad89be3357e0fd."
+  "documentNamespace": "https://ansa.invalid/spdx/cargo-lock-lf-37e3ef6a33d2be3067863adaa1d1746b2bdd7eab51eecbfe2283a1e8d2724eda-1f03825a0ddb5e2fb25302ad92ef6084ba44ace7c7b8ce28f1d13d2fa046924a",
+  "comment": "Cargo.lock SHA-256 (LF-normalized, CRLF pairs only): 37e3ef6a33d2be3067863adaa1d1746b2bdd7eab51eecbfe2283a1e8d2724eda. SPDX content digest: 1f03825a0ddb5e2fb25302ad92ef6084ba44ace7c7b8ce28f1d13d2fa046924a."
 }

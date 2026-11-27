@@ -143,8 +143,16 @@ class NativeSmokeHelperTests(unittest.TestCase):
 
 
 class NativeSmokeWorkflowContractTests(unittest.TestCase):
+    APPLICATION_SOURCES = (
+        "crates/ui-gpui/src/lib.rs",
+        "crates/ui-gpui/src/shell.rs",
+    )
+
     def read(self, relative: str) -> str:
         return (ROOT / relative).read_text(encoding="utf-8")
+
+    def application_source(self) -> str:
+        return "\n".join(self.read(path) for path in self.APPLICATION_SOURCES)
 
     def test_workflow_runs_native_smoke_after_desktop_build(self) -> None:
         workflow = self.read(".github/workflows/ci.yml")
@@ -168,11 +176,11 @@ class NativeSmokeWorkflowContractTests(unittest.TestCase):
         self.assertIn("if: always()", workflow)
 
     def test_emitted_marker_matches_application_source(self) -> None:
-        application = self.read("crates/ui-gpui/src/lib.rs")
+        application = self.application_source()
         self.assertIn(native_smoke.STARTUP_MARKER, application)
 
     def test_hwnd_lookup_is_windows_only(self) -> None:
-        application = self.read("crates/ui-gpui/src/lib.rs")
+        application = self.application_source()
         self.assertIn('#[cfg(target_os = "windows")]\nfn native_handle(window:', application)
         self.assertIn('#[cfg(not(target_os = "windows"))]\nfn native_handle(_window:', application)
 
